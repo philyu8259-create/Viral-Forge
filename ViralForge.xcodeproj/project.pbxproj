@@ -1,0 +1,436 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		01E8ED191E9B861F4DAE0668 /* ContentGenerating.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0823B86AD05AAE6D2A1AAB3 /* ContentGenerating.swift */; };
+		0228FE765DEA88C4E3803B99 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83815749F09EADCA87A06CC /* HomeView.swift */; };
+		03358CFC67B62760141B8CFE /* AssetsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC02973674BE989B04A852F9 /* AssetsView.swift */; };
+		1701D887978FC8561C071200 /* BrandKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435A1758105F1C55CA31EC3C /* BrandKitView.swift */; };
+		18E0338F4E417037D5E8FD8D /* BackendDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DACCB1C6BF0EFF9C9703B3A /* BackendDTOs.swift */; };
+		19D283F18C2A3902374BAEF5 /* BackendSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 695BF69FFFFF254432D0E21A /* BackendSettings.swift */; };
+		3780DD9E4026EEB0E859C958 /* BatchCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14694249B2F69A3705DE7E80 /* BatchCreateView.swift */; };
+		3B90739F88F8EAEB3A1C86DB /* PosterEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D033E9C4C3CC1B64D8F0FF1 /* PosterEditorView.swift */; };
+		47912C696A40595977E2F893 /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FF09FC068E1A3F4F7C4ECFF /* SampleData.swift */; };
+		4C725A02C61AA20E52A76A9A /* ViralForgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE34A96FAAB6CA2E2369217B /* ViralForgeApp.swift */; };
+		4E9CA4F44AE23FCFE75E00DC /* AppText.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9EE0CA669A23A4BE74282E /* AppText.swift */; };
+		4F17DB62D597B4C5060B7D25 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B3517FED465E57D7E238B59 /* AppRootView.swift */; };
+		6EEB30F52BD5F87097807B3D /* TemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A692A256A45B27A1D796A3D2 /* TemplatesView.swift */; };
+		7A23E5648596D58AF9D7AD50 /* QuotaStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0856B85C79DB28A552029E28 /* QuotaStatusView.swift */; };
+		7B4BCF433D429A58D6A99240 /* ModelRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF7DB1105294A475EF485A28 /* ModelRouting.swift */; };
+		8F21A6B03326CACDE5A25535 /* BackendSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B73AF0B6A0CB5159DC1EF8 /* BackendSettingsView.swift */; };
+		ACA4C874E9B6798F32298BDF /* MockContentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13EA30A70042A3FEA3C738B3 /* MockContentService.swift */; };
+		AEB90894E5BF2150C567C159 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */; };
+		BD60120398B530E8489DB73B /* BackendContentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F64EB59F1AEBB183A77E3A /* BackendContentService.swift */; };
+		C1AC0492FB57BD1C2BFFF969 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01292BC19CA55087155F90C7 /* AppConfiguration.swift */; };
+		D8E1253C24307785AC59E071 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */; };
+		DAB68408B16581443A690917 /* BackendDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A85E893743A9153D469CAB /* BackendDataService.swift */; };
+		DAD8544C45ACB3C855E48481 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64177FF007D6CE07527E00E1 /* APIClient.swift */; };
+		F1242B83BCFAD3B5CADD38A1 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12772C4BFCF55BD6E18C80B8 /* AppModel.swift */; };
+		F306B438C432EC4B842C2A4C /* ContentModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 387E20D6EEBB4DAF6F06913C /* ContentModels.swift */; };
+		F5DE66E363E609C00EF58EDA /* SubscriptionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE3B5217B984EACDAB6767A /* SubscriptionModels.swift */; };
+		F6353430166BA4F123792695 /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC38B989C06A1E6BC56891B3 /* ResultView.swift */; };
+		FDCCB3F010505A0F302340D4 /* ContentServiceFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEC1C0E0BB8257B613064F0 /* ContentServiceFactory.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		01292BC19CA55087155F90C7 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+		04F64EB59F1AEBB183A77E3A /* BackendContentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendContentService.swift; sourceTree = "<group>"; };
+		0856B85C79DB28A552029E28 /* QuotaStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaStatusView.swift; sourceTree = "<group>"; };
+		0D033E9C4C3CC1B64D8F0FF1 /* PosterEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PosterEditorView.swift; sourceTree = "<group>"; };
+		12772C4BFCF55BD6E18C80B8 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		13EA30A70042A3FEA3C738B3 /* MockContentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockContentService.swift; sourceTree = "<group>"; };
+		14694249B2F69A3705DE7E80 /* BatchCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchCreateView.swift; sourceTree = "<group>"; };
+		1B76C4539870EB9D20A3703E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		2DACCB1C6BF0EFF9C9703B3A /* BackendDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendDTOs.swift; sourceTree = "<group>"; };
+		2EE3B5217B984EACDAB6767A /* SubscriptionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionModels.swift; sourceTree = "<group>"; };
+		387E20D6EEBB4DAF6F06913C /* ContentModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentModels.swift; sourceTree = "<group>"; };
+		435A1758105F1C55CA31EC3C /* BrandKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandKitView.swift; sourceTree = "<group>"; };
+		48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		4FF09FC068E1A3F4F7C4ECFF /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
+		64177FF007D6CE07527E00E1 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		65A85E893743A9153D469CAB /* BackendDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendDataService.swift; sourceTree = "<group>"; };
+		695BF69FFFFF254432D0E21A /* BackendSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSettings.swift; sourceTree = "<group>"; };
+		6B3517FED465E57D7E238B59 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
+		7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		8515AE8622366534FFE8A090 /* ViralForge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ViralForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A692A256A45B27A1D796A3D2 /* TemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatesView.swift; sourceTree = "<group>"; };
+		AC38B989C06A1E6BC56891B3 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
+		B0823B86AD05AAE6D2A1AAB3 /* ContentGenerating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentGenerating.swift; sourceTree = "<group>"; };
+		BFEC1C0E0BB8257B613064F0 /* ContentServiceFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentServiceFactory.swift; sourceTree = "<group>"; };
+		C0B73AF0B6A0CB5159DC1EF8 /* BackendSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSettingsView.swift; sourceTree = "<group>"; };
+		C83815749F09EADCA87A06CC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		CC02973674BE989B04A852F9 /* AssetsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetsView.swift; sourceTree = "<group>"; };
+		DC9EE0CA669A23A4BE74282E /* AppText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppText.swift; sourceTree = "<group>"; };
+		EE34A96FAAB6CA2E2369217B /* ViralForgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViralForgeApp.swift; sourceTree = "<group>"; };
+		FF7DB1105294A475EF485A28 /* ModelRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelRouting.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		11D2A0831966E018045B72A9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8515AE8622366534FFE8A090 /* ViralForge.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		30B5C3C21A84BB9A6846D3C6 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				387E20D6EEBB4DAF6F06913C /* ContentModels.swift */,
+				2EE3B5217B984EACDAB6767A /* SubscriptionModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		32342ED8D0482EC53BDE26A2 /* ViralForge */ = {
+			isa = PBXGroup;
+			children = (
+				1B76C4539870EB9D20A3703E /* Info.plist */,
+				CC1CD816AC19A9520035BB61 /* App */,
+				30B5C3C21A84BB9A6846D3C6 /* Models */,
+				5AFB22499BE01F54FF9AFB69 /* Services */,
+				C4D7535FF5CC422C93F5FAED /* Views */,
+			);
+			path = ViralForge;
+			sourceTree = "<group>";
+		};
+		5AFB22499BE01F54FF9AFB69 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				64177FF007D6CE07527E00E1 /* APIClient.swift */,
+				04F64EB59F1AEBB183A77E3A /* BackendContentService.swift */,
+				65A85E893743A9153D469CAB /* BackendDataService.swift */,
+				2DACCB1C6BF0EFF9C9703B3A /* BackendDTOs.swift */,
+				B0823B86AD05AAE6D2A1AAB3 /* ContentGenerating.swift */,
+				BFEC1C0E0BB8257B613064F0 /* ContentServiceFactory.swift */,
+				13EA30A70042A3FEA3C738B3 /* MockContentService.swift */,
+				FF7DB1105294A475EF485A28 /* ModelRouting.swift */,
+				4FF09FC068E1A3F4F7C4ECFF /* SampleData.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		C4D7535FF5CC422C93F5FAED /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				CC02973674BE989B04A852F9 /* AssetsView.swift */,
+				C0B73AF0B6A0CB5159DC1EF8 /* BackendSettingsView.swift */,
+				14694249B2F69A3705DE7E80 /* BatchCreateView.swift */,
+				435A1758105F1C55CA31EC3C /* BrandKitView.swift */,
+				7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */,
+				C83815749F09EADCA87A06CC /* HomeView.swift */,
+				48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */,
+				0D033E9C4C3CC1B64D8F0FF1 /* PosterEditorView.swift */,
+				0856B85C79DB28A552029E28 /* QuotaStatusView.swift */,
+				AC38B989C06A1E6BC56891B3 /* ResultView.swift */,
+				A692A256A45B27A1D796A3D2 /* TemplatesView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		CC1CD816AC19A9520035BB61 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				01292BC19CA55087155F90C7 /* AppConfiguration.swift */,
+				12772C4BFCF55BD6E18C80B8 /* AppModel.swift */,
+				6B3517FED465E57D7E238B59 /* AppRootView.swift */,
+				DC9EE0CA669A23A4BE74282E /* AppText.swift */,
+				695BF69FFFFF254432D0E21A /* BackendSettings.swift */,
+				EE34A96FAAB6CA2E2369217B /* ViralForgeApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		EA90C21E69117ADD413F27A6 = {
+			isa = PBXGroup;
+			children = (
+				32342ED8D0482EC53BDE26A2 /* ViralForge */,
+				11D2A0831966E018045B72A9 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4452928A70DA0D1ECC286824 /* ViralForge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E625757A7A4D3FA40EC57DC7 /* Build configuration list for PBXNativeTarget "ViralForge" */;
+			buildPhases = (
+				95D4E898F2EC3062D1CC4E43 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ViralForge;
+			packageProductDependencies = (
+			);
+			productName = ViralForge;
+			productReference = 8515AE8622366534FFE8A090 /* ViralForge.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4D34EBCB5F295DDEA20EFFFC /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					4452928A70DA0D1ECC286824 = {
+						DevelopmentTeam = "";
+						SystemCapabilities = "[\"com.apple.InAppPurchase\": [\"enabled\": 1]]";
+					};
+				};
+			};
+			buildConfigurationList = 44A1E903E127EB38819FAFE7 /* Build configuration list for PBXProject "ViralForge" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EA90C21E69117ADD413F27A6;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 11D2A0831966E018045B72A9 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4452928A70DA0D1ECC286824 /* ViralForge */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		95D4E898F2EC3062D1CC4E43 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAD8544C45ACB3C855E48481 /* APIClient.swift in Sources */,
+				C1AC0492FB57BD1C2BFFF969 /* AppConfiguration.swift in Sources */,
+				F1242B83BCFAD3B5CADD38A1 /* AppModel.swift in Sources */,
+				4F17DB62D597B4C5060B7D25 /* AppRootView.swift in Sources */,
+				4E9CA4F44AE23FCFE75E00DC /* AppText.swift in Sources */,
+				03358CFC67B62760141B8CFE /* AssetsView.swift in Sources */,
+				BD60120398B530E8489DB73B /* BackendContentService.swift in Sources */,
+				18E0338F4E417037D5E8FD8D /* BackendDTOs.swift in Sources */,
+				DAB68408B16581443A690917 /* BackendDataService.swift in Sources */,
+				19D283F18C2A3902374BAEF5 /* BackendSettings.swift in Sources */,
+				8F21A6B03326CACDE5A25535 /* BackendSettingsView.swift in Sources */,
+				3780DD9E4026EEB0E859C958 /* BatchCreateView.swift in Sources */,
+				1701D887978FC8561C071200 /* BrandKitView.swift in Sources */,
+				01E8ED191E9B861F4DAE0668 /* ContentGenerating.swift in Sources */,
+				F306B438C432EC4B842C2A4C /* ContentModels.swift in Sources */,
+				FDCCB3F010505A0F302340D4 /* ContentServiceFactory.swift in Sources */,
+				AEB90894E5BF2150C567C159 /* HistoryView.swift in Sources */,
+				0228FE765DEA88C4E3803B99 /* HomeView.swift in Sources */,
+				ACA4C874E9B6798F32298BDF /* MockContentService.swift in Sources */,
+				7B4BCF433D429A58D6A99240 /* ModelRouting.swift in Sources */,
+				D8E1253C24307785AC59E071 /* PaywallView.swift in Sources */,
+				3B90739F88F8EAEB3A1C86DB /* PosterEditorView.swift in Sources */,
+				7A23E5648596D58AF9D7AD50 /* QuotaStatusView.swift in Sources */,
+				F6353430166BA4F123792695 /* ResultView.swift in Sources */,
+				47912C696A40595977E2F893 /* SampleData.swift in Sources */,
+				F5DE66E363E609C00EF58EDA /* SubscriptionModels.swift in Sources */,
+				6EEB30F52BD5F87097807B3D /* TemplatesView.swift in Sources */,
+				4C725A02C61AA20E52A76A9A /* ViralForgeApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		15DECF38CAAC7ED32FE377A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		17F0AD14EF5F4A3216465DA4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				BACKEND_BASE_URL = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = ViralForge/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.phil.viralforge;
+				PRODUCT_NAME = ViralForge;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CF136C986D206A3E28FA07D9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F569D8304764A78E4B3CB016 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				BACKEND_BASE_URL = "http://localhost:8787";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = ViralForge/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.phil.viralforge;
+				PRODUCT_NAME = ViralForge;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		44A1E903E127EB38819FAFE7 /* Build configuration list for PBXProject "ViralForge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF136C986D206A3E28FA07D9 /* Debug */,
+				15DECF38CAAC7ED32FE377A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E625757A7A4D3FA40EC57DC7 /* Build configuration list for PBXNativeTarget "ViralForge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F569D8304764A78E4B3CB016 /* Debug */,
+				17F0AD14EF5F4A3216465DA4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4D34EBCB5F295DDEA20EFFFC /* Project object */;
+}

@@ -1,0 +1,89 @@
+{
+  "identifier" : "A2A08C4A-8694-4E4C-8F64-6CDA027EA0DF",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "zh_CN",
+    "_storefront" : "CHN",
+    "_storeKitErrors" : [
+
+    ],
+    "subscriptionRenewalRate" : 0,
+    "timeRate" : 0
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "2E05396D-1E62-432E-A039-F13B0177B853",
+      "localizations" : [
+        {
+          "locale" : "en_US",
+          "name" : "ViralForge Pro"
+        },
+        {
+          "locale" : "zh_CN",
+          "name" : "ViralForge Pro"
+        }
+      ],
+      "name" : "ViralForge Pro",
+      "subscriptions" : [
+        {
+          "displayPrice" : "39.8",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "id" : "viralforge_pro_monthly",
+          "internalID" : "E42F2A06",
+          "localizations" : [
+            {
+              "description" : "Unlimited copy generation, premium templates, and AI background credits.",
+              "displayName" : "ViralForge Pro Monthly",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "解锁更多生成次数和专业模板",
+              "displayName" : "ViralForge Pro 月度会员",
+              "locale" : "zh_CN"
+            }
+          ],
+          "productID" : "viralforge_pro_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "ViralForge Pro Monthly",
+          "subscriptionGroupID" : "2E05396D-1E62-432E-A039-F13B0177B853",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "displayPrice" : "398",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "id" : "viralforge_pro_yearly",
+          "internalID" : "A9DAE83C",
+          "localizations" : [
+            {
+              "description" : "A full year of ViralForge Pro at the best value.",
+              "displayName" : "ViralForge Pro Yearly",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "解锁全年更多生成次数和专业模板",
+              "displayName" : "ViralForge Pro 年度会员",
+              "locale" : "zh_CN"
+            }
+          ],
+          "productID" : "viralforge_pro_yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "ViralForge Pro Yearly",
+          "subscriptionGroupID" : "2E05396D-1E62-432E-A039-F13B0177B853",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
