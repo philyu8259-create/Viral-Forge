@@ -11,6 +11,7 @@ final class CreationFlowUITests: XCTestCase {
         createContentPack(in: app)
 
         XCTAssertTrue(app.staticTexts["标题"].waitForExistence(timeout: 4))
+        assertCopyPackWorks(in: app, statusText: "整套发布稿已复制。")
         saveScreenshot(named: "e2e-03-result.png")
     }
 
@@ -58,6 +59,7 @@ final class CreationFlowUITests: XCTestCase {
             topic: "Portable blender for busy creators, fast breakfast, easy cleanup, low noise, and camera-friendly design."
         )
         XCTAssertTrue(app.staticTexts["Titles"].waitForExistence(timeout: 4))
+        assertCopyPackWorks(in: app, statusText: "Full publish pack copied.")
     }
 
     private func launch(_ app: XCUIApplication, appleLanguages: String = "(zh-Hans)", appleLocale: String = "zh_CN") {
@@ -85,6 +87,13 @@ final class CreationFlowUITests: XCTestCase {
 
         let resultScreen = app.scrollViews["vf.result.screen"]
         XCTAssertTrue(resultScreen.waitForExistence(timeout: 8))
+    }
+
+    private func assertCopyPackWorks(in app: XCUIApplication, statusText: String) {
+        let copyPackButton = app.buttons["vf.result.copyPackButton"]
+        XCTAssertTrue(copyPackButton.waitForExistence(timeout: 4))
+        copyPackButton.tap()
+        XCTAssertTrue(app.staticTexts[statusText].waitForExistence(timeout: 4))
     }
 
     private func saveScreenshot(named fileName: String) {

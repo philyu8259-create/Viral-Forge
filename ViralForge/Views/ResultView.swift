@@ -5,6 +5,7 @@ struct ResultView: View {
     @Environment(AppModel.self) private var appModel
     let project: ContentProject
     @State private var regeneratedProject: ContentProject?
+    @State private var copyStatusMessage: String?
 
     private var currentProject: ContentProject {
         appModel.projects.first(where: { $0.id == project.id }) ?? project
@@ -86,6 +87,32 @@ struct ResultView: View {
                     .disabled(appModel.isGenerating)
                 }
 
+                HStack(spacing: 10) {
+                    Button {
+                        copyToClipboard(
+                            currentProject.formattedPublishPackage,
+                            feedback: AppText.localized("Full publish pack copied.", "整套发布稿已复制。")
+                        )
+                    } label: {
+                        actionPill(AppText.localized("Copy Pack", "复制整套"), icon: "doc.on.doc.fill", tint: VFStyle.electricCyan)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.result.copyPackButton")
+
+                    ShareLink(item: currentProject.formattedPublishPackage) {
+                        actionPill(AppText.localized("Share Text", "分享文案"), icon: "square.and.arrow.up", tint: VFStyle.purpleFlow)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.result.shareTextButton")
+                }
+
+                if let copyStatusMessage {
+                    Label(copyStatusMessage, systemImage: "checkmark.circle.fill")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(VFStyle.teal)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+
                 if let generationError = appModel.generationError {
                     Label(generationError, systemImage: "exclamationmark.triangle.fill")
                         .font(.footnote.weight(.semibold))
@@ -117,7 +144,7 @@ struct ResultView: View {
                         Text(line.reason)
                             .font(.caption.weight(.medium))
                             .foregroundStyle(VFStyle.secondaryText)
-                        copyButton(line.text, tint: tint)
+                        copyButton(line.text, tint: tint, feedback: AppText.localized("Line copied.", "已复制该条文案。"))
                     }
                 }
             }
@@ -131,7 +158,7 @@ struct ResultView: View {
                 Text(currentProject.result.caption)
                     .font(.body.weight(.medium))
                     .foregroundStyle(VFStyle.ink)
-                copyButton(currentProject.result.caption, tint: VFStyle.electricCyan)
+                copyButton(currentProject.result.caption, tint: VFStyle.electricCyan, feedback: AppText.localized("Caption copied.", "正文已复制。"))
             }
         }
     }
@@ -148,7 +175,7 @@ struct ResultView: View {
                 Text(currentProject.result.hashtags.joined(separator: " "))
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(VFStyle.secondaryText)
-                copyButton(currentProject.result.hashtags.joined(separator: " "), tint: VFStyle.purpleFlow)
+                copyButton(currentProject.result.hashtags.joined(separator: " "), tint: VFStyle.purpleFlow, feedback: AppText.localized("Hashtags copied.", "标签已复制。"))
             }
         }
     }
@@ -193,9 +220,9 @@ struct ResultView: View {
             }
     }
 
-    private func copyButton(_ text: String, tint: Color) -> some View {
+    private func copyButton(_ text: String, tint: Color, feedback: String) -> some View {
         Button {
-            UIPasteboard.general.string = text
+            copyToClipboard(text, feedback: feedback)
         } label: {
             Label(AppText.localized("Copy", "复制"), systemImage: "doc.on.doc")
                 .font(.caption.weight(.bold))
@@ -205,6 +232,20 @@ struct ResultView: View {
                 .background(.white.opacity(0.58), in: Capsule())
         }
         .buttonStyle(.plain)
+    }
+
+    private func copyToClipboard(_ text: String, feedback: String) {
+        UIPasteboard.general.string = text
+        withAnimation(.easeOut(duration: 0.16)) {
+            copyStatusMessage = feedback
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.8))
+            withAnimation(.easeOut(duration: 0.16)) {
+                copyStatusMessage = nil
+            }
+        }
     }
 
     private func regenerate() {

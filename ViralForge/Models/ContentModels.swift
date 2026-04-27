@@ -233,6 +233,77 @@ struct ContentProject: Identifiable, Hashable, Codable {
     var hasPosterExport: Bool
 }
 
+extension ContentProject {
+    var formattedPublishPackage: String {
+        switch draft.language {
+        case .chinese:
+            return formattedChinesePublishPackage
+        case .english:
+            return formattedEnglishPublishPackage
+        }
+    }
+
+    private var bestTitle: String {
+        result.titles.first?.text ?? poster.headline
+    }
+
+    private var bestHook: String {
+        result.hooks.first?.text ?? ""
+    }
+
+    private var formattedChinesePublishPackage: String {
+        [
+            "【平台】\(draft.platform.displayName)",
+            "【主题】\(draft.topic)",
+            "",
+            "【标题】",
+            bestTitle,
+            "",
+            "【开头钩子】",
+            bestHook,
+            "",
+            "【正文】",
+            result.caption,
+            "",
+            "【卖点】",
+            result.sellingPoints.map { "- \($0)" }.joined(separator: "\n"),
+            "",
+            "【标签】",
+            result.hashtags.joined(separator: " "),
+            "",
+            "【海报文案】",
+            "\(poster.headline)\n\(poster.subtitle)\n\(poster.cta)"
+        ]
+        .joined(separator: "\n")
+    }
+
+    private var formattedEnglishPublishPackage: String {
+        [
+            "Platform: \(draft.platform.displayName)",
+            "Topic: \(draft.topic)",
+            "",
+            "Title",
+            bestTitle,
+            "",
+            "Opening Hook",
+            bestHook,
+            "",
+            "Caption",
+            result.caption,
+            "",
+            "Selling Points",
+            result.sellingPoints.map { "- \($0)" }.joined(separator: "\n"),
+            "",
+            "Hashtags",
+            result.hashtags.joined(separator: " "),
+            "",
+            "Poster Copy",
+            "\(poster.headline)\n\(poster.subtitle)\n\(poster.cta)"
+        ]
+        .joined(separator: "\n")
+    }
+}
+
 struct ContentResult: Hashable, Codable {
     var titles: [ScoredLine]
     var hooks: [ScoredLine]
