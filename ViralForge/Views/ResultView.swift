@@ -6,6 +6,7 @@ struct ResultView: View {
     let project: ContentProject
     @State private var regeneratedProject: ContentProject?
     @State private var copyStatusMessage: String?
+    @State private var isShowingEditor = false
 
     private var currentProject: ContentProject {
         appModel.projects.first(where: { $0.id == project.id }) ?? project
@@ -42,6 +43,16 @@ struct ResultView: View {
         .navigationDestination(item: $regeneratedProject) { project in
             ResultView(project: project)
         }
+        .sheet(isPresented: $isShowingEditor) {
+            ResultEditorSheet(project: currentProject) { result in
+                Task {
+                    await appModel.saveContentResult(for: currentProject, result: result)
+                    copyStatusMessage = AppText.localized("Edits saved.", "修改已保存。")
+                }
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
     }
 
     private var metaCard: some View {
@@ -70,6 +81,14 @@ struct ResultView: View {
                 )
 
                 HStack(spacing: 10) {
+                    Button {
+                        isShowingEditor = true
+                    } label: {
+                        actionPill(AppText.localized("Edit Copy", "编辑文案"), icon: "pencil.line", tint: VFStyle.electricCyan)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.result.editCopyButton")
+
                     NavigationLink {
                         PosterEditorView(project: currentProject)
                     } label: {
@@ -252,6 +271,170 @@ struct ResultView: View {
         Task {
             regeneratedProject = await appModel.generateProject(from: currentProject.draft)
         }
+    }
+}
+
+private struct ResultEditorSheet: View {
+    let project: ContentProject
+    let save: (ContentResult) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft: ResultEditDraft
+
+    init(project: ContentProject, save: @escaping (ContentResult) -> Void) {
+        self.project = project
+        self.save = save
+        _draft = State(initialValue: ResultEditDraft(result: project.result))
+    }
+
+    var body: some View {
+        NavigationStack {
+            VFPage {
+                VFPageHeader(
+                    title: AppText.localized("Edit Copy", "编辑文案"),
+                    subtitle: project.draft.topic,
+                    icon: "pencil.line",
+                    tint: VFStyle.electricCyan
+                )
+
+                editorCard(
+                    title: AppText.localized("Titles", "标题"),
+                    subtitle: AppText.localized("One title per line", "每行一个标题"),
+                    text: $draft.titlesText,
+                    lines: 4,
+                    identifier: "vf.resultEditor.titles"
+                )
+
+                editorCard(
+                    title: AppText.localized("Hooks", "开头钩子"),
+                    subtitle: AppText.localized("One hook per line", "每行一个开头钩子"),
+                    text: $draft.hooksText,
+                    lines: 4,
+                    identifier: "vf.resultEditor.hooks"
+                )
+
+                editorCard(
+                    title: AppText.localized("Caption", "正文"),
+                    subtitle: AppText.localized("Main publishable body copy", "用于发布的正文"),
+                    text: $draft.caption,
+                    lines: 8,
+                    identifier: "vf.resultEditor.caption"
+                )
+
+                editorCard(
+                    title: AppText.localized("Selling Points", "卖点"),
+                    subtitle: AppText.localized("One point per line", "每行一个卖点"),
+                    text: $draft.sellingPointsText,
+                    lines: 5,
+                    identifier: "vf.resultEditor.sellingPoints"
+                )
+
+                editorCard(
+                    title: AppText.localized("Hashtags", "标签"),
+                    subtitle: AppText.localized("Separate by spaces, commas, or lines", "用空格、逗号或换行分隔"),
+                    text: $draft.hashtagsText,
+                    lines: 3,
+                    identifier: "vf.resultEditor.hashtags"
+                )
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(AppText.localized("Cancel", "取消")) {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(AppText.localized("Save", "保存")) {
+                        save(draft.result(fallback: project.result))
+                        dismiss()
+                    }
+                    .fontWeight(.bold)
+                    .accessibilityIdentifier("vf.resultEditor.saveButton")
+                }
+            }
+        }
+    }
+
+    private func editorCard(title: String, subtitle: String, text: Binding<String>, lines: Int, identifier: String) -> some View {
+        VFGlassCard(level: lines > 4 ? .thick : .thin) {
+            VStack(alignment: .leading, spacing: 12) {
+                VFSectionHeader(title: title, subtitle: subtitle)
+                TextField(title, text: text, axis: .vertical)
+                    .lineLimit(lines, reservesSpace: true)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(VFStyle.ink)
+                    .padding(14)
+                    .background(.white.opacity(0.66), in: RoundedRectangle(cornerRadius: 16))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(.white.opacity(0.82), lineWidth: 1)
+                    }
+                    .accessibilityIdentifier(identifier)
+            }
+        }
+    }
+}
+
+private struct ResultEditDraft {
+    var titlesText: String
+    var hooksText: String
+    var caption: String
+    var sellingPointsText: String
+    var hashtagsText: String
+
+    init(result: ContentResult) {
+        titlesText = result.titles.map(\.text).joined(separator: "\n")
+        hooksText = result.hooks.map(\.text).joined(separator: "\n")
+        caption = result.caption
+        sellingPointsText = result.sellingPoints.joined(separator: "\n")
+        hashtagsText = result.hashtags.joined(separator: " ")
+    }
+
+    func result(fallback: ContentResult) -> ContentResult {
+        ContentResult(
+            titles: scoredLines(from: titlesText, fallback: fallback.titles),
+            hooks: scoredLines(from: hooksText, fallback: fallback.hooks),
+            caption: cleanedCaption(fallback: fallback.caption),
+            sellingPoints: nonEmptyOrFallback(lineItems(from: sellingPointsText), fallback: fallback.sellingPoints),
+            hashtags: nonEmptyOrFallback(hashtags(from: hashtagsText), fallback: fallback.hashtags)
+        )
+    }
+
+    private func cleanedCaption(fallback: String) -> String {
+        let cleaned = caption.trimmingCharacters(in: .whitespacesAndNewlines)
+        return cleaned.isEmpty ? fallback : cleaned
+    }
+
+    private func scoredLines(from text: String, fallback: [ScoredLine]) -> [ScoredLine] {
+        let lines = lineItems(from: text)
+        let scored = lines.enumerated().map { index, line in
+            if fallback.indices.contains(index) {
+                return ScoredLine(id: fallback[index].id, text: line, score: fallback[index].score, reason: fallback[index].reason)
+            }
+            return ScoredLine(text: line, score: 80, reason: AppText.localized("Edited by user.", "用户编辑。"))
+        }
+        return scored.isEmpty ? fallback : scored
+    }
+
+    private func nonEmptyOrFallback(_ values: [String], fallback: [String]) -> [String] {
+        values.isEmpty ? fallback : values
+    }
+
+    private func lineItems(from text: String) -> [String] {
+        text
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    private func hashtags(from text: String) -> [String] {
+        let separators = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: ",，"))
+        return text
+            .components(separatedBy: separators)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .map { $0.hasPrefix("#") ? $0 : "#\($0)" }
     }
 }
 

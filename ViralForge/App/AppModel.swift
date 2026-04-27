@@ -111,6 +111,15 @@ final class AppModel {
         await persistProjectIfNeeded(updatedProject)
     }
 
+    func saveContentResult(for project: ContentProject, result: ContentResult) async {
+        guard let index = projects.firstIndex(where: { $0.id == project.id }) else { return }
+        projects[index].result = result
+
+        let updatedProject = projects[index]
+        persistProjectsLocally()
+        await persistProjectIfNeeded(updatedProject)
+    }
+
     func generatePosterBackground(for project: ContentProject, poster: PosterDraft, aspectRatio: String = "9:16") async -> URL? {
         guard quota.remainingPosterExports > 0 || quota.isPro else {
             posterGenerationError = "Free poster exports are used up for today."

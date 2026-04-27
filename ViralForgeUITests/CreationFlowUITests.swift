@@ -12,6 +12,7 @@ final class CreationFlowUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["标题"].waitForExistence(timeout: 4))
         assertCopyPackWorks(in: app, statusText: "整套发布稿已复制。")
+        assertResultEditorSaves(in: app, statusText: "修改已保存。")
         saveScreenshot(named: "e2e-03-result.png")
     }
 
@@ -93,6 +94,18 @@ final class CreationFlowUITests: XCTestCase {
         let copyPackButton = app.buttons["vf.result.copyPackButton"]
         XCTAssertTrue(copyPackButton.waitForExistence(timeout: 4))
         copyPackButton.tap()
+        XCTAssertTrue(app.staticTexts[statusText].waitForExistence(timeout: 4))
+    }
+
+    private func assertResultEditorSaves(in app: XCUIApplication, statusText: String) {
+        let editCopyButton = app.buttons["vf.result.editCopyButton"]
+        XCTAssertTrue(editCopyButton.waitForExistence(timeout: 4))
+        editCopyButton.tap()
+
+        let saveButton = app.buttons["vf.resultEditor.saveButton"]
+        XCTAssertTrue(saveButton.waitForExistence(timeout: 4))
+        saveButton.tap()
+
         XCTAssertTrue(app.staticTexts[statusText].waitForExistence(timeout: 4))
     }
 
