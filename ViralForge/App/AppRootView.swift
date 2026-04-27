@@ -40,7 +40,10 @@ struct AppRootView: View {
                 Label(AppText.localized("Pro", "会员"), systemImage: "crown")
             }
         }
-        .tint(.primary)
+        .tint(Color(red: 0.06, green: 0.72, blue: 0.74))
+        .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarColorScheme(.dark, for: .tabBar)
         .task {
             await appModel.configureStoreKitIfNeeded()
         }
