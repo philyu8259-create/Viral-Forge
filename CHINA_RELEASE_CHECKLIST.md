@@ -79,8 +79,8 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 - [ ] Update the iOS Release `BACKEND_BASE_URL` in `project.yml`, regenerate the Xcode project, and rebuild.
 - [ ] Validate the iOS app against the deployed backend, including quota, generation, poster background, project sync, and deletion.
 - [x] Add in-app Settings entry for privacy policy, terms, support, restore purchases, data deletion, version, and user ID.
-- [x] Draft public bilingual Privacy Policy, Terms, and Support pages under `docs/`.
-- [x] Deploy public bilingual Privacy Policy, Terms, and Support URLs through GitHub Pages and verify they open outside GitHub file view.
+- [x] Draft separate Simplified Chinese and English Privacy Policy, Terms, and Support pages under `docs/zh/` and `docs/en/`.
+- [x] Deploy public locale-specific Privacy Policy, Terms, and Support URLs through GitHub Pages and verify they open outside GitHub file view.
 - [ ] Finish App Store Connect agreements, tax, and banking so subscriptions can be tested and sold.
 - [ ] Add Simplified Chinese and English App Store metadata, app screenshots, and subscription review screenshots.
 - [ ] Archive and upload a TestFlight build from the final Release configuration.
@@ -104,7 +104,7 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 
 ## Compliance And Operations
 
-- Prepare Simplified Chinese privacy policy and terms.
+- Prepare separate Simplified Chinese and English privacy policy, terms, and support URLs for the single-bundle dual-locale app.
 - Confirm photo library usage copy is localized.
 - Add content safety rules before broad launch:
   - Block illegal, medical, financial, and exaggerated claims.

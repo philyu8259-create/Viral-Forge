@@ -124,7 +124,7 @@ final class CreationFlowUITests: XCTestCase {
 
         app.tabBars.buttons["会员"].tap()
 
-        XCTAssertTrue(app.staticTexts["ViralForge Pro"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.scrollViews["vf.paywall.screen"].waitForExistence(timeout: 8))
         XCTAssertTrue(app.buttons["vf.paywall.plan.viralforge_pro_monthly"].waitForExistence(timeout: 4))
         XCTAssertTrue(app.buttons["vf.paywall.plan.viralforge_pro_yearly"].waitForExistence(timeout: 4))
         XCTAssertTrue(app.staticTexts["¥39.8/月"].exists)

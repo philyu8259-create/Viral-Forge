@@ -15,6 +15,7 @@ struct PaywallView: View {
             backendSettingsCard
         }
         .navigationBarTitleDisplayMode(.inline)
+        .accessibilityIdentifier("vf.paywall.screen")
     }
 
     private var proHero: some View {

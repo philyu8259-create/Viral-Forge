@@ -1,11 +1,26 @@
 import SwiftUI
 
 enum AppLegalLinks {
-    static let privacy = URL(string: "https://philyu8259-create.github.io/Viral-Forge/privacy.html")!
-    static let terms = URL(string: "https://philyu8259-create.github.io/Viral-Forge/terms.html")!
-    static let support = URL(string: "https://philyu8259-create.github.io/Viral-Forge/support.html")!
-    static let supportEmail = URL(string: "mailto:support@viralforge.app?subject=ViralForge%20Support")!
-    static let dataDeletionEmail = URL(string: "mailto:support@viralforge.app?subject=ViralForge%20Data%20Deletion%20Request")!
+    private static let baseURL = "https://philyu8259-create.github.io/Viral-Forge"
+
+    static var privacy: URL {
+        localizedURL(chinesePath: "zh/privacy.html", englishPath: "en/privacy.html")
+    }
+
+    static var terms: URL {
+        localizedURL(chinesePath: "zh/terms.html", englishPath: "en/terms.html")
+    }
+
+    static var support: URL {
+        localizedURL(chinesePath: "zh/support.html", englishPath: "en/support.html")
+    }
+
+    static let supportEmail = URL(string: "mailto:philyu2023@qq.com?subject=ViralForge%20Support")!
+    static let dataDeletionEmail = URL(string: "mailto:philyu2023@qq.com?subject=ViralForge%20Data%20Deletion%20Request")!
+
+    private static func localizedURL(chinesePath: String, englishPath: String) -> URL {
+        URL(string: "\(baseURL)/\(AppText.isChinese ? chinesePath : englishPath)")!
+    }
 }
 
 struct SettingsView: View {
@@ -113,7 +128,7 @@ struct SettingsView: View {
 
                 settingsLink(
                     title: AppText.localized("Email Support", "邮件联系"),
-                    subtitle: "support@viralforge.app",
+                    subtitle: "philyu2023@qq.com",
                     icon: "envelope.fill",
                     tint: VFStyle.primaryRed,
                     url: AppLegalLinks.supportEmail,
