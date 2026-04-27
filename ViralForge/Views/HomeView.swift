@@ -7,6 +7,7 @@ struct HomeView: View {
     @State private var generatedProject: ContentProject?
     @State private var activeEditor: StrategyEditor?
     @State private var pasteStatusMessage: String?
+    @State private var appliedWorkflow: AppliedTemplateWorkflow?
 
     private var canGenerate: Bool {
         !appModel.isGenerating && draft.isReadyToGenerate
@@ -18,6 +19,10 @@ struct HomeView: View {
 
     private var hasTopic: Bool {
         !draft.topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var hasStrategyContext: Bool {
+        hasTopic || appliedWorkflow != nil
     }
 
     private var launchPlatforms: [SocialPlatform] {
@@ -65,9 +70,13 @@ struct HomeView: View {
         }
         .task {
             await appModel.refreshQuota()
+            applyPendingTemplateWorkflow()
         }
         .onChange(of: draft) { _, _ in
             appModel.generationError = nil
+        }
+        .onChange(of: appModel.pendingTemplateWorkflow) { _, _ in
+            applyPendingTemplateWorkflow()
         }
     }
 
@@ -123,6 +132,10 @@ struct HomeView: View {
                         }
                         .buttonStyle(.plain)
                     }
+                }
+
+                if let appliedWorkflow {
+                    appliedTemplateCard(appliedWorkflow)
                 }
 
                 ZStack(alignment: .topLeading) {
@@ -197,13 +210,13 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 7) {
-                        Image(systemName: hasTopic ? "sparkles" : "lightbulb")
-                        Text(hasTopic ? AppText.localized("Strategy suggestions are ready", "智能策略已准备") : AppText.localized("Add a topic to unlock strategy suggestions", "输入主题后展开智能策略"))
+                        Image(systemName: hasStrategyContext ? "sparkles" : "lightbulb")
+                        Text(strategyHintText)
                     }
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(hasTopic ? VFStudioDesign.primaryRed : VFStudioDesign.secondaryText)
+                    .foregroundStyle(hasStrategyContext ? VFStudioDesign.primaryRed : VFStudioDesign.secondaryText)
 
-                    if hasTopic {
+                    if hasStrategyContext {
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                             StrategyMiniChip(
                                 icon: "paperplane.fill",
@@ -247,7 +260,7 @@ struct HomeView: View {
                         .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))
                     }
                 }
-                .animation(.spring(response: 0.36, dampingFraction: 0.86), value: hasTopic)
+                .animation(.spring(response: 0.36, dampingFraction: 0.86), value: hasStrategyContext)
 
                 generateFAB
                     .padding(.top, 2)
@@ -273,6 +286,62 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(AppText.localized("Magic Paste", "智能粘贴"))
+    }
+
+    private func appliedTemplateCard(_ workflow: AppliedTemplateWorkflow) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VFGradientIcon(icon: "rectangle.on.rectangle.fill", tint: VFStudioDesign.platformTint(workflow.platform), size: 38)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(AppText.localized("Template applied", "已套用模板"))
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(VFStudioDesign.platformTint(workflow.platform))
+                Text(workflow.templateName)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(VFStudioDesign.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+                Text("\(workflow.platform.displayName) · \(workflow.category.displayName) · \(workflow.draft.tone)")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(VFStudioDesign.secondaryText)
+                    .lineLimit(2)
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                Haptics.selection()
+                withAnimation(.spring(response: 0.30, dampingFraction: 0.86)) {
+                    appliedWorkflow = nil
+                    draft = GenerationDraft(language: appModel.launchLanguage, platform: SocialPlatform.defaultPlatform(for: appModel.launchLanguage))
+                }
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(VFStudioDesign.secondaryText)
+                    .frame(width: 30, height: 30)
+                    .background(.white.opacity(0.70), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(AppText.localized("Clear applied template", "清除已套用模板"))
+        }
+        .padding(14)
+        .background(
+            LinearGradient(
+                colors: [VFStudioDesign.platformTint(workflow.platform).opacity(0.12), .white.opacity(0.66)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 20)
+        )
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(.white.opacity(0.84), lineWidth: 1)
+        }
+        .shadow(color: VFStudioDesign.platformTint(workflow.platform).opacity(0.12), radius: 14, x: 0, y: 8)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("vf.home.appliedTemplateCard")
     }
 
     private var templatePreviewSection: some View {
@@ -496,6 +565,15 @@ struct HomeView: View {
         }
     }
 
+    private var strategyHintText: String {
+        if appliedWorkflow != nil {
+            return AppText.localized("Template strategy is ready", "模板策略已准备")
+        }
+        return hasTopic
+            ? AppText.localized("Strategy suggestions are ready", "智能策略已准备")
+            : AppText.localized("Add a topic to unlock strategy suggestions", "输入主题后展开智能策略")
+    }
+
     private func sectionHeader(title: String, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
@@ -545,6 +623,16 @@ struct HomeView: View {
         Task {
             generatedProject = await appModel.generateProject(from: draft)
         }
+    }
+
+    private func applyPendingTemplateWorkflow() {
+        guard let workflow = appModel.consumeTemplateWorkflow() else { return }
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.86)) {
+            draft = workflow.draft
+            appliedWorkflow = workflow
+        }
+        Haptics.success()
+        showPasteStatus(AppText.localized("Template preset loaded", "模板参数已载入"))
     }
 
     private func magicPaste() {

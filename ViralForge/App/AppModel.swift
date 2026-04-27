@@ -3,9 +3,26 @@ import CryptoKit
 import Observation
 import StoreKit
 
+enum AppTab: Hashable {
+    case create
+    case templates
+    case brand
+    case assets
+    case pro
+}
+
+struct AppliedTemplateWorkflow: Identifiable, Hashable {
+    let id = UUID()
+    var templateName: String
+    var platform: SocialPlatform
+    var category: TemplateCategory
+    var draft: GenerationDraft
+}
+
 @MainActor
 @Observable
 final class AppModel {
+    var selectedTab: AppTab = .create
     var projects: [ContentProject] = SampleData.projects
     var templates: [CreativeTemplate] = SampleData.templates
     var posterAssets: [PosterAsset] = []
@@ -24,6 +41,7 @@ final class AppModel {
     var purchaseStatusMessage: String?
     var subscriptionProducts: [Product] = []
     var purchasedSubscriptionIDs: Set<String> = []
+    var pendingTemplateWorkflow: AppliedTemplateWorkflow?
 
     private let fallbackContentService: ContentGenerating
     private var didConfigureStoreKit = false
@@ -195,6 +213,31 @@ final class AppModel {
             brandIndustry: brandProfile.industry,
             bannedWords: brandProfile.bannedWords
         )
+    }
+
+    func applyTemplateToStudio(_ template: CreativeTemplate, draft customDraft: GenerationDraft? = nil) {
+        var appliedDraft = customDraft ?? draft(from: template)
+        appliedDraft.language = launchLanguage
+        appliedDraft.platform = template.platform
+        appliedDraft.goal = template.category.defaultGoal
+        appliedDraft.templateName = template.name
+        appliedDraft.templatePromptHint = template.promptHint
+        appliedDraft.templateStyle = template.style
+
+        pendingTemplateWorkflow = AppliedTemplateWorkflow(
+            templateName: template.name,
+            platform: template.platform,
+            category: template.category,
+            draft: appliedDraft
+        )
+        generationError = nil
+        selectedTab = .create
+    }
+
+    func consumeTemplateWorkflow() -> AppliedTemplateWorkflow? {
+        let workflow = pendingTemplateWorkflow
+        pendingTemplateWorkflow = nil
+        return workflow
     }
 
     func batchIdeas(for brief: String, platforms: [SocialPlatform], count: Int) -> [CampaignIdea] {

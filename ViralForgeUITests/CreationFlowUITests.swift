@@ -77,7 +77,13 @@ final class CreationFlowUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["内容结构"].waitForExistence(timeout: 4))
         XCTAssertTrue(app.staticTexts["适合人群"].exists)
+        let applyButton = app.buttons["vf.templateDetail.applyToStudioButton"]
+        XCTAssertTrue(applyButton.waitForExistence(timeout: 4))
         XCTAssertTrue(app.buttons["vf.templateDetail.useTemplateButton"].waitForExistence(timeout: 4))
+        applyButton.tap()
+
+        XCTAssertTrue(app.textViews["vf.home.topicEditor"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.descendants(matching: .any)["vf.home.appliedTemplateCard"].waitForExistence(timeout: 4))
     }
 
     private func launch(_ app: XCUIApplication, appleLanguages: String = "(zh-Hans)", appleLocale: String = "zh_CN") {

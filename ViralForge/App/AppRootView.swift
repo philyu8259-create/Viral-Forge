@@ -4,10 +4,13 @@ struct AppRootView: View {
     @Environment(AppModel.self) private var appModel
 
     var body: some View {
-        TabView {
+        @Bindable var appModel = appModel
+
+        TabView(selection: $appModel.selectedTab) {
             NavigationStack {
                 HomeView()
             }
+            .tag(AppTab.create)
             .tabItem {
                 Label(AppText.localized("Create", "创作"), systemImage: "sparkles")
             }
@@ -15,6 +18,7 @@ struct AppRootView: View {
             NavigationStack {
                 TemplatesView()
             }
+            .tag(AppTab.templates)
             .tabItem {
                 Label(AppText.localized("Templates", "模板"), systemImage: "rectangle.on.rectangle")
             }
@@ -22,6 +26,7 @@ struct AppRootView: View {
             NavigationStack {
                 BrandKitView()
             }
+            .tag(AppTab.brand)
             .tabItem {
                 Label(AppText.localized("Brand", "品牌"), systemImage: "person.text.rectangle")
             }
@@ -29,6 +34,7 @@ struct AppRootView: View {
             NavigationStack {
                 AssetsView()
             }
+            .tag(AppTab.assets)
             .tabItem {
                 Label(AppText.localized("Assets", "素材"), systemImage: "folder")
             }
@@ -36,6 +42,7 @@ struct AppRootView: View {
             NavigationStack {
                 PaywallView()
             }
+            .tag(AppTab.pro)
             .tabItem {
                 Label(AppText.localized("Pro", "会员"), systemImage: "crown")
             }

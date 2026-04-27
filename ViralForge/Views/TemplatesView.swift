@@ -285,6 +285,34 @@ struct TemplateDetailView: View {
                             .foregroundStyle(VFStyle.warning)
                     }
 
+                    Button {
+                        appModel.applyTemplateToStudio(template, draft: draft)
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "square.and.pencil")
+                                .font(.headline.weight(.bold))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(AppText.localized("Apply to Studio", "套用到创作台"))
+                                    .font(.headline.weight(.bold))
+                                Text(AppText.localized("Fill the product brief on the Create page", "回到创作页补产品主题"))
+                                    .font(.caption.weight(.semibold))
+                                    .opacity(0.78)
+                            }
+                            Spacer()
+                            Image(systemName: "arrow.right.circle.fill")
+                                .font(.title3.weight(.bold))
+                        }
+                        .foregroundStyle(VFStyle.ink)
+                        .padding(15)
+                        .background(.white.opacity(0.66), in: Capsule())
+                        .overlay {
+                            Capsule()
+                                .stroke(.white.opacity(0.86), lineWidth: 1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.templateDetail.applyToStudioButton")
+
                     VFPrimaryButton(
                         title: appModel.isGenerating ? AppText.localized("Generating...", "生成中...") : AppText.localized("Use Template", "使用模板"),
                         icon: "wand.and.stars",
