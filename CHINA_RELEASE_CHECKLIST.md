@@ -80,7 +80,7 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 - [ ] Validate the iOS app against the deployed backend, including quota, generation, poster background, project sync, and deletion.
 - [x] Add in-app Settings entry for privacy policy, terms, support, restore purchases, data deletion, version, and user ID.
 - [x] Draft public bilingual Privacy Policy, Terms, and Support pages under `docs/`.
-- [ ] Deploy public Simplified Chinese and English Privacy Policy and Terms URLs, then verify they open outside GitHub file view.
+- [x] Deploy public bilingual Privacy Policy, Terms, and Support URLs through GitHub Pages and verify they open outside GitHub file view.
 - [ ] Finish App Store Connect agreements, tax, and banking so subscriptions can be tested and sold.
 - [ ] Add Simplified Chinese and English App Store metadata, app screenshots, and subscription review screenshots.
 - [ ] Archive and upload a TestFlight build from the final Release configuration.
