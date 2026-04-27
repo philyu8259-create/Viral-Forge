@@ -27,7 +27,7 @@ enum ContentLanguage: String, CaseIterable, Identifiable, Codable {
     }
 
     static var defaultGenerationLanguage: ContentLanguage {
-        .chinese
+        preferredDeviceLanguage
     }
 
     var displayName: String {
@@ -49,6 +49,29 @@ enum SocialPlatform: String, CaseIterable, Identifiable, Codable {
     var id: String { rawValue }
 
     static let chinaLaunchPlatforms: [SocialPlatform] = [.xiaohongshu, .douyin, .weChat]
+    static let englishLaunchPlatforms: [SocialPlatform] = [.tikTok, .instagram, .youtubeShorts]
+
+    static var launchPlatforms: [SocialPlatform] {
+        launchPlatforms(for: .defaultGenerationLanguage)
+    }
+
+    static func launchPlatforms(for language: ContentLanguage) -> [SocialPlatform] {
+        switch language {
+        case .chinese: chinaLaunchPlatforms
+        case .english: englishLaunchPlatforms
+        }
+    }
+
+    static var defaultLaunchPlatform: SocialPlatform {
+        defaultPlatform(for: .defaultGenerationLanguage)
+    }
+
+    static func defaultPlatform(for language: ContentLanguage) -> SocialPlatform {
+        switch language {
+        case .chinese: .xiaohongshu
+        case .english: .tikTok
+        }
+    }
 
     var apiValue: String {
         switch self {
@@ -128,7 +151,7 @@ struct QuotaState: Equatable, Codable {
 
 struct GenerationDraft: Hashable, Codable {
     var language: ContentLanguage = .defaultGenerationLanguage
-    var platform: SocialPlatform = .xiaohongshu
+    var platform: SocialPlatform = .defaultLaunchPlatform
     var goal: ContentGoal = .sellProduct
     var topic = ""
     var audience = ""
@@ -170,7 +193,7 @@ struct BrandProfile: Hashable, Codable {
     var audience = ""
     var tone = ""
     var bannedWords = ""
-    var defaultPlatform: SocialPlatform = .xiaohongshu
+    var defaultPlatform: SocialPlatform = .defaultLaunchPlatform
     var primaryColorName = "Emerald"
 }
 
@@ -286,9 +309,9 @@ enum PosterCanvasTarget: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .xiaohongshuCover: AppText.localized("Xiaohongshu 3:4", "小红书 3:4")
-        case .douyinVertical: AppText.localized("Douyin 9:16", "抖音 9:16")
-        case .weChatSquare: AppText.localized("WeChat 1:1", "微信 1:1")
+        case .xiaohongshuCover: AppText.localized("Instagram 3:4", "小红书 3:4")
+        case .douyinVertical: AppText.localized("Shorts 9:16", "抖音 9:16")
+        case .weChatSquare: AppText.localized("Instagram 1:1", "微信 1:1")
         }
     }
 

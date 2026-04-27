@@ -46,6 +46,20 @@ final class AppModel {
         !purchasedSubscriptionIDs.isDisjoint(with: SubscriptionProductID.all)
     }
 
+    var launchLanguage: ContentLanguage {
+        .defaultGenerationLanguage
+    }
+
+    var launchPlatforms: [SocialPlatform] {
+        SocialPlatform.launchPlatforms(for: launchLanguage)
+    }
+
+    var visibleTemplates: [CreativeTemplate] {
+        let platforms = Set(launchPlatforms)
+        let filteredTemplates = templates.filter { platforms.contains($0.platform) }
+        return filteredTemplates.isEmpty ? SampleData.templates(for: launchLanguage) : filteredTemplates
+    }
+
     private var appAccountToken: UUID {
         BackendAccountToken.uuid(for: backendSettings.userId)
     }
@@ -289,6 +303,12 @@ final class AppModel {
             "\(title)｜15 秒讲清楚"
         case .weChat:
             "\(title)｜适合发朋友圈/社群"
+        case .tikTok:
+            "\(title) | 15-second hook"
+        case .instagram:
+            "\(title) | Reel or carousel angle"
+        case .youtubeShorts:
+            "\(title) | Shorts-ready"
         default:
             title
         }
@@ -508,15 +528,33 @@ final class AppModel {
         if enrichedDraft.bannedWords.isEmpty {
             enrichedDraft.bannedWords = brandProfile.bannedWords
         }
-        if enrichedDraft.platform == .xiaohongshu, brandProfile.defaultPlatform != .xiaohongshu, !brandProfile.brandName.isEmpty, enrichedDraft.templateName.isEmpty {
+        let defaultPlatform = SocialPlatform.defaultPlatform(for: enrichedDraft.language)
+        let allowedBrandPlatforms = SocialPlatform.launchPlatforms(for: enrichedDraft.language)
+        if enrichedDraft.platform == defaultPlatform,
+           brandProfile.defaultPlatform != defaultPlatform,
+           allowedBrandPlatforms.contains(brandProfile.defaultPlatform),
+           !brandProfile.brandName.isEmpty,
+           enrichedDraft.templateName.isEmpty {
             enrichedDraft.platform = brandProfile.defaultPlatform
         }
         return enrichedDraft
     }
 
     private func posterBackgroundPrompt(for project: ContentProject, poster: PosterDraft) -> String {
-        [
-            "为小红书商业海报生成一张竖版背景图。",
+        if project.draft.language == .english {
+            return [
+                "Generate a clean commercial social poster background for \(project.draft.platform.displayName).",
+                "Product or topic: \(project.draft.topic).",
+                "Audience: \(project.draft.audience.isEmpty ? brandProfile.audience : project.draft.audience).",
+                "Poster headline meaning: \(poster.headline).",
+                "Style: \(poster.style.displayName).",
+                "Do not generate any text, logos, watermarks, or QR codes.",
+                "Leave clean negative space in the upper or middle area so the app can overlay title and CTA text."
+            ].joined(separator: " ")
+        }
+
+        return [
+            "为\(project.draft.platform.displayName)商业海报生成一张背景图。",
             "产品或主题：\(project.draft.topic)。",
             "目标人群：\(project.draft.audience.isEmpty ? brandProfile.audience : project.draft.audience)。",
             "海报标题含义：\(poster.headline)。",

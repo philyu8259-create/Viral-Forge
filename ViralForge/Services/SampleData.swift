@@ -1,7 +1,22 @@
 import Foundation
 
 enum SampleData {
-    static let templates: [CreativeTemplate] = [
+    static var templates: [CreativeTemplate] {
+        templates(for: .defaultGenerationLanguage)
+    }
+
+    static func templates(for language: ContentLanguage) -> [CreativeTemplate] {
+        switch language {
+        case .chinese: chineseTemplates
+        case .english: englishTemplates
+        }
+    }
+
+    static var allTemplates: [CreativeTemplate] {
+        chineseTemplates + englishTemplates
+    }
+
+    private static let chineseTemplates: [CreativeTemplate] = [
         CreativeTemplate(name: "小红书种草封面", category: .cover, platform: .xiaohongshu, style: .cleanProduct, promptHint: "适合产品种草的大标题封面，突出卖点和生活场景"),
         CreativeTemplate(name: "抖音 3 秒钩子封面", category: .cover, platform: .douyin, style: .boldLaunch, promptHint: "高对比短视频封面，用前三秒钩子抓住注意力"),
         CreativeTemplate(name: "朋友圈/社群促销海报", category: .promotion, platform: .weChat, style: .boldLaunch, promptHint: "适合微信转发的促销海报，保留优惠和行动按钮区域", lockedToPro: true),
@@ -10,7 +25,27 @@ enum SampleData {
         CreativeTemplate(name: "微信成交转化文案", category: .story, platform: .weChat, style: .editorial, promptHint: "适合朋友圈/社群的故事式种草文案，先建立信任再引导咨询")
     ]
 
-    static let projects: [ContentProject] = [
+    private static let englishTemplates: [CreativeTemplate] = [
+        CreativeTemplate(name: "TikTok 3-Second Hook", category: .cover, platform: .tikTok, style: .boldLaunch, promptHint: "Short-form opening frame with a strong first-line hook and product payoff"),
+        CreativeTemplate(name: "Instagram Carousel Cover", category: .cover, platform: .instagram, style: .cleanProduct, promptHint: "Save-worthy carousel opener with a clear promise and visual hierarchy"),
+        CreativeTemplate(name: "YouTube Shorts Product Teaser", category: .product, platform: .youtubeShorts, style: .editorial, promptHint: "Fast product trial structure for Shorts with a curiosity-led intro", lockedToPro: true),
+        CreativeTemplate(name: "Instagram Promo Story", category: .promotion, platform: .instagram, style: .boldLaunch, promptHint: "Conversion-focused Story frame with offer, proof, and CTA zones", lockedToPro: true),
+        CreativeTemplate(name: "TikTok Myth vs Fact", category: .knowledge, platform: .tikTok, style: .softLifestyle, promptHint: "Educational short-form angle that corrects one misconception quickly"),
+        CreativeTemplate(name: "Shorts Founder Story", category: .story, platform: .youtubeShorts, style: .editorial, promptHint: "Personal brand story script that builds trust before the product mention")
+    ]
+
+    static var projects: [ContentProject] {
+        projects(for: .defaultGenerationLanguage)
+    }
+
+    static func projects(for language: ContentLanguage) -> [ContentProject] {
+        switch language {
+        case .chinese: chineseProjects
+        case .english: englishProjects
+        }
+    }
+
+    private static let chineseProjects: [ContentProject] = [
         ContentProject(
             id: UUID(),
             createdAt: .now.addingTimeInterval(-3600),
@@ -27,6 +62,28 @@ enum SampleData {
                 hashtags: ["#小红书种草", "#上班族好物"]
             ),
             poster: PosterDraft(headline: "下班后也能轻松补充维C", subtitle: "便携榨汁杯", cta: "3个场景告诉你值不值得买", style: .cleanProduct),
+            isFavorite: true,
+            hasPosterExport: false
+        )
+    ]
+
+    private static let englishProjects: [ContentProject] = [
+        ContentProject(
+            id: UUID(),
+            createdAt: .now.addingTimeInterval(-3600),
+            draft: GenerationDraft(language: .english, platform: .tikTok, goal: .sellProduct, topic: "portable blender", audience: "busy creators and office workers", tone: "practical, upbeat, not exaggerated"),
+            result: ContentResult(
+                titles: [
+                    ScoredLine(text: "Is a portable blender actually worth it for busy mornings?", score: 91, reason: "Clear product and short-form curiosity angle.")
+                ],
+                hooks: [
+                    ScoredLine(text: "If your healthy routine keeps failing before 9 AM, the problem might be friction.", score: 90, reason: "Starts with a relatable routine problem.")
+                ],
+                caption: "I tried a portable blender for workdays. It is not magic, but it removes enough friction to make a small healthy habit easier to repeat.",
+                sellingPoints: ["Fits in a work bag", "Quick rinse cleanup", "Useful after workouts"],
+                hashtags: ["#creatorfinds", "#healthyroutine", "#productreview"]
+            ),
+            poster: PosterDraft(headline: "A smoother routine in 60 seconds", subtitle: "Portable Blender", cta: "3 moments where it actually helps", style: .editorial),
             isFavorite: true,
             hasPosterExport: false
         )

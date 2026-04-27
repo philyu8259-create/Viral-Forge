@@ -20,6 +20,10 @@ struct HomeView: View {
         !draft.topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var launchPlatforms: [SocialPlatform] {
+        appModel.launchPlatforms
+    }
+
     var body: some View {
         ZStack {
             GeometryReader { proxy in
@@ -105,7 +109,7 @@ struct HomeView: View {
         StudioGlassCard(level: .thick) {
             VStack(alignment: .leading, spacing: 18) {
                 HStack(spacing: 10) {
-                    ForEach(SocialPlatform.chinaLaunchPlatforms) { platform in
+                    ForEach(launchPlatforms) { platform in
                         Button {
                             Haptics.selection()
                             withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
@@ -292,7 +296,7 @@ struct HomeView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(Array(SampleData.templates.prefix(4))) { template in
+                    ForEach(Array(appModel.visibleTemplates.prefix(4))) { template in
                         HotTemplateCard(template: template)
                     }
                 }
@@ -398,7 +402,7 @@ struct HomeView: View {
                     StudioToolTile(
                         icon: "rectangle.on.rectangle.fill",
                         title: AppText.localized("Templates", "模板开始"),
-                        subtitle: AppText.localized("China-first creative formats", "国内平台创意格式"),
+                        subtitle: AppText.localized("TikTok, Instagram, Shorts", "国内平台创意格式"),
                         tint: VFStudioDesign.accent
                     )
                 }

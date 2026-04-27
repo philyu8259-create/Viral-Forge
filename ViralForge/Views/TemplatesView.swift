@@ -5,14 +5,14 @@ struct TemplatesView: View {
     @State private var selectedCategory: TemplateCategory = .cover
 
     private var filteredTemplates: [CreativeTemplate] {
-        appModel.templates.filter { $0.category == selectedCategory }
+        appModel.visibleTemplates.filter { $0.category == selectedCategory }
     }
 
     var body: some View {
         VFPage {
             VFPageHeader(
                 title: AppText.localized("Templates", "模板"),
-                subtitle: AppText.localized("China-first creative formats for faster production", "国内平台创意格式，快速起稿"),
+                subtitle: AppText.localized("Locale-ready creative formats for faster production", "国内平台创意格式，快速起稿"),
                 icon: "rectangle.on.rectangle.fill",
                 tint: VFStyle.purpleFlow
             )
@@ -202,7 +202,9 @@ private struct TemplateDetailView: View {
 
     private var samplePoster: PosterDraft {
         PosterDraft(
-            headline: template.category == .knowledge ? "3 steps to make it easier" : "Make it worth stopping for",
+            headline: template.category == .knowledge
+                ? AppText.localized("3 steps to make it easier", "3 个步骤讲清楚")
+                : AppText.localized("Make it worth stopping for", "让用户愿意停下来"),
             subtitle: template.name,
             cta: template.platform.displayName,
             style: template.style

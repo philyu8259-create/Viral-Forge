@@ -25,6 +25,7 @@
 		7B4BCF433D429A58D6A99240 /* ModelRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF7DB1105294A475EF485A28 /* ModelRouting.swift */; };
 		7B9835188AC6574EBB2C38CD /* CreationFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0987BBAA96C58EE63F59E6DC /* CreationFlowUITests.swift */; };
 		8F21A6B03326CACDE5A25535 /* BackendSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B73AF0B6A0CB5159DC1EF8 /* BackendSettingsView.swift */; };
+		91BECCB8742A5C4C7362C24B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 24A546EA52C98A01F028C9CC /* InfoPlist.strings */; };
 		ACA4C874E9B6798F32298BDF /* MockContentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13EA30A70042A3FEA3C738B3 /* MockContentService.swift */; };
 		AEB90894E5BF2150C567C159 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */; };
 		BD60120398B530E8489DB73B /* BackendContentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F64EB59F1AEBB183A77E3A /* BackendContentService.swift */; };
@@ -65,6 +66,7 @@
 		435A1758105F1C55CA31EC3C /* BrandKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandKitView.swift; sourceTree = "<group>"; };
 		48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		4FF09FC068E1A3F4F7C4ECFF /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
+		5CCC0BBD19F07241283C2AE5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		64177FF007D6CE07527E00E1 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		65A85E893743A9153D469CAB /* BackendDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendDataService.swift; sourceTree = "<group>"; };
 		695BF69FFFFF254432D0E21A /* BackendSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSettings.swift; sourceTree = "<group>"; };
@@ -74,6 +76,7 @@
 		A692A256A45B27A1D796A3D2 /* TemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatesView.swift; sourceTree = "<group>"; };
 		AC38B989C06A1E6BC56891B3 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
 		B0823B86AD05AAE6D2A1AAB3 /* ContentGenerating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentGenerating.swift; sourceTree = "<group>"; };
+		BCB99148953B560FA9F13AF2 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		BFEC1C0E0BB8257B613064F0 /* ContentServiceFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentServiceFactory.swift; sourceTree = "<group>"; };
 		C0B73AF0B6A0CB5159DC1EF8 /* BackendSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSettingsView.swift; sourceTree = "<group>"; };
 		C83815749F09EADCA87A06CC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -109,6 +112,7 @@
 			children = (
 				1B76C4539870EB9D20A3703E /* Info.plist */,
 				CC1CD816AC19A9520035BB61 /* App */,
+				24A546EA52C98A01F028C9CC /* InfoPlist.strings */,
 				30B5C3C21A84BB9A6846D3C6 /* Models */,
 				5AFB22499BE01F54FF9AFB69 /* Services */,
 				C4D7535FF5CC422C93F5FAED /* Views */,
@@ -189,6 +193,7 @@
 			buildConfigurationList = E625757A7A4D3FA40EC57DC7 /* Build configuration list for PBXNativeTarget "ViralForge" */;
 			buildPhases = (
 				95D4E898F2EC3062D1CC4E43 /* Sources */,
+				2A73F5BA32FD800A11B97FCD /* Resources */,
 			);
 			buildRules = (
 			);
@@ -244,6 +249,7 @@
 			knownRegions = (
 				Base,
 				en,
+				"zh-Hans",
 			);
 			mainGroup = EA90C21E69117ADD413F27A6;
 			minimizedProjectReferenceProxies = 1;
@@ -257,6 +263,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2A73F5BA32FD800A11B97FCD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				91BECCB8742A5C4C7362C24B /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		22BB87DC15DFAEBC71DE456F /* Sources */ = {
@@ -312,6 +329,18 @@
 			targetProxy = 54225245808A9235A69C5B73 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		24A546EA52C98A01F028C9CC /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5CCC0BBD19F07241283C2AE5 /* en */,
+				BCB99148953B560FA9F13AF2 /* zh-Hans */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		15DECF38CAAC7ED32FE377A4 /* Release */ = {

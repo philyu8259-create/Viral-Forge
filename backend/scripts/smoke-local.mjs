@@ -34,8 +34,10 @@ try {
   await expectJSON("/api/providers/status", (body) => body.mode === "mock");
   await expectJSON("/api/app-store/status", (body) => body.mode === "local_development");
   const templates = await expectJSON("/api/templates", (body) => Array.isArray(body.templates) && body.templates.length > 0);
-  assert(templates.templates.every((template) => ["xiaohongshu", "douyin", "wechat"].includes(template.platform)), "templates are China-first");
+  assert(templates.templates.some((template) => ["xiaohongshu", "douyin", "wechat"].includes(template.platform)), "templates include China launch platforms");
+  assert(templates.templates.some((template) => ["tiktok", "instagram", "youtube_shorts"].includes(template.platform)), "templates include English launch platforms");
   assert(templates.templates.some((template) => template.name.includes("小红书")), "templates include Chinese launch copy");
+  assert(templates.templates.some((template) => template.name.includes("TikTok")), "templates include English launch copy");
   await expectJSON("/api/quota", (body) => body.remainingTextGenerations === 3, {
     "x-user-id": "smoke-user"
   });

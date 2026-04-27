@@ -22,6 +22,7 @@ struct BrandKitView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             profile = appModel.brandProfile
+            normalizeDefaultPlatform()
         }
         .onChange(of: profile) { _, _ in
             didSave = false
@@ -36,6 +37,10 @@ struct BrandKitView: View {
         case "Graphite": VFStyle.ink
         default: VFStyle.teal
         }
+    }
+
+    private var launchPlatforms: [SocialPlatform] {
+        appModel.launchPlatforms
     }
 
     private var brandMemoryCard: some View {
@@ -99,7 +104,7 @@ struct BrandKitView: View {
                         .foregroundStyle(VFStyle.secondaryText)
 
                     HStack(spacing: 10) {
-                        ForEach(SocialPlatform.chinaLaunchPlatforms) { platform in
+                        ForEach(launchPlatforms) { platform in
                             Button {
                                 profile.defaultPlatform = platform
                             } label: {
@@ -226,6 +231,11 @@ struct BrandKitView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private func normalizeDefaultPlatform() {
+        guard !launchPlatforms.contains(profile.defaultPlatform) else { return }
+        profile.defaultPlatform = SocialPlatform.defaultPlatform(for: appModel.launchLanguage)
     }
 }
 

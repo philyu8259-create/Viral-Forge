@@ -67,7 +67,7 @@ struct PaywallView: View {
         VStack(alignment: .leading, spacing: 14) {
             VFSectionHeader(
                 title: AppText.localized("Choose Plan", "选择方案"),
-                subtitle: AppText.localized("China-first pricing is configured for local StoreKit testing", "本地 StoreKit 已按中国区价格配置")
+                subtitle: AppText.localized("StoreKit products are configured for local testing", "本地 StoreKit 已按中国区价格配置")
             )
 
             VStack(spacing: 12) {

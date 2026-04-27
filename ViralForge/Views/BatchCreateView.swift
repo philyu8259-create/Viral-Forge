@@ -3,7 +3,7 @@ import SwiftUI
 struct BatchCreateView: View {
     @Environment(AppModel.self) private var appModel
     @State private var productBrief = ""
-    @State private var selectedPlatforms: Set<SocialPlatform> = [.xiaohongshu, .douyin]
+    @State private var selectedPlatforms: Set<SocialPlatform> = Set(SocialPlatform.launchPlatforms.prefix(2))
     @State private var batchSize = 7
     @State private var ideas: [CampaignIdea] = []
     @State private var generatedProject: ContentProject?
@@ -57,6 +57,9 @@ struct BatchCreateView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            normalizeSelectedPlatforms()
+        }
         .navigationDestination(item: $generatedProject) { project in
             ResultView(project: project)
         }
@@ -92,7 +95,7 @@ struct BatchCreateView: View {
                         .foregroundStyle(VFStyle.secondaryText)
 
                     HStack(spacing: 10) {
-                        ForEach(SocialPlatform.chinaLaunchPlatforms) { platform in
+                        ForEach(appModel.launchPlatforms) { platform in
                             Button {
                                 toggle(platform)
                             } label: {
@@ -135,6 +138,14 @@ struct BatchCreateView: View {
             selectedPlatforms.remove(platform)
         } else {
             selectedPlatforms.insert(platform)
+        }
+    }
+
+    private func normalizeSelectedPlatforms() {
+        let allowed = Set(appModel.launchPlatforms)
+        selectedPlatforms = selectedPlatforms.intersection(allowed)
+        if selectedPlatforms.isEmpty {
+            selectedPlatforms = Set(appModel.launchPlatforms.prefix(2))
         }
     }
 }

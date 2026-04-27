@@ -138,7 +138,7 @@ function normalizeAlternateResponse(parsed, request) {
     poster: {
       headline: titles[0]?.text || request.topic || "Poster",
       subtitle: request.topic || "",
-      cta: request.templateName || "立即查看",
+      cta: request.templateName || (request.language === "en" ? "Learn more" : "立即查看"),
       style: request.templateStyle || "Clean"
     }
   };

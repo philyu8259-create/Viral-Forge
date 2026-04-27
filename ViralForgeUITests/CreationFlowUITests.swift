@@ -45,20 +45,38 @@ final class CreationFlowUITests: XCTestCase {
         saveScreenshot(named: "e2e-04-assets-poster.png")
     }
 
-    private func launch(_ app: XCUIApplication) {
+    func testEnglishLocaleUsesGlobalPlatforms() throws {
+        let app = XCUIApplication()
+        launch(app, appleLanguages: "(en)", appleLocale: "en_US")
+
+        XCTAssertTrue(app.staticTexts["TikTok"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["Instagram"].exists)
+        XCTAssertTrue(app.staticTexts["YouTube Shorts"].exists)
+
+        createContentPack(
+            in: app,
+            topic: "Portable blender for busy creators, fast breakfast, easy cleanup, low noise, and camera-friendly design."
+        )
+        XCTAssertTrue(app.staticTexts["Titles"].waitForExistence(timeout: 4))
+    }
+
+    private func launch(_ app: XCUIApplication, appleLanguages: String = "(zh-Hans)", appleLocale: String = "zh_CN") {
         app.launchArguments = [
             "VF_UI_TESTING",
-            "-AppleLanguages", "(zh-Hans)",
-            "-AppleLocale", "zh_CN"
+            "-AppleLanguages", appleLanguages,
+            "-AppleLocale", appleLocale
         ]
         app.launch()
     }
 
-    private func createContentPack(in app: XCUIApplication) {
+    private func createContentPack(
+        in app: XCUIApplication,
+        topic: String = "便携榨汁杯，适合上班族办公室快速早餐，主打便携、好清洗、低噪音、颜值高。"
+    ) {
         let topicEditor = app.textViews["vf.home.topicEditor"]
         XCTAssertTrue(topicEditor.waitForExistence(timeout: 8))
         topicEditor.tap()
-        topicEditor.typeText("便携榨汁杯，适合上班族办公室快速早餐，主打便携、好清洗、低噪音、颜值高。")
+        topicEditor.typeText(topic)
 
         let generateButton = app.buttons["vf.home.generateButton"]
         XCTAssertTrue(generateButton.waitForExistence(timeout: 4))

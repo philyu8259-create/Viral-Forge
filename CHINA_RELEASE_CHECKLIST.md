@@ -1,11 +1,12 @@
 # China Release Checklist
 
-This checklist tracks the first ViralForge release for Chinese users. International/OpenAI support remains in the codebase but is not required for this phase.
+This checklist tracks the first ViralForge release path. The app is now a single bundle with locale-driven Chinese and English modes; backend deployment can still prioritize China hosting first.
 
 ## Product Scope
 
-- Default generation language: Chinese.
-- Primary platforms: Xiaohongshu, Douyin, WeChat.
+- Default generation language follows the phone system language.
+- Chinese mode platforms: Xiaohongshu, Douyin, WeChat.
+- English mode platforms: TikTok, Instagram, YouTube Shorts.
 - First output types: copy package, poster copy, AI poster background, rendered poster export.
 - First paid plan: ViralForge Pro monthly/yearly.
 
@@ -50,19 +51,24 @@ https://YOUR_BACKEND_DOMAIN/api/app-store/notifications/v2
 
 ## TestFlight Readiness Gap List
 
-This is the source of truth for the first China TestFlight build. Keep the first beta China-only; do not add international/OpenAI scope to clear these items.
+This is the source of truth for the first TestFlight build. Keep the first deployment simple, but preserve the single-bundle dual-locale behavior.
 
 ### Verified Local Baseline
 
 - [x] Core creation flow works in Chinese mock mode: Home -> Result.
+- [x] English locale works in mock mode: Home shows TikTok/Instagram/YouTube Shorts and generates an English Result.
 - [x] Poster flow works in UI smoke tests: Result -> Poster Editor -> rendered PNG -> Assets > Posters.
 - [x] Backend local checks pass with mock/local providers: `npm run check` and `npm run smoke:local`.
 - [x] Local StoreKit configuration uses the China-first subscription products and prices.
 - [x] Release build keeps `BACKEND_BASE_URL` empty until a real public HTTPS backend is chosen.
+- [x] Photo-library permission copy is localized through `InfoPlist.strings`.
 
 ### P0 Before First TestFlight Upload
 
 - [ ] Deploy a public HTTPS backend for the beta build.
+- [ ] Decide production provider mode for English live generation:
+  - `china_live`: Qwen/Seedream handle both Chinese and English prompts.
+  - `live`: English routes require OpenAI text/image keys.
 - [ ] Configure backend production/sandbox environment variables without committing secrets:
   - `AI_PROVIDER_MODE=china_live`
   - `QWEN_API_KEY`
@@ -71,10 +77,9 @@ This is the source of truth for the first China TestFlight build. Keep the first
   - Persistent SQLite database path and backup plan
 - [ ] Update the iOS Release `BACKEND_BASE_URL` in `project.yml`, regenerate the Xcode project, and rebuild.
 - [ ] Validate the iOS app against the deployed backend, including quota, generation, poster background, project sync, and deletion.
-- [ ] Create public Simplified Chinese Privacy Policy and Terms URLs.
-- [ ] Localize the photo-library save permission copy. Current `NSPhotoLibraryAddUsageDescription` is English-only.
+- [ ] Create public Simplified Chinese and English Privacy Policy and Terms URLs.
 - [ ] Finish App Store Connect agreements, tax, and banking so subscriptions can be tested and sold.
-- [ ] Add Simplified Chinese App Store metadata, app screenshots, and subscription review screenshots.
+- [ ] Add Simplified Chinese and English App Store metadata, app screenshots, and subscription review screenshots.
 - [ ] Archive and upload a TestFlight build from the final Release configuration.
 
 ### P1 Before Wider External Beta

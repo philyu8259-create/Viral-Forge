@@ -54,6 +54,60 @@ const defaultTemplates = [
     style: "Editorial",
     promptHint: "适合朋友圈/社群的故事式种草文案，先建立信任再引导咨询",
     lockedToPro: false
+  },
+  {
+    templateId: "tiktok-bold-hook",
+    name: "TikTok 3-Second Hook",
+    category: "Covers",
+    platform: "tiktok",
+    style: "Bold",
+    promptHint: "Short-form opening frame with a strong first-line hook and product payoff",
+    lockedToPro: false
+  },
+  {
+    templateId: "instagram-carousel-cover",
+    name: "Instagram Carousel Cover",
+    category: "Covers",
+    platform: "instagram",
+    style: "Clean",
+    promptHint: "Save-worthy carousel opener with a clear promise and visual hierarchy",
+    lockedToPro: false
+  },
+  {
+    templateId: "youtube-shorts-product-teaser",
+    name: "YouTube Shorts Product Teaser",
+    category: "Product",
+    platform: "youtube_shorts",
+    style: "Editorial",
+    promptHint: "Fast product trial structure for Shorts with a curiosity-led intro",
+    lockedToPro: true
+  },
+  {
+    templateId: "instagram-promo-story",
+    name: "Instagram Promo Story",
+    category: "Promo",
+    platform: "instagram",
+    style: "Bold",
+    promptHint: "Conversion-focused Story frame with offer, proof, and CTA zones",
+    lockedToPro: true
+  },
+  {
+    templateId: "tiktok-myth-vs-fact",
+    name: "TikTok Myth vs Fact",
+    category: "Knowledge",
+    platform: "tiktok",
+    style: "Soft",
+    promptHint: "Educational short-form angle that corrects one misconception quickly",
+    lockedToPro: false
+  },
+  {
+    templateId: "shorts-founder-story",
+    name: "Shorts Founder Story",
+    category: "Story",
+    platform: "youtube_shorts",
+    style: "Editorial",
+    promptHint: "Personal brand story script that builds trust before the product mention",
+    lockedToPro: false
   }
 ];
 

@@ -2,22 +2,24 @@
 
 ## Current Direction
 
-Viral Forge is a China-first iOS app for generating viral content packages and AI poster backgrounds. The first release focuses on Chinese users and domestic model providers. International/OpenAI support remains deferred.
+Viral Forge is a single-bundle dual-locale iOS app for generating viral content packages and AI poster backgrounds. The app follows the user's phone language: Simplified Chinese mode focuses on Chinese social platforms, while English mode focuses on global short-form platforms.
 
 ## Product Scope
 
-- Default language: Simplified Chinese, following the phone system language.
-- Primary platforms: Xiaohongshu, Douyin, WeChat.
+- Default language follows the phone system language.
+- Chinese mode platforms: Xiaohongshu, Douyin, WeChat.
+- English mode platforms: TikTok, Instagram, YouTube Shorts.
 - First useful outputs: copy package, poster copy, AI poster background, rendered poster export, saved project history.
 - The app should not feel like a generic chatbot; it should package workflows and templates around content creation.
 - UI/UX expert design is planned later. Current work should continue functional MVP scaffolding and tell the user when it is ready for design handoff.
 
 ## AI Provider Decisions
 
-- China-first backend mode: `AI_PROVIDER_MODE=china_live`.
+- China backend mode: `AI_PROVIDER_MODE=china_live`.
 - Text generation: Qwen.
 - Image generation: Volcengine Ark / Seedream.
-- English/OpenAI support is intentionally postponed.
+- English UI/mock generation is now part of the MVP.
+- Production English live generation can either use `china_live` with Qwen/Seedream English prompts, or `AI_PROVIDER_MODE=live` with OpenAI keys for English text/image routes.
 - Volcengine TOS object storage is optional and should not be deployed for MVP unless explicitly requested later.
 
 ## Monetization
@@ -88,6 +90,8 @@ Viral Forge is a China-first iOS app for generating viral content packages and A
 - Follow-up UI/UX audit passed iOS Debug build and reinstalled on iPhone 17 simulator. Poster Editor controls/export actions were also brought into the global vibrant Studio language after the audit found it was still using system bordered buttons.
 - Simulator screenshot after UI audit: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-ui-audit-create.png`
 - Core creation flow now has automated UI smoke tests. `ViralForgeUITests/CreationFlowUITests.swift` launches in Chinese mock mode, enters a product brief, taps the Home generation CTA, verifies the Result page and the `标题` section, then covers Result -> Poster Editor -> render PNG -> Assets -> Posters.
+- Dual-locale shell is implemented: Chinese locale uses Xiaohongshu/Douyin/WeChat, English locale uses TikTok/Instagram/YouTube Shorts, default generation language follows `Locale.preferredLanguages`, local sample templates/projects switch by locale, backend templates now include both Chinese and English launch platforms, and photo-library permission copy is localized through `InfoPlist.strings`.
+- UI smoke tests now include an English `en_US` launch that verifies global platform pills and generates an English mock content pack to the `Titles` result section.
 - Latest end-to-end checks passed: iOS Debug build on iPhone 17 simulator, `xcodebuild ... test` for the mock creation and poster export/assets flows, backend `npm run check`, and backend `npm run smoke:local`.
 - Core creation flow screenshots: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/e2e-01-fresh-home.png`, `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/e2e-02-topic-entered.png`, `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/e2e-03-result.png`
 - Previous Elite Studio home screenshot: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-elite-studio-home.png`
@@ -101,10 +105,10 @@ Viral Forge is a China-first iOS app for generating viral content packages and A
 
 ## Next Work
 
-1. Use `CHINA_RELEASE_CHECKLIST.md` as the TestFlight readiness source of truth.
+1. Use `CHINA_RELEASE_CHECKLIST.md` as the TestFlight readiness source of truth, with the added dual-locale requirements.
 2. Continue local MVP development only where it clears the checklist or removes launch risk.
 3. Use `npm run smoke:local` after backend changes to verify health, provider status, quota, content generation, and poster background routes without consuming live model credits.
 4. The functional MVP is close to UI/UX handoff: a designer can now redesign the visible screens around real workflows instead of placeholders.
 5. Before TestFlight, deploy a public HTTPS backend, update Release `BACKEND_BASE_URL`, regenerate the Xcode project, and validate the app against that backend.
-6. Prepare public Simplified Chinese privacy policy/terms, App Store metadata, and subscription screenshots.
+6. Prepare public Simplified Chinese and English privacy policy/terms, App Store metadata, and subscription screenshots.
 7. Later, Alibaba Cloud FC + Tablestore remains viable but requires replacing SQLite persistence and adapting the HTTP server to a serverless handler.
