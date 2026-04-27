@@ -75,6 +75,7 @@ struct ResultView: View {
                         actionPill(AppText.localized("Edit Poster", "编辑海报"), icon: "photo.on.rectangle.angled", tint: VFStyle.sunset)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.result.editPosterButton")
 
                     Button {
                         regenerate()
@@ -166,6 +167,7 @@ struct ResultView: View {
                     .allowsHitTesting(false)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("vf.result.editPosterButton.bottom")
         }
     }
 

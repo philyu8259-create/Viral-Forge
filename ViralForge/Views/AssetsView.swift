@@ -34,6 +34,7 @@ struct AssetsView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .accessibilityIdentifier("vf.assets.screen")
         .task {
             await appModel.refreshProjectsIfNeeded()
         }
@@ -67,6 +68,7 @@ struct AssetsView: View {
                     .shadow(color: section.tint.opacity(selectedSection == section ? 0.22 : 0.04), radius: 10, x: 0, y: 6)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("vf.assets.section.\(section.rawValue)")
             }
         }
     }
@@ -130,8 +132,10 @@ struct AssetsView: View {
                         PosterAssetCard(poster: poster)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.assets.posterCard")
                 } else {
                     PosterAssetCard(poster: poster)
+                        .accessibilityIdentifier("vf.assets.posterCard")
                 }
             }
         }

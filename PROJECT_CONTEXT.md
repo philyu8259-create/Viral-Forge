@@ -87,8 +87,8 @@ Viral Forge is a China-first iOS app for generating viral content packages and A
 - Simulator screenshot after global styling: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-global-style-home.png`
 - Follow-up UI/UX audit passed iOS Debug build and reinstalled on iPhone 17 simulator. Poster Editor controls/export actions were also brought into the global vibrant Studio language after the audit found it was still using system bordered buttons.
 - Simulator screenshot after UI audit: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-ui-audit-create.png`
-- Core creation flow now has an automated UI smoke test. `ViralForgeUITests/CreationFlowUITests.swift` launches in Chinese mock mode, enters a product brief, taps the Home generation CTA, and verifies the Result page and the `标题` section.
-- Latest end-to-end checks passed: iOS Debug build on iPhone 17 simulator, `xcodebuild ... test` for the mock creation flow, backend `npm run check`, and backend `npm run smoke:local`.
+- Core creation flow now has automated UI smoke tests. `ViralForgeUITests/CreationFlowUITests.swift` launches in Chinese mock mode, enters a product brief, taps the Home generation CTA, verifies the Result page and the `标题` section, then covers Result -> Poster Editor -> render PNG -> Assets -> Posters.
+- Latest end-to-end checks passed: iOS Debug build on iPhone 17 simulator, `xcodebuild ... test` for the mock creation and poster export/assets flows, backend `npm run check`, and backend `npm run smoke:local`.
 - Core creation flow screenshots: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/e2e-01-fresh-home.png`, `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/e2e-02-topic-entered.png`, `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/e2e-03-result.png`
 - Previous Elite Studio home screenshot: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-elite-studio-home.png`
 - Previous Studio home screenshot: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-studio-home.png`

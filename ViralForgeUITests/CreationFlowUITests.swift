@@ -7,13 +7,54 @@ final class CreationFlowUITests: XCTestCase {
 
     func testMockCreationFlowNavigatesToResult() throws {
         let app = XCUIApplication()
+        launch(app)
+        createContentPack(in: app)
+
+        XCTAssertTrue(app.staticTexts["标题"].waitForExistence(timeout: 4))
+        saveScreenshot(named: "e2e-03-result.png")
+    }
+
+    func testPosterExportAppearsInAssets() throws {
+        let app = XCUIApplication()
+        launch(app)
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let renderButton = app.buttons["vf.poster.renderButton"]
+        XCTAssertTrue(renderButton.waitForExistence(timeout: 8))
+        renderButton.tap()
+
+        let exportStatus = app.staticTexts["vf.poster.exportStatus"]
+        XCTAssertTrue(exportStatus.waitForExistence(timeout: 8))
+
+        app.tabBars.buttons["素材"].tap()
+        XCTAssertTrue(app.scrollViews["vf.assets.screen"].waitForExistence(timeout: 8))
+
+        let postersSection = app.buttons["vf.assets.section.Posters"]
+        XCTAssertTrue(postersSection.waitForExistence(timeout: 4))
+        postersSection.tap()
+
+        let posterCard = app.buttons["vf.assets.posterCard"].firstMatch
+        XCTAssertTrue(posterCard.waitForExistence(timeout: 8))
+        saveScreenshot(named: "e2e-04-assets-poster.png")
+    }
+
+    private func launch(_ app: XCUIApplication) {
         app.launchArguments = [
             "VF_UI_TESTING",
             "-AppleLanguages", "(zh-Hans)",
             "-AppleLocale", "zh_CN"
         ]
         app.launch()
+    }
 
+    private func createContentPack(in app: XCUIApplication) {
         let topicEditor = app.textViews["vf.home.topicEditor"]
         XCTAssertTrue(topicEditor.waitForExistence(timeout: 8))
         topicEditor.tap()
@@ -26,8 +67,6 @@ final class CreationFlowUITests: XCTestCase {
 
         let resultScreen = app.scrollViews["vf.result.screen"]
         XCTAssertTrue(resultScreen.waitForExistence(timeout: 8))
-        XCTAssertTrue(app.staticTexts["标题"].waitForExistence(timeout: 4))
-        saveScreenshot(named: "e2e-03-result.png")
     }
 
     private func saveScreenshot(named fileName: String) {

@@ -60,6 +60,7 @@ struct PosterEditorView: View {
                 VFPrimaryButton(title: AppText.localized("Render Poster", "生成海报图片"), icon: "square.and.arrow.down") {
                     exportPoster()
                 }
+                .accessibilityIdentifier("vf.poster.renderButton")
 
                 if let exportedImageURL {
                     VFGlassCard {
@@ -98,6 +99,7 @@ struct PosterEditorView: View {
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(VFStyle.secondaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityIdentifier("vf.poster.exportStatus")
                 }
 
                 if let exportedUIImage {
@@ -119,6 +121,7 @@ struct PosterEditorView: View {
                 }
             }
         }
+        .accessibilityIdentifier("vf.poster.screen")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             NavigationLink {
