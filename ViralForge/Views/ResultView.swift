@@ -27,6 +27,7 @@ struct ResultView: View {
             sellingPointsSection
             posterSection
         }
+        .accessibilityIdentifier("vf.result.screen")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             Button {

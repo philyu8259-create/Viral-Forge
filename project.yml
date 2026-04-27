@@ -26,10 +26,23 @@ targets:
         Release:
           BACKEND_BASE_URL: ""
     scheme:
-      testTargets: []
+      testTargets:
+        - ViralForgeUITests
       run:
         storeKitConfiguration: ViralForge.storekit
     attributes:
       SystemCapabilities:
         com.apple.InAppPurchase:
           enabled: 1
+  ViralForgeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - ViralForgeUITests
+    dependencies:
+      - target: ViralForge
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.phil.viralforge.uitests
+        TEST_TARGET_NAME: ViralForge
+        GENERATE_INFOPLIST_FILE: YES

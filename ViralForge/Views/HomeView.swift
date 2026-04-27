@@ -139,6 +139,7 @@ struct HomeView: View {
                         .padding(.bottom, 46)
                         .scrollContentBackground(.hidden)
                         .background(Color.clear)
+                        .accessibilityIdentifier("vf.home.topicEditor")
 
                     if draft.topic.isEmpty {
                         Text(AppText.localized(
@@ -462,6 +463,7 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .disabled(!canGenerate)
+        .accessibilityIdentifier("vf.home.generateButton")
     }
 
     private var quotaRingText: String {

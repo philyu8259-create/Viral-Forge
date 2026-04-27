@@ -39,6 +39,17 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "4D23125238E31CBB26FCD1F2"
+               BuildableName = "ViralForgeUITests.xctest"
+               BlueprintName = "ViralForgeUITests"
+               ReferencedContainer = "container:ViralForge.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

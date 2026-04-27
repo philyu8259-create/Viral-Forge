@@ -23,6 +23,7 @@
 		6EEB30F52BD5F87097807B3D /* TemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A692A256A45B27A1D796A3D2 /* TemplatesView.swift */; };
 		7A23E5648596D58AF9D7AD50 /* QuotaStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0856B85C79DB28A552029E28 /* QuotaStatusView.swift */; };
 		7B4BCF433D429A58D6A99240 /* ModelRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF7DB1105294A475EF485A28 /* ModelRouting.swift */; };
+		7B9835188AC6574EBB2C38CD /* CreationFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0987BBAA96C58EE63F59E6DC /* CreationFlowUITests.swift */; };
 		8F21A6B03326CACDE5A25535 /* BackendSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B73AF0B6A0CB5159DC1EF8 /* BackendSettingsView.swift */; };
 		ACA4C874E9B6798F32298BDF /* MockContentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13EA30A70042A3FEA3C738B3 /* MockContentService.swift */; };
 		AEB90894E5BF2150C567C159 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */; };
@@ -38,10 +39,21 @@
 		FDCCB3F010505A0F302340D4 /* ContentServiceFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEC1C0E0BB8257B613064F0 /* ContentServiceFactory.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		54225245808A9235A69C5B73 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4D34EBCB5F295DDEA20EFFFC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4452928A70DA0D1ECC286824;
+			remoteInfo = ViralForge;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		01292BC19CA55087155F90C7 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		04F64EB59F1AEBB183A77E3A /* BackendContentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendContentService.swift; sourceTree = "<group>"; };
 		0856B85C79DB28A552029E28 /* QuotaStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaStatusView.swift; sourceTree = "<group>"; };
+		0987BBAA96C58EE63F59E6DC /* CreationFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreationFlowUITests.swift; sourceTree = "<group>"; };
 		0D033E9C4C3CC1B64D8F0FF1 /* PosterEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PosterEditorView.swift; sourceTree = "<group>"; };
 		12772C4BFCF55BD6E18C80B8 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		13EA30A70042A3FEA3C738B3 /* MockContentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockContentService.swift; sourceTree = "<group>"; };
@@ -66,6 +78,7 @@
 		C0B73AF0B6A0CB5159DC1EF8 /* BackendSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSettingsView.swift; sourceTree = "<group>"; };
 		C83815749F09EADCA87A06CC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		CC02973674BE989B04A852F9 /* AssetsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetsView.swift; sourceTree = "<group>"; };
+		D36D31C093B28F6A0530B9C2 /* ViralForgeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ViralForgeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DC9EE0CA669A23A4BE74282E /* AppText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppText.swift; sourceTree = "<group>"; };
 		EA0295E570E4E64BAF3200F2 /* VFGlobalStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VFGlobalStyle.swift; sourceTree = "<group>"; };
 		EE34A96FAAB6CA2E2369217B /* ViralForgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViralForgeApp.swift; sourceTree = "<group>"; };
@@ -77,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				8515AE8622366534FFE8A090 /* ViralForge.app */,
+				D36D31C093B28F6A0530B9C2 /* ViralForgeUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -154,8 +168,17 @@
 			isa = PBXGroup;
 			children = (
 				32342ED8D0482EC53BDE26A2 /* ViralForge */,
+				F6866AAB428935FAD6960978 /* ViralForgeUITests */,
 				11D2A0831966E018045B72A9 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		F6866AAB428935FAD6960978 /* ViralForgeUITests */ = {
+			isa = PBXGroup;
+			children = (
+				0987BBAA96C58EE63F59E6DC /* CreationFlowUITests.swift */,
+			);
+			path = ViralForgeUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -178,6 +201,24 @@
 			productReference = 8515AE8622366534FFE8A090 /* ViralForge.app */;
 			productType = "com.apple.product-type.application";
 		};
+		4D23125238E31CBB26FCD1F2 /* ViralForgeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E798CB58C5397D6843EC3C65 /* Build configuration list for PBXNativeTarget "ViralForgeUITests" */;
+			buildPhases = (
+				22BB87DC15DFAEBC71DE456F /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C312FE8BCF99A82A61643A59 /* PBXTargetDependency */,
+			);
+			name = ViralForgeUITests;
+			packageProductDependencies = (
+			);
+			productName = ViralForgeUITests;
+			productReference = D36D31C093B28F6A0530B9C2 /* ViralForgeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -190,6 +231,10 @@
 					4452928A70DA0D1ECC286824 = {
 						DevelopmentTeam = "";
 						SystemCapabilities = "[\"com.apple.InAppPurchase\": [\"enabled\": 1]]";
+					};
+					4D23125238E31CBB26FCD1F2 = {
+						DevelopmentTeam = "";
+						TestTargetID = 4452928A70DA0D1ECC286824;
 					};
 				};
 			};
@@ -208,11 +253,20 @@
 			projectRoot = "";
 			targets = (
 				4452928A70DA0D1ECC286824 /* ViralForge */,
+				4D23125238E31CBB26FCD1F2 /* ViralForgeUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		22BB87DC15DFAEBC71DE456F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7B9835188AC6574EBB2C38CD /* CreationFlowUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		95D4E898F2EC3062D1CC4E43 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -250,6 +304,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C312FE8BCF99A82A61643A59 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4452928A70DA0D1ECC286824 /* ViralForge */;
+			targetProxy = 54225245808A9235A69C5B73 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		15DECF38CAAC7ED32FE377A4 /* Release */ = {
@@ -329,6 +391,23 @@
 			};
 			name = Release;
 		};
+		88402A9D4DA2938D2DC54834 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.phil.viralforge.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ViralForge;
+			};
+			name = Debug;
+		};
 		CF136C986D206A3E28FA07D9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -395,6 +474,23 @@
 			};
 			name = Debug;
 		};
+		E0481F2B6D90EC04F1194C32 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.phil.viralforge.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ViralForge;
+			};
+			name = Release;
+		};
 		F569D8304764A78E4B3CB016 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -430,6 +526,15 @@
 			buildConfigurations = (
 				F569D8304764A78E4B3CB016 /* Debug */,
 				17F0AD14EF5F4A3216465DA4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E798CB58C5397D6843EC3C65 /* Build configuration list for PBXNativeTarget "ViralForgeUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				88402A9D4DA2938D2DC54834 /* Debug */,
+				E0481F2B6D90EC04F1194C32 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

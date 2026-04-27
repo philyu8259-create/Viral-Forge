@@ -30,11 +30,15 @@ final class AppModel {
     private var transactionUpdatesTask: Task<Void, Never>?
 
     init(contentService: ContentGenerating = MockContentService(), settings: BackendSettings = BackendSettingsStore.load()) {
+        let isUITesting = ProcessInfo.processInfo.arguments.contains("VF_UI_TESTING")
         self.fallbackContentService = contentService
-        self.backendSettings = settings
+        self.backendSettings = isUITesting ? BackendSettings() : settings
         self.brandProfile = BrandProfileStore.load()
         self.projects = LocalProjectStore.load()
         self.posterAssets = assetsFromProjects(projects)
+        if isUITesting {
+            quota = QuotaState(remainingTextGenerations: 10, remainingPosterExports: 10, isPro: false)
+        }
         startTransactionListener()
     }
 
