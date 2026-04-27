@@ -85,6 +85,8 @@ Viral Forge is a China-first iOS app for generating viral content packages and A
 - Simulator screenshot for the Vibrant Studio home: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-vibrant-studio-home.png`
 - Global UI/UX styling has been applied beyond Home: shared `VFStyle` / `VFPage` / glass card components now drive Templates, Brand Kit, Assets, Paywall, Batch Campaign, History, Backend Settings, Result, and quota cards with the same vibrant ecommerce Studio language.
 - Simulator screenshot after global styling: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-global-style-home.png`
+- Follow-up UI/UX audit passed iOS Debug build and reinstalled on iPhone 17 simulator. Poster Editor controls/export actions were also brought into the global vibrant Studio language after the audit found it was still using system bordered buttons.
+- Simulator screenshot after UI audit: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-ui-audit-create.png`
 - Previous Elite Studio home screenshot: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-elite-studio-home.png`
 - Previous Studio home screenshot: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-studio-home.png`
 - Previous bright dashboard reference screenshot: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-bright-glass-home.png`

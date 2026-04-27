@@ -19,57 +19,60 @@ struct PosterEditorView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
+        VFPage {
+            VFPageHeader(
+                title: AppText.localized("Poster", "海报"),
+                subtitle: AppText.localized("Edit, render, and export visual assets", "编辑、生成并导出视觉资产"),
+                icon: "photo.on.rectangle.angled",
+                tint: VFStyle.platformTint(project.draft.platform)
+            )
+
+            VStack(spacing: 18) {
                 PosterPreview(poster: poster, platform: project.draft.platform, target: selectedTarget)
                     .frame(height: 520)
-                    .padding(.horizontal)
+                    .clipShape(RoundedRectangle(cornerRadius: 28))
+                    .shadow(color: VFStyle.platformTint(project.draft.platform).opacity(0.16), radius: 22, x: 0, y: 12)
 
                 controls
 
                 QuotaStatusView(quota: appModel.quota, compact: true)
-                    .padding(.horizontal)
 
-                Button {
+                VFPrimaryButton(
+                    title: appModel.isGeneratingPosterBackground ? AppText.localized("Generating Background...", "生成背景中...") : AppText.localized("Generate AI Background", "生成 AI 背景"),
+                    icon: "sparkles.rectangle.stack",
+                    isLoading: appModel.isGeneratingPosterBackground,
+                    isEnabled: !appModel.isGeneratingPosterBackground
+                ) {
                     Task {
                         if let imageURL = await appModel.generatePosterBackground(for: project, poster: poster, aspectRatio: selectedTarget.apiAspectRatio) {
                             poster.backgroundImageURL = imageURL
                         }
                     }
-                } label: {
-                    Label(
-                        appModel.isGeneratingPosterBackground ? AppText.localized("Generating Background...", "生成背景中...") : AppText.localized("Generate AI Background", "生成 AI 背景"),
-                        systemImage: "sparkles.rectangle.stack"
-                    )
-                    .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.bordered)
-                .disabled(appModel.isGeneratingPosterBackground)
-                .padding(.horizontal)
 
                 if let posterGenerationError = appModel.posterGenerationError {
                     Text(posterGenerationError)
-                        .font(.footnote)
-                        .foregroundStyle(.red)
-                        .padding(.horizontal)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(VFStyle.warning)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                Button {
+                VFPrimaryButton(title: AppText.localized("Render Poster", "生成海报图片"), icon: "square.and.arrow.down") {
                     exportPoster()
-                } label: {
-                    Label(AppText.localized("Render Poster", "生成海报图片"), systemImage: "square.and.arrow.down")
-                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .padding(.horizontal)
 
                 if let exportedImageURL {
-                    VStack(spacing: 12) {
+                    VFGlassCard {
+                        VStack(spacing: 12) {
                         ShareLink(item: exportedImageURL) {
                             Label(AppText.localized("Share PNG", "分享 PNG 图片"), systemImage: "square.and.arrow.up")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(VFStyle.primaryRed)
                                 .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(.white.opacity(0.62), in: Capsule())
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(.plain)
 
                         Button {
                             saveToPhotoLibrary()
@@ -78,41 +81,45 @@ struct PosterEditorView: View {
                                 isSavingToPhotos ? AppText.localized("Saving...", "保存中...") : AppText.localized("Save to Photos", "保存到相册"),
                                 systemImage: "photo.badge.arrow.down"
                             )
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(VFStyle.ink)
                             .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(.white.opacity(0.62), in: Capsule())
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(.plain)
                         .disabled(isSavingToPhotos || exportedUIImage == nil)
+                        }
                     }
-                    .padding(.horizontal)
                 }
 
                 if let exportStatusMessage {
                     Label(exportStatusMessage, systemImage: "checkmark.circle")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(VFStyle.secondaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 if let exportedUIImage {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VFGlassCard {
+                    VStack(alignment: .leading, spacing: 10) {
                         Text(AppText.localized("Export Preview", "导出预览"))
-                            .font(.headline)
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(VFStyle.ink)
                         Image(uiImage: exportedUIImage)
                             .resizable()
                             .scaledToFit()
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
                             .overlay {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(.quaternary)
+                                RoundedRectangle(cornerRadius: 18)
+                                    .stroke(.white.opacity(0.8), lineWidth: 1)
                             }
                     }
-                    .padding(.horizontal)
+                    }
                 }
             }
-            .padding(.vertical)
         }
-        .navigationTitle(AppText.localized("Poster", "海报"))
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             NavigationLink {
                 ResultView(project: project)
@@ -123,7 +130,13 @@ struct PosterEditorView: View {
     }
 
     private var controls: some View {
+        VFGlassCard(level: .thick) {
         VStack(alignment: .leading, spacing: 14) {
+            VFSectionHeader(
+                title: AppText.localized("Poster Controls", "海报控制台"),
+                subtitle: AppText.localized("Choose size, visual style, and poster copy", "选择尺寸、视觉风格与海报文案")
+            )
+
             Picker(AppText.localized("Template", "模板"), selection: $poster.style) {
                 ForEach(PosterStyle.allCases) { style in
                     Text(style.displayName).tag(style)
@@ -138,13 +151,26 @@ struct PosterEditorView: View {
             }
             .pickerStyle(.segmented)
 
-            TextField(AppText.localized("Headline", "主标题"), text: $poster.headline, axis: .vertical)
-                .lineLimit(2, reservesSpace: true)
-            TextField(AppText.localized("Subtitle", "副标题"), text: $poster.subtitle)
-            TextField(AppText.localized("CTA", "行动按钮"), text: $poster.cta)
+            posterField(AppText.localized("Headline", "主标题"), text: $poster.headline, icon: "textformat.size", tint: VFStyle.primaryRed, lines: 2)
+            posterField(AppText.localized("Subtitle", "副标题"), text: $poster.subtitle, icon: "text.alignleft", tint: VFStyle.electricCyan)
+            posterField(AppText.localized("CTA", "行动按钮"), text: $poster.cta, icon: "hand.tap.fill", tint: VFStyle.sunset)
         }
-        .textFieldStyle(.roundedBorder)
-        .padding()
+        }
+    }
+
+    private func posterField(_ placeholder: String, text: Binding<String>, icon: String, tint: Color, lines: Int = 1) -> some View {
+        HStack(alignment: lines > 1 ? .top : .center, spacing: 12) {
+            VFGradientIcon(icon: icon, tint: tint, size: 34)
+            TextField(placeholder, text: text, axis: .vertical)
+                .lineLimit(lines, reservesSpace: lines > 1)
+                .font(.subheadline.weight(.semibold))
+                .padding(12)
+                .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 15))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 15)
+                        .stroke(.white.opacity(0.82), lineWidth: 1)
+                }
+        }
     }
 
     @MainActor
