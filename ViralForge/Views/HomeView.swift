@@ -1,10 +1,12 @@
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     @Environment(AppModel.self) private var appModel
     @State private var draft = GenerationDraft()
     @State private var generatedProject: ContentProject?
     @State private var activeEditor: StrategyEditor?
+    @State private var pasteStatusMessage: String?
 
     private var canGenerate: Bool {
         !appModel.isGenerating && draft.isReadyToGenerate
@@ -12,6 +14,10 @@ struct HomeView: View {
 
     private var visibleTopicValidationMessage: String? {
         draft.topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : draft.topicValidationMessage
+    }
+
+    private var hasTopic: Bool {
+        !draft.topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
@@ -31,7 +37,7 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 16)
+                .padding(.top, 12)
                 .padding(.bottom, 126)
             }
         }
@@ -93,6 +99,7 @@ struct HomeView: View {
                 HStack(spacing: 10) {
                     ForEach(SocialPlatform.chinaLaunchPlatforms) { platform in
                         Button {
+                            Haptics.selection()
                             withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
                                 draft.platform = platform
                             }
@@ -108,7 +115,7 @@ struct HomeView: View {
 
                 ZStack(alignment: .topLeading) {
                     RoundedRectangle(cornerRadius: 18)
-                        .fill(.white.opacity(0.46))
+                        .fill(.white.opacity(0.70))
                         .overlay {
                             RoundedRectangle(cornerRadius: 18)
                                 .stroke(Color.black.opacity(0.045), lineWidth: 1)
@@ -119,7 +126,9 @@ struct HomeView: View {
                     TextEditor(text: $draft.topic)
                         .font(.body.weight(.medium))
                         .foregroundStyle(VFStudioDesign.ink)
-                        .padding(14)
+                        .padding(.horizontal, 14)
+                        .padding(.top, 14)
+                        .padding(.bottom, 46)
                         .scrollContentBackground(.hidden)
                         .background(Color.clear)
 
@@ -134,8 +143,38 @@ struct HomeView: View {
                         .padding(.vertical, 22)
                         .allowsHitTesting(false)
                     }
+
+                    VStack {
+                        HStack {
+                            Spacer()
+                            magicPasteButton
+                        }
+                        Spacer()
+                    }
+                    .padding(12)
+
+                    HStack {
+                        if let pasteStatusMessage {
+                            Text(pasteStatusMessage)
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(VFStudioDesign.secondaryText)
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        }
+
+                        Spacer()
+
+                        HStack(spacing: 14) {
+                            Image(systemName: "mic.fill")
+                            Image(systemName: "photo.on.rectangle")
+                        }
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStudioDesign.secondaryText.opacity(0.44))
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.bottom, 15)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
                 }
-                .frame(minHeight: 126)
+                .frame(minHeight: 154)
 
                 if let message = visibleTopicValidationMessage {
                     Label(message, systemImage: "exclamationmark.circle.fill")
@@ -143,48 +182,84 @@ struct HomeView: View {
                         .foregroundStyle(VFStudioDesign.warning)
                 }
 
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                    StrategyMiniChip(
-                        icon: "target",
-                        title: AppText.localized("Goal", "目标"),
-                        value: draft.goal.displayName,
-                        tint: VFStudioDesign.accent
-                    ) {
-                        activeEditor = .goal
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 7) {
+                        Image(systemName: hasTopic ? "sparkles" : "lightbulb")
+                        Text(hasTopic ? AppText.localized("Strategy suggestions are ready", "智能策略已准备") : AppText.localized("Add a topic to unlock strategy suggestions", "输入主题后展开智能策略"))
                     }
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(hasTopic ? VFStudioDesign.accent : VFStudioDesign.secondaryText)
 
-                    StrategyMiniChip(
-                        icon: "person.2.fill",
-                        title: AppText.localized("Audience", "人群"),
-                        value: draft.audience.isEmpty ? AppText.localized("Tap to set", "点击设置") : draft.audience,
-                        tint: VFStudioDesign.teal
-                    ) {
-                        activeEditor = .audience
-                    }
+                    if hasTopic {
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                            StrategyMiniChip(
+                                icon: "paperplane.fill",
+                                title: AppText.localized("Platform", "平台"),
+                                value: draft.platform.displayName,
+                                tint: VFStudioDesign.accent
+                            ) {
+                                Haptics.selection()
+                            }
 
-                    StrategyMiniChip(
-                        icon: "quote.bubble.fill",
-                        title: AppText.localized("Tone", "语气"),
-                        value: draft.tone.isEmpty ? AppText.localized("Not set", "未设置") : draft.tone,
-                        tint: VFStudioDesign.coral
-                    ) {
-                        activeEditor = .tone
-                    }
+                            StrategyMiniChip(
+                                icon: "person.3.fill",
+                                title: AppText.localized("Audience", "受众画像"),
+                                value: draft.audience.isEmpty ? AppText.localized("Recommended persona", "智能推荐画像") : draft.audience,
+                                tint: VFStudioDesign.teal
+                            ) {
+                                Haptics.selection()
+                                activeEditor = .audience
+                            }
 
-                    StrategyMiniChip(
-                        icon: "building.2.fill",
-                        title: AppText.localized("Brand", "品牌"),
-                        value: appModel.brandProfile.hasSavedMemory ? appModel.brandProfile.memorySummary : AppText.localized("Not set", "未设置"),
-                        tint: brandAccentColor
-                    ) {
-                        activeEditor = .brand
+                            StrategyMiniChip(
+                                icon: "mouth.fill",
+                                title: AppText.localized("Tone", "内容语气"),
+                                value: draft.tone.isEmpty ? AppText.localized("Professional seeding", "专业种草") : draft.tone,
+                                tint: VFStudioDesign.sky
+                            ) {
+                                Haptics.selection()
+                                activeEditor = .tone
+                            }
+
+                            StrategyMiniChip(
+                                icon: "paintpalette.fill",
+                                title: AppText.localized("Poster style", "海报风格"),
+                                value: AppText.localized("Minimal white", "极简白系"),
+                                tint: brandAccentColor
+                            ) {
+                                Haptics.selection()
+                                activeEditor = .brand
+                            }
+                        }
+                        .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))
                     }
                 }
+                .animation(.spring(response: 0.36, dampingFraction: 0.86), value: hasTopic)
 
                 generateFAB
                     .padding(.top, 2)
             }
         }
+    }
+
+    private var magicPasteButton: some View {
+        Button {
+            magicPaste()
+        } label: {
+            Label(AppText.localized("Magic Paste", "智能粘贴"), systemImage: "doc.on.clipboard")
+                .labelStyle(.iconOnly)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(VFStudioDesign.accent)
+                .frame(width: 34, height: 34)
+                .background(.white.opacity(0.78), in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(.white.opacity(0.96), lineWidth: 1)
+                }
+                .shadow(color: VFStudioDesign.primaryBlue.opacity(0.12), radius: 10, x: 0, y: 5)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppText.localized("Magic Paste", "智能粘贴"))
     }
 
     private var contentPipelineSection: some View {
@@ -261,7 +336,7 @@ struct HomeView: View {
     private var workflowShortcuts: some View {
         VStack(alignment: .leading, spacing: 14) {
             sectionHeader(
-                title: AppText.localized("Studio tools", "工作室工具"),
+                title: AppText.localized("Pro Studio tools", "专业工作室工具"),
                 subtitle: AppText.localized("Move from one-off assets to repeatable production", "从单次生成进入持续生产")
             )
 
@@ -295,12 +370,18 @@ struct HomeView: View {
 
     private var generateFAB: some View {
         Button {
+            Haptics.impact()
             generate()
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: appModel.isGenerating ? "sparkles" : "sparkles")
-                    .font(.headline.weight(.bold))
-                    .symbolEffect(.pulse, options: .repeating, isActive: appModel.isGenerating)
+                if appModel.isGenerating {
+                    ProgressView()
+                        .tint(canGenerate ? .white : VFStudioDesign.secondaryText)
+                } else {
+                    Image(systemName: "wand.and.stars")
+                        .font(.headline.weight(.bold))
+                        .symbolEffect(.pulse, options: .repeating, isActive: appModel.isGenerating)
+                }
                 Text(appModel.isGenerating ? AppText.localized("Creating...", "正在创作...") : AppText.localized("Start Viral Creation", "开启爆款创作"))
                     .font(.headline.weight(.bold))
             }
@@ -313,7 +394,7 @@ struct HomeView: View {
                     .fill(
                         LinearGradient(
                             colors: canGenerate
-                                ? [VFStudioDesign.accent, VFStudioDesign.sky]
+                                ? [VFStudioDesign.primaryBlue, VFStudioDesign.accent]
                                 : [Color.white.opacity(0.72), Color.white.opacity(0.54)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -324,7 +405,7 @@ struct HomeView: View {
                 Capsule()
                     .stroke(canGenerate ? .white.opacity(0.45) : .white.opacity(0.78), lineWidth: 1)
             }
-            .shadow(color: VFStudioDesign.accent.opacity(0.30), radius: 18, x: 0, y: 11)
+            .shadow(color: VFStudioDesign.primaryBlue.opacity(canGenerate ? 0.24 : 0.08), radius: 22, x: 0, y: 11)
             .opacity(canGenerate ? 1 : 0.86)
         }
         .buttonStyle(.plain)
@@ -402,10 +483,42 @@ struct HomeView: View {
             generatedProject = await appModel.generateProject(from: draft)
         }
     }
+
+    private func magicPaste() {
+        Haptics.selection()
+        let pasted = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        guard !pasted.isEmpty else {
+            showPasteStatus(AppText.localized("Clipboard is empty", "剪贴板暂无可用内容"))
+            return
+        }
+
+        let compacted = pasted
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "  ", with: " ")
+
+        draft.topic = String(compacted.prefix(240))
+        Haptics.success()
+        showPasteStatus(AppText.localized("Brief imported from clipboard", "已从剪贴板导入简报"))
+    }
+
+    private func showPasteStatus(_ message: String) {
+        withAnimation(.easeOut(duration: 0.18)) {
+            pasteStatusMessage = message
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.8))
+            withAnimation(.easeOut(duration: 0.18)) {
+                pasteStatusMessage = nil
+            }
+        }
+    }
 }
 
 private enum VFStudioDesign {
-    static let accent = Color(red: 0.37, green: 0.36, blue: 0.90)
+    static let primaryBlue = Color(red: 0.0, green: 0.48, blue: 1.0)
+    static let accent = Color(red: 0.35, green: 0.34, blue: 0.84)
     static let ink = Color(red: 0.13, green: 0.16, blue: 0.22)
     static let graphite = Color(red: 0.30, green: 0.34, blue: 0.42)
     static let secondaryText = Color(red: 0.48, green: 0.53, blue: 0.60)
@@ -415,13 +528,27 @@ private enum VFStudioDesign {
     static let warning = Color(red: 0.86, green: 0.34, blue: 0.22)
 }
 
+private enum Haptics {
+    static func selection() {
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    static func impact() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+
+    static func success() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+}
+
 private struct StudioDashboardBackground: View {
     var body: some View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(red: 0.975, green: 0.985, blue: 1.0),
-                    Color(red: 0.90, green: 0.93, blue: 1.0),
+                    Color(red: 0.95, green: 0.97, blue: 1.0),
+                    Color(red: 0.985, green: 0.99, blue: 1.0),
                     .white
                 ],
                 startPoint: .topLeading,
@@ -430,16 +557,16 @@ private struct StudioDashboardBackground: View {
             .ignoresSafeArea()
 
             Circle()
-                .fill(VFStudioDesign.sky.opacity(0.18))
-                .frame(width: 330, height: 330)
-                .blur(radius: 64)
-                .offset(x: 170, y: -220)
+                .fill(VFStudioDesign.primaryBlue.opacity(0.06))
+                .frame(width: 320, height: 320)
+                .blur(radius: 86)
+                .offset(x: 170, y: -280)
 
             Circle()
-                .fill(VFStudioDesign.accent.opacity(0.11))
-                .frame(width: 250, height: 250)
-                .blur(radius: 58)
-                .offset(x: -170, y: 110)
+                .fill(VFStudioDesign.accent.opacity(0.07))
+                .frame(width: 260, height: 260)
+                .blur(radius: 70)
+                .offset(x: -170, y: 120)
 
             Circle()
                 .fill(VFStudioDesign.teal.opacity(0.12))
@@ -492,14 +619,14 @@ private struct StudioGlassCard<Content: View>: View {
     var body: some View {
         content
             .padding(level == .thick ? 20 : 17)
-            .background(.white.opacity(level == .thick ? 0.62 : 0.44), in: RoundedRectangle(cornerRadius: 24))
+            .background(.white.opacity(level == .thick ? 0.82 : 0.68), in: RoundedRectangle(cornerRadius: 28))
             .background(level == .thick ? .thinMaterial : .ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
             .overlay {
-                RoundedRectangle(cornerRadius: 24)
-                    .stroke(Color.white.opacity(level == .thick ? 0.74 : 0.58), lineWidth: 1.4)
+                RoundedRectangle(cornerRadius: 28)
+                    .stroke(Color.white.opacity(level == .thick ? 0.92 : 0.80), lineWidth: 1.2)
             }
-            .shadow(color: .white.opacity(0.58), radius: 12, x: -4, y: -5)
-            .shadow(color: .black.opacity(level == .thick ? 0.045 : 0.03), radius: level == .thick ? 22 : 16, x: 0, y: level == .thick ? 12 : 8)
+            .shadow(color: .white.opacity(0.72), radius: 14, x: -4, y: -6)
+            .shadow(color: .black.opacity(level == .thick ? 0.04 : 0.026), radius: level == .thick ? 24 : 18, x: 0, y: level == .thick ? 12 : 8)
     }
 }
 
