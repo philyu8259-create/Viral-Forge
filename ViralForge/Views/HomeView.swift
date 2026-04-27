@@ -22,24 +22,31 @@ struct HomeView: View {
 
     var body: some View {
         ZStack {
-            StudioDashboardBackground()
+            GeometryReader { proxy in
+                let contentWidth = max(proxy.size.width - 40, 0)
 
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 24) {
-                    studioHeader
-                    mainCreationCard
-                    contentPipelineSection
-                    brandKitShortcut
-                    workflowShortcuts
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 24) {
+                        studioHeader
+                        mainCreationCard
+                        contentPipelineSection
+                        templatePreviewSection
+                        brandKitShortcut
+                        workflowShortcuts
 
-                    if let generationError = appModel.generationError {
-                        errorCard(generationError)
+                        if let generationError = appModel.generationError {
+                            errorCard(generationError)
+                        }
                     }
+                    .frame(width: contentWidth, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 126)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 126)
             }
+        }
+        .background {
+            StudioDashboardBackground()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .toolbar(.hidden, for: .navigationBar)
@@ -67,16 +74,17 @@ struct HomeView: View {
                     .font(.system(size: 29, weight: .black, design: .rounded))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [VFStudioDesign.accent, VFStudioDesign.ink],
+                            colors: [VFStudioDesign.primaryRed, VFStudioDesign.sunset, VFStudioDesign.accent],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
 
                 HStack(spacing: 7) {
-                    Image(systemName: appModel.brandProfile.hasSavedMemory ? "link" : "link.badge.plus")
+                    Image(systemName: appModel.quota.isPro ? "crown.fill" : "bolt.fill")
                         .font(.caption.weight(.bold))
-                    Text(appModel.brandProfile.hasSavedMemory ? appModel.brandProfile.memorySummary : AppText.localized("Connect a brand memory", "连接品牌记忆"))
+                        .foregroundStyle(VFStudioDesign.sunset)
+                    Text(appModel.quota.isPro ? AppText.localized("Pro creator workspace", "专业版会员工作间") : AppText.localized("Creator workspace", "爆款创作工作间"))
                         .lineLimit(1)
                 }
                 .font(.caption.weight(.semibold))
@@ -88,7 +96,7 @@ struct HomeView: View {
             QuotaRingBadge(
                 text: quotaRingText,
                 progress: quotaProgress,
-                tint: VFStudioDesign.accent
+                tint: VFStudioDesign.primaryRed
             )
         }
     }
@@ -188,7 +196,7 @@ struct HomeView: View {
                         Text(hasTopic ? AppText.localized("Strategy suggestions are ready", "智能策略已准备") : AppText.localized("Add a topic to unlock strategy suggestions", "输入主题后展开智能策略"))
                     }
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(hasTopic ? VFStudioDesign.accent : VFStudioDesign.secondaryText)
+                    .foregroundStyle(hasTopic ? VFStudioDesign.primaryRed : VFStudioDesign.secondaryText)
 
                     if hasTopic {
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
@@ -196,7 +204,7 @@ struct HomeView: View {
                                 icon: "paperplane.fill",
                                 title: AppText.localized("Platform", "平台"),
                                 value: draft.platform.displayName,
-                                tint: VFStudioDesign.accent
+                                tint: VFStudioDesign.primaryRed
                             ) {
                                 Haptics.selection()
                             }
@@ -205,7 +213,7 @@ struct HomeView: View {
                                 icon: "person.3.fill",
                                 title: AppText.localized("Audience", "受众画像"),
                                 value: draft.audience.isEmpty ? AppText.localized("Recommended persona", "智能推荐画像") : draft.audience,
-                                tint: VFStudioDesign.teal
+                                tint: VFStudioDesign.electricCyan
                             ) {
                                 Haptics.selection()
                                 activeEditor = .audience
@@ -215,7 +223,7 @@ struct HomeView: View {
                                 icon: "mouth.fill",
                                 title: AppText.localized("Tone", "内容语气"),
                                 value: draft.tone.isEmpty ? AppText.localized("Professional seeding", "专业种草") : draft.tone,
-                                tint: VFStudioDesign.sky
+                                tint: VFStudioDesign.sunset
                             ) {
                                 Haptics.selection()
                                 activeEditor = .tone
@@ -249,17 +257,47 @@ struct HomeView: View {
             Label(AppText.localized("Magic Paste", "智能粘贴"), systemImage: "doc.on.clipboard")
                 .labelStyle(.iconOnly)
                 .font(.caption.weight(.bold))
-                .foregroundStyle(VFStudioDesign.accent)
+                .foregroundStyle(VFStudioDesign.primaryRed)
                 .frame(width: 34, height: 34)
-                .background(.white.opacity(0.78), in: Circle())
+                .background(.white.opacity(0.86), in: Circle())
                 .overlay {
                     Circle()
                         .stroke(.white.opacity(0.96), lineWidth: 1)
                 }
-                .shadow(color: VFStudioDesign.primaryBlue.opacity(0.12), radius: 10, x: 0, y: 5)
+                .shadow(color: VFStudioDesign.primaryRed.opacity(0.18), radius: 12, x: 0, y: 6)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(AppText.localized("Magic Paste", "智能粘贴"))
+    }
+
+    private var templatePreviewSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                sectionHeader(
+                    title: AppText.localized("Hot templates", "热门创作模板"),
+                    subtitle: AppText.localized("Commerce-ready starting points", "电商种草快速起稿")
+                )
+
+                Spacer()
+
+                NavigationLink {
+                    TemplatesView()
+                } label: {
+                    Text(AppText.localized("More", "更多"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStudioDesign.primaryRed)
+                }
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(Array(SampleData.templates.prefix(4))) { template in
+                        HotTemplateCard(template: template)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+        }
     }
 
     private var contentPipelineSection: some View {
@@ -394,7 +432,7 @@ struct HomeView: View {
                     .fill(
                         LinearGradient(
                             colors: canGenerate
-                                ? [VFStudioDesign.primaryBlue, VFStudioDesign.accent]
+                                ? [VFStudioDesign.primaryRed, VFStudioDesign.sunset, VFStudioDesign.accent]
                                 : [Color.white.opacity(0.72), Color.white.opacity(0.54)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -404,8 +442,22 @@ struct HomeView: View {
             .overlay {
                 Capsule()
                     .stroke(canGenerate ? .white.opacity(0.45) : .white.opacity(0.78), lineWidth: 1)
+                    .overlay {
+                        if canGenerate {
+                            Capsule()
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [.white.opacity(0.0), .white.opacity(0.76), .white.opacity(0.0)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.3
+                                )
+                                .blur(radius: 0.4)
+                        }
+                    }
             }
-            .shadow(color: VFStudioDesign.primaryBlue.opacity(canGenerate ? 0.24 : 0.08), radius: 22, x: 0, y: 11)
+            .shadow(color: VFStudioDesign.primaryRed.opacity(canGenerate ? 0.28 : 0.08), radius: 22, x: 0, y: 11)
             .opacity(canGenerate ? 1 : 0.86)
         }
         .buttonStyle(.plain)
@@ -427,9 +479,9 @@ struct HomeView: View {
         switch appModel.brandProfile.primaryColorName {
         case "Indigo": VFStudioDesign.accent
         case "Rose": Color(red: 0.95, green: 0.36, blue: 0.52)
-        case "Sky": VFStudioDesign.sky
-        case "Amber": Color(red: 0.95, green: 0.64, blue: 0.23)
-        default: VFStudioDesign.teal
+        case "Sky": VFStudioDesign.electricCyan
+        case "Amber": VFStudioDesign.sunset
+        default: VFStudioDesign.electricCyan
         }
     }
 
@@ -517,15 +569,31 @@ struct HomeView: View {
 }
 
 private enum VFStudioDesign {
+    static let primaryRed = Color(red: 1.0, green: 0.23, blue: 0.19)
+    static let sunset = Color(red: 1.0, green: 0.58, blue: 0.0)
+    static let auroraPink = Color(red: 1.0, green: 0.27, blue: 0.57)
+    static let purpleFlow = Color(red: 0.69, green: 0.32, blue: 0.87)
+    static let electricCyan = Color(red: 0.0, green: 0.76, blue: 0.95)
     static let primaryBlue = Color(red: 0.0, green: 0.48, blue: 1.0)
     static let accent = Color(red: 0.35, green: 0.34, blue: 0.84)
     static let ink = Color(red: 0.13, green: 0.16, blue: 0.22)
     static let graphite = Color(red: 0.30, green: 0.34, blue: 0.42)
     static let secondaryText = Color(red: 0.48, green: 0.53, blue: 0.60)
-    static let sky = Color(red: 0.38, green: 0.70, blue: 0.93)
+    static let sky = electricCyan
     static let teal = Color(red: 0.29, green: 0.79, blue: 0.73)
     static let coral = Color(red: 0.95, green: 0.55, blue: 0.38)
     static let warning = Color(red: 0.86, green: 0.34, blue: 0.22)
+
+    static func platformTint(_ platform: SocialPlatform) -> Color {
+        switch platform {
+        case .xiaohongshu: primaryRed
+        case .douyin: purpleFlow
+        case .weChat: teal
+        case .tikTok: accent
+        case .instagram: auroraPink
+        case .youtubeShorts: sunset
+        }
+    }
 }
 
 private enum Haptics {
@@ -544,40 +612,72 @@ private enum Haptics {
 
 private struct StudioDashboardBackground: View {
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.95, green: 0.97, blue: 1.0),
-                    Color(red: 0.985, green: 0.99, blue: 1.0),
-                    .white
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+        GeometryReader { proxy in
+            TimelineView(.animation) { timeline in
+                let seconds = timeline.date.timeIntervalSinceReferenceDate
+                let rotation = Angle.degrees(seconds.truncatingRemainder(dividingBy: 18) * 20)
 
-            Circle()
-                .fill(VFStudioDesign.primaryBlue.opacity(0.06))
-                .frame(width: 320, height: 320)
-                .blur(radius: 86)
-                .offset(x: 170, y: -280)
+                ZStack {
+                    LinearGradient(
+                        colors: [
+                            Color(red: 1.0, green: 0.985, blue: 0.975),
+                            Color(red: 0.965, green: 0.978, blue: 1.0),
+                            Color(red: 0.995, green: 0.998, blue: 1.0)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
 
-            Circle()
-                .fill(VFStudioDesign.accent.opacity(0.07))
-                .frame(width: 260, height: 260)
-                .blur(radius: 70)
-                .offset(x: -170, y: 120)
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [VFStudioDesign.primaryRed.opacity(0.14), VFStudioDesign.auroraPink.opacity(0.05), .clear],
+                                center: .center,
+                                startRadius: 12,
+                                endRadius: 280
+                            )
+                        )
+                        .frame(width: 560, height: 560)
+                        .blur(radius: 54)
+                        .offset(x: -220, y: -300)
+                        .rotationEffect(rotation)
 
-            Circle()
-                .fill(VFStudioDesign.teal.opacity(0.12))
-                .frame(width: 270, height: 270)
-                .blur(radius: 74)
-                .offset(x: 160, y: 440)
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [VFStudioDesign.sunset.opacity(0.16), VFStudioDesign.primaryRed.opacity(0.05), .clear],
+                                center: .center,
+                                startRadius: 8,
+                                endRadius: 230
+                            )
+                        )
+                        .frame(width: 430, height: 430)
+                        .blur(radius: 60)
+                        .offset(x: 210, y: -110)
+                        .rotationEffect(-rotation)
 
-            StudioNoiseOverlay()
-                .opacity(0.28)
-                .ignoresSafeArea()
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [VFStudioDesign.electricCyan.opacity(0.13), VFStudioDesign.purpleFlow.opacity(0.06), .clear],
+                                center: .center,
+                                startRadius: 10,
+                                endRadius: 250
+                            )
+                        )
+                        .frame(width: 500, height: 500)
+                        .blur(radius: 72)
+                        .offset(x: 170, y: 455)
+                        .rotationEffect(Angle.degrees(rotation.degrees * 0.6))
+
+                    StudioNoiseOverlay()
+                        .opacity(0.30)
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .clipped()
+            }
         }
+        .ignoresSafeArea()
     }
 }
 
@@ -675,12 +775,23 @@ private struct StudioPlatformPill: View {
         .padding(.horizontal, 11)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(isActive ? VFStudioDesign.accent : .white.opacity(0.52), in: Capsule())
+        .background {
+            Capsule()
+                .fill(
+                    isActive
+                        ? LinearGradient(colors: [tint, tint.opacity(0.78)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        : LinearGradient(colors: [.white.opacity(0.74), .white.opacity(0.48)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                )
+        }
         .overlay {
             Capsule()
                 .stroke(isActive ? .white.opacity(0.34) : .white.opacity(0.74), lineWidth: 1)
         }
-        .shadow(color: isActive ? VFStudioDesign.accent.opacity(0.23) : .black.opacity(0.025), radius: isActive ? 10 : 5, x: 0, y: isActive ? 6 : 3)
+        .shadow(color: isActive ? tint.opacity(0.26) : .black.opacity(0.025), radius: isActive ? 10 : 5, x: 0, y: isActive ? 6 : 3)
+    }
+
+    private var tint: Color {
+        VFStudioDesign.platformTint(platform)
     }
 
     private var icon: String {
@@ -707,9 +818,17 @@ private struct StrategyMiniChip: View {
             HStack(spacing: 10) {
                 Image(systemName: icon)
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(tint)
-                    .frame(width: 26, height: 26)
-                    .background(tint.opacity(0.11), in: Circle())
+                    .foregroundStyle(.white)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        LinearGradient(colors: [tint.opacity(0.95), tint.opacity(0.68)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                        in: Circle()
+                    )
+                    .overlay {
+                        Circle()
+                            .stroke(.white.opacity(0.54), lineWidth: 1)
+                    }
+                    .shadow(color: tint.opacity(0.28), radius: 8, x: 0, y: 4)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
@@ -725,11 +844,19 @@ private struct StrategyMiniChip: View {
                 Spacer(minLength: 0)
             }
             .padding(11)
-            .background(.white.opacity(0.48), in: RoundedRectangle(cornerRadius: 16))
+            .background(
+                LinearGradient(
+                    colors: [tint.opacity(0.10), .white.opacity(0.64)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                in: RoundedRectangle(cornerRadius: 16)
+            )
             .overlay {
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(.white.opacity(0.72), lineWidth: 1)
             }
+            .shadow(color: tint.opacity(0.06), radius: 10, x: 0, y: 5)
         }
         .buttonStyle(.plain)
     }
@@ -781,6 +908,80 @@ private struct PipelineItem: View {
     }
 }
 
+private struct HotTemplateCard: View {
+    let template: CreativeTemplate
+
+    private var tint: Color {
+        VFStudioDesign.platformTint(template.platform)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ZStack(alignment: .topTrailing) {
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(
+                        LinearGradient(
+                            colors: [tint.opacity(0.92), template.style.palette.accent.opacity(0.72), .white.opacity(0.9)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(alignment: .bottomLeading) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(template.platform.displayName)
+                                .font(.caption2.weight(.black))
+                                .foregroundStyle(.white.opacity(0.82))
+                            Text(template.category.displayName)
+                                .font(.headline.weight(.black))
+                                .foregroundStyle(.white)
+                        }
+                        .padding(12)
+                    }
+                    .overlay {
+                        Circle()
+                            .fill(.white.opacity(0.22))
+                            .frame(width: 74, height: 74)
+                            .blur(radius: 5)
+                            .offset(x: 44, y: -42)
+                    }
+
+                if template.lockedToPro {
+                    Image(systemName: "crown.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStudioDesign.sunset)
+                        .frame(width: 25, height: 25)
+                        .background(.white.opacity(0.88), in: Circle())
+                        .padding(9)
+                }
+            }
+            .frame(height: 112)
+            .shadow(color: tint.opacity(0.18), radius: 14, x: 0, y: 8)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(template.name)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(VFStudioDesign.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                Text(template.promptHint)
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(VFStudioDesign.secondaryText)
+                    .lineLimit(2)
+            }
+        }
+        .padding(10)
+        .frame(width: 154)
+        .background(.white.opacity(0.68), in: RoundedRectangle(cornerRadius: 22))
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 22))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(.white.opacity(0.86), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.035), radius: 16, x: 0, y: 8)
+    }
+}
+
 private struct StudioToolTile: View {
     let icon: String
     let title: String
@@ -793,8 +994,15 @@ private struct StudioToolTile: View {
                 .font(.title3.weight(.bold))
                 .foregroundStyle(.white)
                 .frame(width: 38, height: 38)
-                .background(tint, in: RoundedRectangle(cornerRadius: 13))
-                .shadow(color: tint.opacity(0.24), radius: 9, x: 0, y: 5)
+                .background(
+                    LinearGradient(colors: [tint.opacity(0.96), tint.opacity(0.66)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    in: RoundedRectangle(cornerRadius: 13)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 13)
+                        .stroke(.white.opacity(0.42), lineWidth: 1)
+                }
+                .shadow(color: tint.opacity(0.28), radius: 10, x: 0, y: 6)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -809,7 +1017,10 @@ private struct StudioToolTile: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.white.opacity(0.54), in: RoundedRectangle(cornerRadius: 21))
+        .background(
+            LinearGradient(colors: [tint.opacity(0.09), .white.opacity(0.60)], startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 21)
+        )
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 21))
         .overlay {
             RoundedRectangle(cornerRadius: 21)
