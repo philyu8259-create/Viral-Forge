@@ -19,7 +19,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.phil.viralforge
         PRODUCT_NAME: ViralForge
         INFOPLIST_FILE: ViralForge/Info.plist
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       configs:
         Debug:
           BACKEND_BASE_URL: "http://localhost:8787"

@@ -37,6 +37,7 @@
 		F306B438C432EC4B842C2A4C /* ContentModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 387E20D6EEBB4DAF6F06913C /* ContentModels.swift */; };
 		F5DE66E363E609C00EF58EDA /* SubscriptionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE3B5217B984EACDAB6767A /* SubscriptionModels.swift */; };
 		F6353430166BA4F123792695 /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC38B989C06A1E6BC56891B3 /* ResultView.swift */; };
+		F8AA88837843F21BF96D7EDB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8F0A3B62468A44D99E7FC673 /* Assets.xcassets */; };
 		FDCCB3F010505A0F302340D4 /* ContentServiceFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEC1C0E0BB8257B613064F0 /* ContentServiceFactory.swift */; };
 /* End PBXBuildFile section */
 
@@ -73,6 +74,7 @@
 		6B3517FED465E57D7E238B59 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		8515AE8622366534FFE8A090 /* ViralForge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ViralForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8F0A3B62468A44D99E7FC673 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A692A256A45B27A1D796A3D2 /* TemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatesView.swift; sourceTree = "<group>"; };
 		AC38B989C06A1E6BC56891B3 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
 		B0823B86AD05AAE6D2A1AAB3 /* ContentGenerating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentGenerating.swift; sourceTree = "<group>"; };
@@ -110,6 +112,7 @@
 		32342ED8D0482EC53BDE26A2 /* ViralForge */ = {
 			isa = PBXGroup;
 			children = (
+				8F0A3B62468A44D99E7FC673 /* Assets.xcassets */,
 				1B76C4539870EB9D20A3703E /* Info.plist */,
 				CC1CD816AC19A9520035BB61 /* App */,
 				24A546EA52C98A01F028C9CC /* InfoPlist.strings */,
@@ -269,6 +272,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F8AA88837843F21BF96D7EDB /* Assets.xcassets in Resources */,
 				91BECCB8742A5C4C7362C24B /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -405,7 +409,7 @@
 		17F0AD14EF5F4A3216465DA4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				BACKEND_BASE_URL = "";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = ViralForge/Info.plist;
@@ -523,7 +527,7 @@
 		F569D8304764A78E4B3CB016 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				BACKEND_BASE_URL = "http://localhost:8787";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = ViralForge/Info.plist;
