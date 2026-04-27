@@ -59,6 +59,7 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 - [x] English locale works in mock mode: Home shows TikTok/Instagram/YouTube Shorts and generates an English Result.
 - [x] Poster flow works in UI smoke tests: Result -> Poster Editor -> rendered PNG -> Assets > Posters.
 - [x] Backend local checks pass with mock/local providers: `npm run check` and `npm run smoke:local`.
+- [x] Backend subscription smoke covers local sync, invalid product rejection, App Store notification expiration, and renewal: `npm run smoke:subscriptions`.
 - [x] Local StoreKit configuration uses the China-first subscription products and prices.
 - [x] Release build keeps `BACKEND_BASE_URL` empty until a real public HTTPS backend is chosen.
 - [x] Photo-library permission copy is localized through `InfoPlist.strings`.
@@ -86,6 +87,7 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 
 - [ ] Test sandbox purchase, restore, renewal, cancellation, and expired subscription states.
 - [ ] Configure and verify App Store Server Notifications V2 against the deployed backend.
+- [ ] Complete the manual steps in `SUBSCRIPTION_SANDBOX_TEST_PLAN.md` with a real TestFlight sandbox account.
 - [x] Add basic server-side quota/rate-limit protection for provider cost control.
 - [x] Harden content safety for illegal, medical, financial, exaggerated, and platform-risky claims.
 - [x] Polish backend-down, provider-error, empty-state, and no-quota user-facing messages.

@@ -26,7 +26,8 @@ The current App Store Connect setup was created from US base prices. For the Chi
 
 1. In-App Purchase capability is enabled in `project.yml` and regenerated into `ViralForge.xcodeproj`.
 2. Keep `ViralForge.storekit` for local simulator testing. It is configured for China storefront/local prices: monthly `39.8`, yearly `398`.
-3. Test with sandbox Apple IDs before TestFlight.
+3. Use `SUBSCRIPTION_SANDBOX_TEST_PLAN.md` for local StoreKit and TestFlight sandbox validation.
+4. Test with sandbox Apple IDs before TestFlight.
 
 ## Production Backend Note
 
@@ -57,3 +58,9 @@ POST /api/app-store/notifications/v2
 Before release, deploy the backend behind HTTPS, set the notification URL in App Store Connect, and test with Apple's test notification flow.
 
 The app uses StoreKit `appAccountToken` during purchase. The token is a stable UUID generated from the backend `userId`, so server notifications can be matched back to the local user by `appAccountToken` or `originalTransactionId`.
+
+Local backend subscription smoke test:
+
+```sh
+npm --prefix backend run smoke:subscriptions
+```

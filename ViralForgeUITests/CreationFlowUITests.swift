@@ -118,6 +118,21 @@ final class CreationFlowUITests: XCTestCase {
         XCTAssertTrue(app.textViews["vf.home.topicEditor"].waitForExistence(timeout: 4))
     }
 
+    func testPaywallShowsChinaSubscriptionPlans() throws {
+        let app = XCUIApplication()
+        launch(app)
+
+        app.tabBars.buttons["会员"].tap()
+
+        XCTAssertTrue(app.staticTexts["ViralForge Pro"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["vf.paywall.plan.viralforge_pro_monthly"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.buttons["vf.paywall.plan.viralforge_pro_yearly"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.staticTexts["¥39.8/月"].exists)
+        XCTAssertTrue(app.staticTexts["¥398/年"].exists)
+        XCTAssertTrue(app.buttons["vf.paywall.purchaseButton"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.buttons["vf.paywall.restoreButton"].waitForExistence(timeout: 4))
+    }
+
     private func launch(
         _ app: XCUIApplication,
         appleLanguages: String = "(zh-Hans)",

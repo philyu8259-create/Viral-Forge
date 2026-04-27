@@ -84,6 +84,7 @@ struct PaywallView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.paywall.plan.\(plan.id)")
                 }
             }
         }
@@ -102,6 +103,7 @@ struct PaywallView: View {
                         await appModel.purchaseSubscription(plan: selectedPlan)
                     }
                 }
+                .accessibilityIdentifier("vf.paywall.purchaseButton")
 
                 Button {
                     Task {
@@ -121,6 +123,7 @@ struct PaywallView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(appModel.isPurchasingSubscription)
+                .accessibilityIdentifier("vf.paywall.restoreButton")
 
                 if let purchaseStatusMessage = appModel.purchaseStatusMessage {
                     VStack(spacing: 10) {
