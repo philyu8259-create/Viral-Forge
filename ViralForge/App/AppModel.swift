@@ -184,10 +184,10 @@ final class AppModel {
         GenerationDraft(
             language: .defaultGenerationLanguage,
             platform: template.platform,
-            goal: template.category == .promotion || template.category == .product ? .sellProduct : .growAudience,
+            goal: template.category.defaultGoal,
             topic: "",
-            audience: brandProfile.audience,
-            tone: brandProfile.tone,
+            audience: brandProfile.audience.isEmpty ? template.defaultAudience : brandProfile.audience,
+            tone: brandProfile.tone.isEmpty ? template.defaultTone : brandProfile.tone,
             templateName: template.name,
             templatePromptHint: template.promptHint,
             templateStyle: template.style,

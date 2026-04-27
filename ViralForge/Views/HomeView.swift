@@ -297,7 +297,12 @@ struct HomeView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(Array(appModel.visibleTemplates.prefix(4))) { template in
-                        HotTemplateCard(template: template)
+                        NavigationLink {
+                            TemplateDetailView(template: template)
+                        } label: {
+                            HotTemplateCard(template: template)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.vertical, 2)

@@ -17,21 +17,33 @@ enum SampleData {
     }
 
     private static let chineseTemplates: [CreativeTemplate] = [
-        CreativeTemplate(name: "小红书种草封面", category: .cover, platform: .xiaohongshu, style: .cleanProduct, promptHint: "适合产品种草的大标题封面，突出卖点和生活场景"),
-        CreativeTemplate(name: "抖音 3 秒钩子封面", category: .cover, platform: .douyin, style: .boldLaunch, promptHint: "高对比短视频封面，用前三秒钩子抓住注意力"),
-        CreativeTemplate(name: "朋友圈/社群促销海报", category: .promotion, platform: .weChat, style: .boldLaunch, promptHint: "适合微信转发的促销海报，保留优惠和行动按钮区域", lockedToPro: true),
-        CreativeTemplate(name: "小红书知识清单卡", category: .knowledge, platform: .xiaohongshu, style: .softLifestyle, promptHint: "适合收藏的知识清单卡，用编号结构降低阅读压力"),
-        CreativeTemplate(name: "抖音产品测评脚本", category: .product, platform: .douyin, style: .editorial, promptHint: "用真实试用口吻组织卖点、槽点和转化话术", lockedToPro: true),
-        CreativeTemplate(name: "微信成交转化文案", category: .story, platform: .weChat, style: .editorial, promptHint: "适合朋友圈/社群的故事式种草文案，先建立信任再引导咨询")
+        CreativeTemplate(name: "小红书真实种草笔记", category: .productSeeding, platform: .xiaohongshu, style: .cleanProduct, promptHint: "按痛点、场景、体验、购买理由组织小红书种草笔记"),
+        CreativeTemplate(name: "抖音 3 秒产品钩子", category: .productSeeding, platform: .douyin, style: .boldLaunch, promptHint: "用短视频前三秒冲突和产品结果抓住注意力"),
+        CreativeTemplate(name: "同城探店收藏卡", category: .storeTraffic, platform: .xiaohongshu, style: .softLifestyle, promptHint: "适合餐饮、美业、亲子、生活方式门店的收藏型探店内容"),
+        CreativeTemplate(name: "微信私域到店邀约", category: .storeTraffic, platform: .weChat, style: .editorial, promptHint: "把门店特色、适合人群和预约理由写成朋友圈/社群转化文案"),
+        CreativeTemplate(name: "创始人信任故事", category: .personalBrand, platform: .weChat, style: .editorial, promptHint: "用个人经历和价值观建立信任，再自然带出产品或服务"),
+        CreativeTemplate(name: "小红书专家人设帖", category: .personalBrand, platform: .xiaohongshu, style: .softLifestyle, promptHint: "用观点、方法和案例强化个人 IP 的专业感"),
+        CreativeTemplate(name: "直播间预约预热", category: .liveLaunch, platform: .douyin, style: .boldLaunch, promptHint: "突出直播福利、限时权益和进直播间的明确理由", lockedToPro: true),
+        CreativeTemplate(name: "微信直播福利清单", category: .liveLaunch, platform: .weChat, style: .boldLaunch, promptHint: "适合社群和朋友圈的直播预告，强调福利、时间和行动按钮", lockedToPro: true),
+        CreativeTemplate(name: "节日送礼促销海报", category: .seasonalPromo, platform: .weChat, style: .boldLaunch, promptHint: "适合节日礼赠、限时优惠和社群转化的促销内容"),
+        CreativeTemplate(name: "小红书节日清单种草", category: .seasonalPromo, platform: .xiaohongshu, style: .cleanProduct, promptHint: "用清单式结构包装节日场景、预算和购买理由"),
+        CreativeTemplate(name: "新品首发悬念帖", category: .newLaunch, platform: .xiaohongshu, style: .cleanProduct, promptHint: "把新品升级点写成有悬念、有记忆点的首发内容"),
+        CreativeTemplate(name: "抖音新品发布脚本", category: .newLaunch, platform: .douyin, style: .editorial, promptHint: "用新品变化、第一波体验和行动号召组织短视频脚本")
     ]
 
     private static let englishTemplates: [CreativeTemplate] = [
-        CreativeTemplate(name: "TikTok 3-Second Hook", category: .cover, platform: .tikTok, style: .boldLaunch, promptHint: "Short-form opening frame with a strong first-line hook and product payoff"),
-        CreativeTemplate(name: "Instagram Carousel Cover", category: .cover, platform: .instagram, style: .cleanProduct, promptHint: "Save-worthy carousel opener with a clear promise and visual hierarchy"),
-        CreativeTemplate(name: "YouTube Shorts Product Teaser", category: .product, platform: .youtubeShorts, style: .editorial, promptHint: "Fast product trial structure for Shorts with a curiosity-led intro", lockedToPro: true),
-        CreativeTemplate(name: "Instagram Promo Story", category: .promotion, platform: .instagram, style: .boldLaunch, promptHint: "Conversion-focused Story frame with offer, proof, and CTA zones", lockedToPro: true),
-        CreativeTemplate(name: "TikTok Myth vs Fact", category: .knowledge, platform: .tikTok, style: .softLifestyle, promptHint: "Educational short-form angle that corrects one misconception quickly"),
-        CreativeTemplate(name: "Shorts Founder Story", category: .story, platform: .youtubeShorts, style: .editorial, promptHint: "Personal brand story script that builds trust before the product mention")
+        CreativeTemplate(name: "TikTok Product Seeding Hook", category: .productSeeding, platform: .tikTok, style: .boldLaunch, promptHint: "Short-form hook, real use case, proof, and clear product payoff"),
+        CreativeTemplate(name: "Instagram Save-Worthy Carousel", category: .productSeeding, platform: .instagram, style: .cleanProduct, promptHint: "A carousel-ready seeding structure built around a useful promise"),
+        CreativeTemplate(name: "Local Visit Reel", category: .storeTraffic, platform: .instagram, style: .softLifestyle, promptHint: "Visit-worthy short-form structure for restaurants, salons, gyms, or pop-ups"),
+        CreativeTemplate(name: "Shorts Destination Teaser", category: .storeTraffic, platform: .youtubeShorts, style: .editorial, promptHint: "Fast decision-making content for places, events, and local experiences"),
+        CreativeTemplate(name: "Founder Trust Story", category: .personalBrand, platform: .instagram, style: .editorial, promptHint: "Founder or creator story that builds trust before the offer"),
+        CreativeTemplate(name: "TikTok Expert POV", category: .personalBrand, platform: .tikTok, style: .softLifestyle, promptHint: "Opinion-led expert content with a practical takeaway and audience prompt"),
+        CreativeTemplate(name: "Live Shopping Warmup", category: .liveLaunch, platform: .tikTok, style: .boldLaunch, promptHint: "Live-room warmup with benefits, timing, urgency, and reminder CTA", lockedToPro: true),
+        CreativeTemplate(name: "Instagram Live Drop Alert", category: .liveLaunch, platform: .instagram, style: .boldLaunch, promptHint: "Story/Reel copy for a live product drop or limited event", lockedToPro: true),
+        CreativeTemplate(name: "Holiday Gift Promo", category: .seasonalPromo, platform: .instagram, style: .boldLaunch, promptHint: "Seasonal offer copy for gifting, urgency, and conversion"),
+        CreativeTemplate(name: "TikTok Seasonal Finds", category: .seasonalPromo, platform: .tikTok, style: .cleanProduct, promptHint: "A list-style seasonal product angle with fast reasons to buy"),
+        CreativeTemplate(name: "New Product Launch Teaser", category: .newLaunch, platform: .instagram, style: .cleanProduct, promptHint: "Launch teaser that turns what is new into curiosity and demand"),
+        CreativeTemplate(name: "YouTube Shorts Launch Script", category: .newLaunch, platform: .youtubeShorts, style: .editorial, promptHint: "A short launch script built around product changes, first-use benefit, and CTA")
     ]
 
     static var projects: [ContentProject] {

@@ -37,11 +37,12 @@ enum VFStyle {
 
     static func templateTint(_ category: TemplateCategory) -> Color {
         switch category {
-        case .cover: primaryRed
-        case .product: sunset
-        case .knowledge: electricCyan
-        case .promotion: auroraPink
-        case .story: purpleFlow
+        case .productSeeding: primaryRed
+        case .storeTraffic: electricCyan
+        case .personalBrand: purpleFlow
+        case .liveLaunch: sunset
+        case .seasonalPromo: auroraPink
+        case .newLaunch: teal
         }
     }
 }

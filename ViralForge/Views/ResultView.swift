@@ -130,6 +130,8 @@ struct ResultView: View {
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(VFStyle.teal)
                         .transition(.opacity.combined(with: .move(edge: .top)))
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("vf.result.copyStatusMessage")
                 }
 
                 if let generationError = appModel.generationError {

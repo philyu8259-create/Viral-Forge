@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TemplatesView: View {
     @Environment(AppModel.self) private var appModel
-    @State private var selectedCategory: TemplateCategory = .cover
+    @State private var selectedCategory: TemplateCategory = .productSeeding
 
     private var filteredTemplates: [CreativeTemplate] {
         appModel.visibleTemplates.filter { $0.category == selectedCategory }
@@ -12,7 +12,7 @@ struct TemplatesView: View {
         VFPage {
             VFPageHeader(
                 title: AppText.localized("Templates", "模板"),
-                subtitle: AppText.localized("Locale-ready creative formats for faster production", "国内平台创意格式，快速起稿"),
+                subtitle: AppText.localized("Ready-made workflows for repeatable content production", "可复用的内容生产工作流"),
                 icon: "rectangle.on.rectangle.fill",
                 tint: VFStyle.purpleFlow
             )
@@ -22,7 +22,7 @@ struct TemplatesView: View {
             VStack(alignment: .leading, spacing: 14) {
                 VFSectionHeader(
                     title: AppText.localized("Template Library", "模板库"),
-                    subtitle: AppText.localized("Pick a ready-made commerce workflow", "选择一个可直接生产的电商工作流")
+                    subtitle: AppText.localized("Pick a template, fill the product, and generate a structured pack", "选择模板，填入产品，一键生成结构化内容包")
                 )
 
                 LazyVStack(spacing: 14) {
@@ -33,6 +33,7 @@ struct TemplatesView: View {
                             TemplateCard(template: template)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("vf.templateCard.\(template.name)")
                     }
                 }
             }
@@ -44,9 +45,9 @@ struct TemplatesView: View {
                         .foregroundStyle(VFStyle.ink)
 
                     VStack(spacing: 12) {
-                        moduleRow(AppText.localized("Template variants for each platform", "各平台模板变体"), icon: "rectangle.3.group", tint: VFStyle.primaryRed)
-                        moduleRow(AppText.localized("One-click resize targets", "一键适配尺寸"), icon: "arrow.up.left.and.arrow.down.right", tint: VFStyle.electricCyan)
-                        moduleRow(AppText.localized("Batch creation from one product brief", "从一个产品简报批量创作"), icon: "tablecells", tint: VFStyle.sunset)
+                        moduleRow(AppText.localized("Six monetization-focused template modules", "六类变现导向模板模块"), icon: "rectangle.3.group", tint: VFStyle.primaryRed)
+                        moduleRow(AppText.localized("Built-in audience, tone, and content structure", "内置人群、语气和内容结构"), icon: "list.bullet.rectangle", tint: VFStyle.electricCyan)
+                        moduleRow(AppText.localized("One template can produce copy, poster direction, and publish pack", "一个模板同时产出文案、海报方向和发布包"), icon: "sparkles", tint: VFStyle.sunset)
                     }
                 }
             }
@@ -103,11 +104,12 @@ struct TemplatesView: View {
 
     private func categoryIcon(_ category: TemplateCategory) -> String {
         switch category {
-        case .cover: "photo.on.rectangle"
-        case .product: "shippingbox.fill"
-        case .knowledge: "list.bullet.rectangle.fill"
-        case .promotion: "tag.fill"
-        case .story: "quote.bubble.fill"
+        case .productSeeding: "shippingbox.fill"
+        case .storeTraffic: "mappin.and.ellipse"
+        case .personalBrand: "person.crop.square.filled.and.at.rectangle"
+        case .liveLaunch: "dot.radiowaves.left.and.right"
+        case .seasonalPromo: "gift.fill"
+        case .newLaunch: "sparkles.rectangle.stack.fill"
         }
     }
 }
@@ -168,6 +170,17 @@ private struct TemplateCard: View {
                         .font(.caption.weight(.medium))
                         .foregroundStyle(VFStyle.secondaryText)
                         .lineLimit(2)
+
+                    HStack(spacing: 6) {
+                        ForEach(template.contentStructure.prefix(2), id: \.self) { item in
+                            Text(item)
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(tint)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(tint.opacity(0.10), in: Capsule())
+                        }
+                    }
                 }
 
                 Spacer(minLength: 0)
@@ -180,7 +193,7 @@ private struct TemplateCard: View {
     }
 }
 
-private struct TemplateDetailView: View {
+struct TemplateDetailView: View {
     @Environment(AppModel.self) private var appModel
     let template: CreativeTemplate
 
@@ -197,13 +210,13 @@ private struct TemplateDetailView: View {
 
     init(template: CreativeTemplate) {
         self.template = template
-        _draft = State(initialValue: GenerationDraft(platform: template.platform, goal: template.category == .promotion || template.category == .product ? .sellProduct : .growAudience, templateName: template.name, templatePromptHint: template.promptHint, templateStyle: template.style))
+        _draft = State(initialValue: GenerationDraft(platform: template.platform, goal: template.category.defaultGoal, audience: template.defaultAudience, tone: template.defaultTone, templateName: template.name, templatePromptHint: template.promptHint, templateStyle: template.style))
     }
 
     private var samplePoster: PosterDraft {
         PosterDraft(
-            headline: template.category == .knowledge
-                ? AppText.localized("3 steps to make it easier", "3 个步骤讲清楚")
+            headline: template.category == .newLaunch
+                ? AppText.localized("New angle, clear demand", "新品亮点，一眼种草")
                 : AppText.localized("Make it worth stopping for", "让用户愿意停下来"),
             subtitle: template.name,
             cta: template.platform.displayName,
@@ -239,6 +252,23 @@ private struct TemplateDetailView: View {
                         .foregroundStyle(VFStyle.secondaryText)
 
                     VStack(spacing: 12) {
+                        detailInfoRow(
+                            title: AppText.localized("Best for", "适合人群"),
+                            value: template.defaultAudience,
+                            icon: "person.2.fill",
+                            tint: VFStyle.electricCyan
+                        )
+                        detailInfoRow(
+                            title: AppText.localized("Tone", "语气"),
+                            value: template.defaultTone,
+                            icon: "quote.bubble.fill",
+                            tint: VFStyle.sunset
+                        )
+                    }
+
+                    structureCard
+
+                    VStack(spacing: 12) {
                         glassTextField(AppText.localized("Topic or product", "主题或产品"), text: $draft.topic, lines: 3)
                         glassTextField(AppText.localized("Audience", "目标人群"), text: $draft.audience, lines: 1)
                         glassTextField(AppText.localized("Tone", "语气风格"), text: $draft.tone, lines: 1)
@@ -263,6 +293,7 @@ private struct TemplateDetailView: View {
                     ) {
                         generate()
                     }
+                    .accessibilityIdentifier("vf.templateDetail.useTemplateButton")
 
                     if let generationError = appModel.generationError {
                         Label(generationError, systemImage: "exclamationmark.triangle.fill")
@@ -278,6 +309,65 @@ private struct TemplateDetailView: View {
         }
         .onChange(of: draft) { _, _ in
             appModel.generationError = nil
+        }
+    }
+
+    private var structureCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VFSectionHeader(
+                title: AppText.localized("Output Structure", "内容结构"),
+                subtitle: template.sampleOutcome
+            )
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                ForEach(Array(template.contentStructure.enumerated()), id: \.offset) { index, item in
+                    HStack(spacing: 8) {
+                        Text("\(index + 1)")
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(.white)
+                            .frame(width: 22, height: 22)
+                            .background(VFStyle.templateTint(template.category), in: Circle())
+                        Text(item)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(VFStyle.ink)
+                            .lineLimit(2)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(10)
+                    .background(.white.opacity(0.60), in: RoundedRectangle(cornerRadius: 14))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(.white.opacity(0.84), lineWidth: 1)
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .background(VFStyle.templateTint(template.category).opacity(0.08), in: RoundedRectangle(cornerRadius: 18))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(.white.opacity(0.70), lineWidth: 1)
+        }
+    }
+
+    private func detailInfoRow(title: String, value: String, icon: String, tint: Color) -> some View {
+        HStack(alignment: .top, spacing: 11) {
+            VFGradientIcon(icon: icon, tint: tint, size: 34)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(VFStyle.secondaryText)
+                Text(value)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(VFStyle.ink)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(13)
+        .background(.white.opacity(0.58), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(.white.opacity(0.82), lineWidth: 1)
         }
     }
 

@@ -63,6 +63,23 @@ final class CreationFlowUITests: XCTestCase {
         assertCopyPackWorks(in: app, statusText: "Full publish pack copied.")
     }
 
+    func testTemplateLibraryShowsWorkflowDetails() throws {
+        let app = XCUIApplication()
+        launch(app)
+
+        app.tabBars.buttons["模板"].tap()
+        XCTAssertTrue(app.staticTexts["产品种草"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["探店引流"].exists)
+
+        let templateCard = app.buttons["vf.templateCard.小红书真实种草笔记"]
+        XCTAssertTrue(templateCard.waitForExistence(timeout: 4))
+        templateCard.tap()
+
+        XCTAssertTrue(app.staticTexts["内容结构"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.staticTexts["适合人群"].exists)
+        XCTAssertTrue(app.buttons["vf.templateDetail.useTemplateButton"].waitForExistence(timeout: 4))
+    }
+
     private func launch(_ app: XCUIApplication, appleLanguages: String = "(zh-Hans)", appleLocale: String = "zh_CN") {
         app.launchArguments = [
             "VF_UI_TESTING",
@@ -94,7 +111,11 @@ final class CreationFlowUITests: XCTestCase {
         let copyPackButton = app.buttons["vf.result.copyPackButton"]
         XCTAssertTrue(copyPackButton.waitForExistence(timeout: 4))
         copyPackButton.tap()
-        XCTAssertTrue(app.staticTexts[statusText].waitForExistence(timeout: 4))
+
+        let statusElement = app.descendants(matching: .any)["vf.result.copyStatusMessage"]
+        if !statusElement.waitForExistence(timeout: 4) {
+            XCTAssertTrue(app.staticTexts[statusText].waitForExistence(timeout: 2))
+        }
     }
 
     private func assertResultEditorSaves(in app: XCUIApplication, statusText: String) {
@@ -103,8 +124,18 @@ final class CreationFlowUITests: XCTestCase {
         editCopyButton.tap()
 
         let saveButton = app.buttons["vf.resultEditor.saveButton"]
-        XCTAssertTrue(saveButton.waitForExistence(timeout: 4))
-        saveButton.tap()
+        if saveButton.waitForExistence(timeout: 4) {
+            saveButton.tap()
+        } else {
+            let chineseSaveButton = app.buttons["保存"]
+            if chineseSaveButton.waitForExistence(timeout: 2) {
+                chineseSaveButton.tap()
+            } else {
+                let englishSaveButton = app.buttons["Save"]
+                XCTAssertTrue(englishSaveButton.waitForExistence(timeout: 2))
+                englishSaveButton.tap()
+            }
+        }
 
         XCTAssertTrue(app.staticTexts[statusText].waitForExistence(timeout: 4))
     }

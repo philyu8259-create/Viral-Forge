@@ -420,31 +420,80 @@ enum PosterCanvasTarget: String, CaseIterable, Identifiable, Hashable {
 }
 
 enum TemplateCategory: String, CaseIterable, Identifiable, Hashable {
-    case cover = "Covers"
-    case product = "Product"
-    case knowledge = "Knowledge"
-    case promotion = "Promo"
-    case story = "Story"
+    case productSeeding = "Product Seeding"
+    case storeTraffic = "Store Traffic"
+    case personalBrand = "Personal Brand"
+    case liveLaunch = "Live Launch"
+    case seasonalPromo = "Seasonal Promo"
+    case newLaunch = "New Launch"
 
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
-        case .cover: AppText.localized("Covers", "封面")
-        case .product: AppText.localized("Product", "商品")
-        case .knowledge: AppText.localized("Knowledge", "知识")
-        case .promotion: AppText.localized("Promo", "促销")
-        case .story: AppText.localized("Story", "故事")
+        case .productSeeding: AppText.localized("Product Seeding", "产品种草")
+        case .storeTraffic: AppText.localized("Store Traffic", "探店引流")
+        case .personalBrand: AppText.localized("Personal Brand", "个人IP")
+        case .liveLaunch: AppText.localized("Live Launch", "直播预热")
+        case .seasonalPromo: AppText.localized("Seasonal Promo", "节日促销")
+        case .newLaunch: AppText.localized("New Launch", "新品发布")
         }
     }
 
     static func from(apiValue: String?) -> TemplateCategory {
         switch apiValue {
-        case "Product": .product
-        case "Knowledge": .knowledge
-        case "Promo": .promotion
-        case "Story": .story
-        default: .cover
+        case "Product Seeding", "Product": .productSeeding
+        case "Store Traffic": .storeTraffic
+        case "Personal Brand", "Story", "Knowledge": .personalBrand
+        case "Live Launch": .liveLaunch
+        case "Seasonal Promo", "Promo": .seasonalPromo
+        case "New Launch", "Covers": .newLaunch
+        default: .productSeeding
+        }
+    }
+
+    var defaultGoal: ContentGoal {
+        switch self {
+        case .productSeeding, .seasonalPromo, .newLaunch, .liveLaunch:
+            .sellProduct
+        case .storeTraffic:
+            .driveTraffic
+        case .personalBrand:
+            .personalBrand
+        }
+    }
+
+    var defaultAudience: String {
+        switch self {
+        case .productSeeding:
+            AppText.localized("Value-conscious shoppers who need a real use case", "有明确场景需求、愿意被真实体验打动的人群")
+        case .storeTraffic:
+            AppText.localized("Local users comparing where to go next", "正在比较去哪消费的同城用户")
+        case .personalBrand:
+            AppText.localized("Followers who trust founder stories and expertise", "关注创始人故事、专业经验和长期陪伴的用户")
+        case .liveLaunch:
+            AppText.localized("Warm leads who need a reason to enter the live room", "已被种草但需要理由进入直播间的潜在用户")
+        case .seasonalPromo:
+            AppText.localized("Deal-sensitive users with an immediate holiday need", "有节日消费需求、关注优惠和时效的人群")
+        case .newLaunch:
+            AppText.localized("Early adopters who like trying new products first", "愿意尝鲜、关注新品亮点和第一波体验的人群")
+        }
+    }
+
+    var defaultTone: String {
+        switch self {
+        case .productSeeding:
+            AppText.localized("Authentic, useful, lightly persuasive", "真实体验、实用、轻种草")
+        case .storeTraffic:
+            AppText.localized("Specific, visual, easy to decide", "具体、有画面感、方便决策")
+        case .personalBrand:
+            AppText.localized("Trustworthy, warm, opinionated", "可信、有温度、有观点")
+        case .liveLaunch:
+            AppText.localized("Urgent, energetic, benefit-led", "有紧迫感、热闹、利益点清晰")
+        case .seasonalPromo:
+            AppText.localized("Festive, clear, conversion-focused", "节日氛围、清晰、促转化")
+        case .newLaunch:
+            AppText.localized("Fresh, confident, curiosity-driven", "新鲜、自信、激发好奇")
         }
     }
 }
@@ -474,6 +523,80 @@ struct CreativeTemplate: Identifiable, Hashable {
         self.style = style
         self.promptHint = promptHint
         self.lockedToPro = lockedToPro
+    }
+}
+
+extension CreativeTemplate {
+    var defaultAudience: String {
+        category.defaultAudience
+    }
+
+    var defaultTone: String {
+        category.defaultTone
+    }
+
+    var contentStructure: [String] {
+        switch category {
+        case .productSeeding:
+            [
+                AppText.localized("Pain point hook", "痛点钩子"),
+                AppText.localized("Real use scene", "真实使用场景"),
+                AppText.localized("Three buying reasons", "三个购买理由"),
+                AppText.localized("Soft CTA", "轻行动引导")
+            ]
+        case .storeTraffic:
+            [
+                AppText.localized("Who should go", "适合谁去"),
+                AppText.localized("Signature scene", "核心场景"),
+                AppText.localized("Decision tips", "决策信息"),
+                AppText.localized("Save/share prompt", "收藏转发引导")
+            ]
+        case .personalBrand:
+            [
+                AppText.localized("Personal belief", "个人观点"),
+                AppText.localized("Short story proof", "经历证明"),
+                AppText.localized("Practical takeaway", "可执行建议"),
+                AppText.localized("Follower interaction", "互动提问")
+            ]
+        case .liveLaunch:
+            [
+                AppText.localized("Live room reason", "进直播间理由"),
+                AppText.localized("Limited benefit", "限时权益"),
+                AppText.localized("Product proof", "产品背书"),
+                AppText.localized("Reminder CTA", "预约提醒")
+            ]
+        case .seasonalPromo:
+            [
+                AppText.localized("Holiday context", "节日场景"),
+                AppText.localized("Offer clarity", "优惠说明"),
+                AppText.localized("Gift/use reason", "送礼/自用理由"),
+                AppText.localized("Deadline CTA", "截止时间引导")
+            ]
+        case .newLaunch:
+            [
+                AppText.localized("Newness hook", "新品亮点钩子"),
+                AppText.localized("What changed", "核心升级"),
+                AppText.localized("First-use benefit", "首波体验收益"),
+                AppText.localized("Try-now CTA", "尝鲜行动引导")
+            ]
+        }
+    }
+
+    var sampleOutcome: String {
+        switch category {
+        case .productSeeding:
+            AppText.localized("3 hooks, one social caption, key selling points, hashtags, and a poster direction for seeding.", "生成 3 个标题、正文、卖点、标签和一张种草海报方向。")
+        case .storeTraffic:
+            AppText.localized("A visit-worthy post package with decision details and shareable visual copy.", "生成一套适合探店引流的内容包，包含决策信息和可分享海报文案。")
+        case .personalBrand:
+            AppText.localized("A founder/IP post that builds trust before introducing the offer.", "生成一篇先建立信任、再自然带出产品或服务的个人 IP 文案。")
+        case .liveLaunch:
+            AppText.localized("A warm-up pack for live room reminders, benefits, and urgency.", "生成直播预热内容包，突出预约理由、福利和紧迫感。")
+        case .seasonalPromo:
+            AppText.localized("A campaign-ready promo pack for seasonal offers and conversion posts.", "生成节日促销内容包，可用于限时活动和转化发布。")
+        case .newLaunch:
+            AppText.localized("A launch pack that turns product newness into curiosity and first-wave demand.", "生成新品发布内容包，把新品感转成好奇心和第一波需求。")
+        }
     }
 }
 
