@@ -42,13 +42,9 @@ export function getQuota(userId) {
 
 export function consumeTextGeneration(userId) {
   const quota = getQuota(userId);
+  assertTextGenerationAvailable(quota);
   if (quota.isPro) {
     return quota;
-  }
-  if (quota.remainingTextGenerations <= 0) {
-    const error = new Error("Daily text generation quota is exhausted.");
-    error.statusCode = 429;
-    throw error;
   }
   return updateQuota(userId, {
     ...quota,
@@ -58,18 +54,26 @@ export function consumeTextGeneration(userId) {
 
 export function consumePosterExport(userId) {
   const quota = getQuota(userId);
+  assertPosterExportAvailable(quota);
   if (quota.isPro) {
     return quota;
-  }
-  if (quota.remainingPosterExports <= 0) {
-    const error = new Error("Daily poster export quota is exhausted.");
-    error.statusCode = 429;
-    throw error;
   }
   return updateQuota(userId, {
     ...quota,
     remainingPosterExports: quota.remainingPosterExports - 1
   });
+}
+
+export function ensureTextGenerationAvailable(userId) {
+  const quota = getQuota(userId);
+  assertTextGenerationAvailable(quota);
+  return quota;
+}
+
+export function ensurePosterExportAvailable(userId) {
+  const quota = getQuota(userId);
+  assertPosterExportAvailable(quota);
+  return quota;
 }
 
 export function setProStatus(userId, isPro) {
@@ -102,4 +106,28 @@ export function updateQuota(userId, quota) {
     nowISO()
   );
   return quota;
+}
+
+function assertTextGenerationAvailable(quota) {
+  if (quota.isPro) {
+    return;
+  }
+  if (quota.remainingTextGenerations <= 0) {
+    const error = new Error("Daily text generation quota is exhausted.");
+    error.statusCode = 429;
+    error.code = "quota_exhausted";
+    throw error;
+  }
+}
+
+function assertPosterExportAvailable(quota) {
+  if (quota.isPro) {
+    return;
+  }
+  if (quota.remainingPosterExports <= 0) {
+    const error = new Error("Daily poster export quota is exhausted.");
+    error.statusCode = 429;
+    error.code = "quota_exhausted";
+    throw error;
+  }
 }

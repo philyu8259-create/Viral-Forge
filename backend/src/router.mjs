@@ -1,7 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { appStoreServerStatus } from "./appStore/serverAPI.mjs";
 import { generateContent, generatePosterBackground, providerStatus } from "./providers/providerRouter.mjs";
-import { consumePosterExport, consumeTextGeneration, getQuota, setProStatus } from "./quota/quotaManager.mjs";
+import {
+  consumePosterExport,
+  consumeTextGeneration,
+  ensurePosterExportAvailable,
+  ensureTextGenerationAvailable,
+  getQuota,
+  setProStatus
+} from "./quota/quotaManager.mjs";
+import { assertRateLimit } from "./safety/rateLimiter.mjs";
+import { assertSafeContentRequest, assertSafePosterRequest } from "./safety/contentSafety.mjs";
 import { processServerNotification } from "./store/appStoreNotificationStore.mjs";
 import { getBrandProfile, saveBrandProfile } from "./store/brandStore.mjs";
 import { deleteProject, listProjects, saveProject } from "./store/memoryStore.mjs";
@@ -101,8 +110,11 @@ export async function routeRequest(request, response) {
     const body = await readJSON(request);
     const brandProfile = getBrandProfile(userId);
     const enrichedBody = applyBrandProfile(body, brandProfile);
-    consumeTextGeneration(userId);
+    assertSafeContentRequest(enrichedBody);
+    ensureTextGenerationAvailable(userId);
+    assertRateLimit(userId, "content");
     const generated = await generateContent(enrichedBody);
+    consumeTextGeneration(userId);
     const result = {
       ...generated,
       projectId: generated.projectId || randomUUID()
@@ -119,8 +131,11 @@ export async function routeRequest(request, response) {
   if (request.method === "POST" && url.pathname === "/api/poster/background") {
     const userId = userIdFrom(request);
     const body = await readJSON(request);
-    consumePosterExport(userId);
+    assertSafePosterRequest(body);
+    ensurePosterExportAvailable(userId);
+    assertRateLimit(userId, "poster");
     const result = await generatePosterBackground(body);
+    consumePosterExport(userId);
     return sendJSON(response, 200, result);
   }
 

@@ -617,6 +617,7 @@ struct HomeView: View {
                 .stroke(VFStudioDesign.warning.opacity(0.22), lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.035), radius: 16, x: 0, y: 8)
+        .accessibilityIdentifier("vf.home.generationError")
     }
 
     private func generate() {

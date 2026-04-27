@@ -86,9 +86,9 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 
 - [ ] Test sandbox purchase, restore, renewal, cancellation, and expired subscription states.
 - [ ] Configure and verify App Store Server Notifications V2 against the deployed backend.
-- [ ] Add basic server-side quota/rate-limit protection for provider cost control.
-- [ ] Harden content safety for illegal, medical, financial, exaggerated, and platform-risky claims.
-- [ ] Polish backend-down, provider-error, empty-state, and no-quota user-facing messages.
+- [x] Add basic server-side quota/rate-limit protection for provider cost control.
+- [x] Harden content safety for illegal, medical, financial, exaggerated, and platform-risky claims.
+- [ ] Polish backend-down, provider-error, empty-state, and no-quota user-facing messages. Provider-error and no-quota messages are now localized; backend-down and deeper empty states still need a final pass.
 - [ ] Add minimal crash/error monitoring or an operational log review routine for beta support.
 
 ### P2 Before App Review

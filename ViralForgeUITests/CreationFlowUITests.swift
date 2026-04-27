@@ -86,12 +86,35 @@ final class CreationFlowUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["vf.home.appliedTemplateCard"].waitForExistence(timeout: 4))
     }
 
-    private func launch(_ app: XCUIApplication, appleLanguages: String = "(zh-Hans)", appleLocale: String = "zh_CN") {
+    func testNoQuotaShowsFriendlyError() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_NO_QUOTA"])
+
+        let topicEditor = app.textViews["vf.home.topicEditor"]
+        XCTAssertTrue(topicEditor.waitForExistence(timeout: 8))
+        topicEditor.tap()
+        topicEditor.typeText("便携榨汁杯，适合上班族办公室快速早餐，主打便携、好清洗、低噪音、颜值高。")
+
+        let generateButton = app.buttons["vf.home.generateButton"]
+        XCTAssertTrue(generateButton.waitForExistence(timeout: 4))
+        generateButton.tap()
+
+        let errorCard = app.descendants(matching: .any)["vf.home.generationError"]
+        XCTAssertTrue(errorCard.waitForExistence(timeout: 4))
+        XCTAssertTrue(app.staticTexts["今日免费文案额度已用完。"].exists)
+    }
+
+    private func launch(
+        _ app: XCUIApplication,
+        appleLanguages: String = "(zh-Hans)",
+        appleLocale: String = "zh_CN",
+        extraArguments: [String] = []
+    ) {
         app.launchArguments = [
             "VF_UI_TESTING",
             "-AppleLanguages", appleLanguages,
             "-AppleLocale", appleLocale
-        ]
+        ] + extraArguments
         app.launch()
     }
 

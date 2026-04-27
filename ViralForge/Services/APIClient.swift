@@ -69,6 +69,9 @@ final class APIClient: Sendable {
 
     private func serverMessage(from data: Data) -> String? {
         guard let envelope = try? decoder.decode(APIErrorEnvelope.self, from: data) else { return nil }
+        if let code = envelope.error.code, !code.isEmpty {
+            return "\(code)|\(envelope.error.message)"
+        }
         return envelope.error.message
     }
 }
@@ -89,6 +92,31 @@ enum APIClientError: LocalizedError {
             }
         }
     }
+
+    var statusCode: Int? {
+        if case .httpStatus(let statusCode, _) = self {
+            return statusCode
+        }
+        return nil
+    }
+
+    var serverCode: String? {
+        guard case .httpStatus(_, let message) = self,
+              let message,
+              let separator = message.firstIndex(of: "|")
+        else { return nil }
+        return String(message[..<separator])
+    }
+
+    var serverDetail: String? {
+        guard case .httpStatus(_, let message) = self,
+              let message
+        else { return nil }
+        guard let separator = message.firstIndex(of: "|") else {
+            return message
+        }
+        return String(message[message.index(after: separator)...])
+    }
 }
 
 private struct APIErrorEnvelope: Decodable {
@@ -96,5 +124,6 @@ private struct APIErrorEnvelope: Decodable {
 }
 
 private struct APIErrorBody: Decodable {
+    var code: String?
     var message: String
 }

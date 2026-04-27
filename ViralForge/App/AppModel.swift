@@ -56,6 +56,9 @@ final class AppModel {
         self.posterAssets = assetsFromProjects(projects)
         if isUITesting {
             quota = QuotaState(remainingTextGenerations: 10, remainingPosterExports: 10, isPro: false)
+            if ProcessInfo.processInfo.arguments.contains("VF_UI_TEST_NO_QUOTA") {
+                quota = QuotaState(remainingTextGenerations: 0, remainingPosterExports: 0, isPro: false)
+            }
         }
         startTransactionListener()
     }
@@ -108,10 +111,7 @@ final class AppModel {
             }
             return project
         } catch {
-            generationError = AppText.localized(
-                "Generation failed: \(error.localizedDescription)",
-                "生成失败：\(error.localizedDescription)"
-            )
+            generationError = userFacingGenerationError(for: error)
             return nil
         }
     }
@@ -168,7 +168,7 @@ final class AppModel {
             await refreshQuota()
             return response.imageUrl
         } catch {
-            posterGenerationError = "Poster background failed: \(error.localizedDescription)"
+            posterGenerationError = userFacingPosterError(for: error)
             return nil
         }
     }
@@ -785,6 +785,80 @@ final class AppModel {
         case .unverified:
             throw StoreKitVerificationError.failed
         }
+    }
+
+    private func userFacingGenerationError(for error: Error) -> String {
+        if let apiError = error as? APIClientError {
+            switch apiError.serverCode {
+            case "medical_claim", "financial_claim", "absolute_ad_claim", "illegal_or_dangerous":
+                return AppText.localized(
+                    "This brief contains high-risk claims. Soften the wording and avoid medical, financial, illegal, or absolute promises.",
+                    "这段简报包含高风险表述。请弱化措辞，避免医疗、金融、违法或绝对化承诺。"
+                )
+            case "rate_limited":
+                return AppText.localized(
+                    "You are generating too quickly. Wait a moment, then retry.",
+                    "生成太频繁了，请稍等片刻再重试。"
+                )
+            case "quota_exhausted":
+                return AppText.localized(
+                    "Free generations are used up for today. Upgrade to Pro or try again tomorrow.",
+                    "今日免费文案额度已用完。可以升级 Pro，或明天再试。"
+                )
+            default:
+                if apiError.statusCode == 502 {
+                    return AppText.localized(
+                        "The AI provider is temporarily unavailable. Please retry in a moment.",
+                        "AI 服务暂时不可用，请稍后重试。"
+                    )
+                }
+                if let detail = apiError.serverDetail, !detail.isEmpty {
+                    return AppText.localized("Generation failed: \(detail)", "生成失败：\(detail)")
+                }
+            }
+        }
+
+        return AppText.localized(
+            "Generation failed: \(error.localizedDescription)",
+            "生成失败：\(error.localizedDescription)"
+        )
+    }
+
+    private func userFacingPosterError(for error: Error) -> String {
+        if let apiError = error as? APIClientError {
+            switch apiError.serverCode {
+            case "medical_claim", "financial_claim", "absolute_ad_claim", "illegal_or_dangerous":
+                return AppText.localized(
+                    "The poster prompt contains high-risk claims. Simplify the visual direction and avoid risky wording.",
+                    "海报提示词包含高风险表述。请简化视觉方向，避免风险措辞。"
+                )
+            case "rate_limited":
+                return AppText.localized(
+                    "AI background requests are too frequent. Wait a moment, then retry.",
+                    "AI 背景请求太频繁了，请稍等片刻再重试。"
+                )
+            case "quota_exhausted":
+                return AppText.localized(
+                    "Free AI background exports are used up for today.",
+                    "今日免费 AI 背景额度已用完。"
+                )
+            default:
+                if apiError.statusCode == 502 {
+                    return AppText.localized(
+                        "The image provider is temporarily unavailable. Please retry in a moment.",
+                        "图片生成服务暂时不可用，请稍后重试。"
+                    )
+                }
+                if let detail = apiError.serverDetail, !detail.isEmpty {
+                    return AppText.localized("Poster background failed: \(detail)", "AI 背景生成失败：\(detail)")
+                }
+            }
+        }
+
+        return AppText.localized(
+            "Poster background failed: \(error.localizedDescription)",
+            "AI 背景生成失败：\(error.localizedDescription)"
+        )
     }
 }
 

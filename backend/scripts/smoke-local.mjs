@@ -15,7 +15,9 @@ const server = spawn(process.execPath, ["src/main.mjs"], {
     PORT: String(port),
     SQLITE_PATH: sqlitePath,
     AI_PROVIDER_MODE: "mock",
-    IAP_VERIFICATION_MODE: "local_development"
+    IAP_VERIFICATION_MODE: "local_development",
+    CONTENT_RATE_MAX: "2",
+    CONTENT_RATE_WINDOW_MS: "60000"
   },
   stdio: ["ignore", "pipe", "pipe"]
 });
@@ -73,6 +75,64 @@ try {
   assert(projects.projects[0]?.input?.brandName === "轻氧日记", "generated project includes saved brand memory");
   assert(projects.projects[0]?.input?.bannedWords === "治疗, 保证瘦", "generated project includes banned words");
 
+  const unsafeResult = await postJSONExpectingStatus(
+    "/api/content/generate",
+    {
+      language: "zh-Hans",
+      platform: "xiaohongshu",
+      goal: "sell_product",
+      topic: "宣称可以治疗痘痘并且百分百有效的护肤品",
+      audience: "敏感肌用户",
+      tone: "强转化"
+    },
+    422,
+    { "x-user-id": "safety-user" }
+  );
+  assert(unsafeResult.error?.code === "medical_claim", "unsafe medical claim is blocked before generation");
+  const safetyQuota = await expectJSON("/api/quota", (body) => body.remainingTextGenerations === 3, {
+    "x-user-id": "safety-user"
+  });
+  assert(safetyQuota.remainingTextGenerations === 3, "blocked content does not consume quota");
+
+  await postJSON(
+    "/api/content/generate",
+    {
+      language: "zh-Hans",
+      platform: "xiaohongshu",
+      goal: "sell_product",
+      topic: "办公室保温杯，适合冬天通勤",
+      audience: "通勤白领",
+      tone: "真实轻快"
+    },
+    { "x-user-id": "rate-user" }
+  );
+  await postJSON(
+    "/api/content/generate",
+    {
+      language: "zh-Hans",
+      platform: "xiaohongshu",
+      goal: "sell_product",
+      topic: "桌面收纳盒，适合租房办公桌",
+      audience: "租房青年",
+      tone: "实用直接"
+    },
+    { "x-user-id": "rate-user" }
+  );
+  const rateLimited = await postJSONExpectingStatus(
+    "/api/content/generate",
+    {
+      language: "zh-Hans",
+      platform: "xiaohongshu",
+      goal: "sell_product",
+      topic: "便携咖啡杯，适合早八通勤",
+      audience: "年轻上班族",
+      tone: "轻快"
+    },
+    429,
+    { "x-user-id": "rate-user" }
+  );
+  assert(rateLimited.error?.code === "rate_limited", "rapid content generation is rate limited");
+
   const deleteResult = await deleteJSON(`/api/projects/${generated.projectId}`);
   assert(deleteResult.deleted === true, "project deletion returned true");
   const projectsAfterDelete = await expectJSON("/api/projects", (body) => Array.isArray(body.projects), {
@@ -120,17 +180,36 @@ async function expectJSON(path, predicate, headers = {}) {
   return body;
 }
 
-async function postJSON(path, body) {
+async function postJSON(path, body, headers = {}) {
   const response = await fetch(`${baseURL}${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-user-id": "smoke-user"
+      "x-user-id": "smoke-user",
+      ...headers
     },
     body: JSON.stringify(body)
   });
   const responseBody = await response.json();
   assert(response.ok, `${path} returned HTTP ${response.status}: ${JSON.stringify(responseBody)}`);
+  return responseBody;
+}
+
+async function postJSONExpectingStatus(path, body, expectedStatus, headers = {}) {
+  const response = await fetch(`${baseURL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-id": "smoke-user",
+      ...headers
+    },
+    body: JSON.stringify(body)
+  });
+  const responseBody = await response.json();
+  assert(
+    response.status === expectedStatus,
+    `${path} expected HTTP ${expectedStatus} but returned HTTP ${response.status}: ${JSON.stringify(responseBody)}`
+  );
   return responseBody;
 }
 
