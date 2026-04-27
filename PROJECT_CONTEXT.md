@@ -81,8 +81,9 @@ Viral Forge is a China-first iOS app for generating viral content packages and A
 - Home/template generation now opens the content result page first, with poster editing available from the result page, so users see the copy package before refining visual assets.
 - Local StoreKit testing is aligned with the China-first price plan: `ViralForge.storekit` uses `zh_CN` / `CHN`, monthly `39.8`, yearly `398`.
 - Simulator screenshot after China-first cleanup: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-china-first-home.png`
-- UI/UX direction has started landing in code: Home is now a bright blue-white glassmorphism production dashboard with quota status, China platform buttons, large product brief editor, strategy cards, workflow shortcuts, and a gradient generate CTA. This is integrated with the existing `AppModel` generation flow rather than a standalone sample view.
-- Simulator screenshot for the bright glassmorphism home: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-bright-glass-home.png`
+- UI/UX direction has started landing in code: Home is now a bright glassmorphism Studio dashboard with layered glass cards, subtle Canvas noise, brand-memory status, quota ring, China platform pills, a recessed brief editor, strategy chips, live/recent pipeline cards, workflow shortcuts, and an integrated generation CTA. This is connected to the existing `AppModel` generation flow rather than a standalone sample view.
+- Simulator screenshot for the Studio home: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-studio-home.png`
+- Previous bright dashboard reference screenshot: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-bright-glass-home.png`
 - Older dark dashboard reference screenshot: `/Users/phil/Desktop/Codex Project/Viral Forge/Screenshots/viralforge-glass-dashboard-tabbar.png`
 - iOS Debug build passed on iPhone 17 simulator.
 - iOS Release simulator build passed before the folder rename.
