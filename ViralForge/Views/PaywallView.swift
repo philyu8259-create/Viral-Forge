@@ -11,6 +11,7 @@ struct PaywallView: View {
             featureGrid
             planPicker
             purchaseCard
+            appSettingsCard
             backendSettingsCard
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -185,6 +186,32 @@ struct PaywallView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private var appSettingsCard: some View {
+        NavigationLink {
+            SettingsView()
+        } label: {
+            VFGlassCard {
+                HStack(spacing: 13) {
+                    VFGradientIcon(icon: "gearshape.fill", tint: VFStyle.ink, size: 38)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(AppText.localized("App Settings", "应用设置"))
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(VFStyle.ink)
+                        Text(AppText.localized("Privacy, terms, support, and restore purchases", "隐私、协议、支持与恢复购买"))
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(VFStyle.secondaryText)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText.opacity(0.55))
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("vf.paywall.settingsLink")
     }
 
     private var primaryButtonTitle: String {

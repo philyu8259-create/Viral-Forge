@@ -133,6 +133,24 @@ final class CreationFlowUITests: XCTestCase {
         XCTAssertTrue(app.buttons["vf.paywall.restoreButton"].waitForExistence(timeout: 4))
     }
 
+    func testSettingsShowsRequiredAppStoreLinks() throws {
+        let app = XCUIApplication()
+        launch(app)
+
+        app.tabBars.buttons["品牌"].tap()
+        XCTAssertTrue(app.buttons["vf.brand.settingsLink"].waitForExistence(timeout: 8))
+        app.buttons["vf.brand.settingsLink"].tap()
+
+        XCTAssertTrue(app.scrollViews["vf.settings.screen"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.buttons["vf.settings.privacyLink"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.buttons["vf.settings.termsLink"].exists)
+        XCTAssertTrue(app.buttons["vf.settings.supportLink"].exists)
+        XCTAssertTrue(app.buttons["vf.settings.emailSupportLink"].exists)
+        XCTAssertTrue(app.buttons["vf.settings.dataDeletionLink"].exists)
+        XCTAssertTrue(app.buttons["vf.settings.restorePurchasesButton"].exists)
+        XCTAssertTrue(app.staticTexts["版本"].exists)
+    }
+
     private func launch(
         _ app: XCUIApplication,
         appleLanguages: String = "(zh-Hans)",

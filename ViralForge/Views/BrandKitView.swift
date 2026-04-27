@@ -18,6 +18,7 @@ struct BrandKitView: View {
             profileCard
             rulesCard
             saveCard
+            settingsCard
         }
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -201,6 +202,33 @@ struct BrandKitView: View {
                 }
             }
         }
+    }
+
+    private var settingsCard: some View {
+        NavigationLink {
+            SettingsView()
+        } label: {
+            VFGlassCard {
+                HStack(spacing: 13) {
+                    VFGradientIcon(icon: "gearshape.fill", tint: VFStyle.ink, size: 38)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(AppText.localized("Settings", "设置"))
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(VFStyle.ink)
+                        Text(AppText.localized("Privacy, terms, support, data deletion, and restore purchases", "隐私、协议、支持、数据删除与恢复购买"))
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(VFStyle.secondaryText)
+                            .lineLimit(2)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText.opacity(0.55))
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("vf.brand.settingsLink")
     }
 
     private func brandedField(_ placeholder: String, text: Binding<String>, icon: String, tint: Color, lines: Int = 1) -> some View {
