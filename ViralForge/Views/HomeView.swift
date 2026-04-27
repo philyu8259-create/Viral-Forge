@@ -7,8 +7,6 @@ struct HomeView: View {
     @State private var generatedProject: ContentProject?
     @State private var activeEditor: StrategyEditor?
     @State private var pasteStatusMessage: String?
-    @State private var inputPulse = false
-    @FocusState private var isBriefFocused: Bool
 
     private var canGenerate: Bool {
         !appModel.isGenerating && draft.isReadyToGenerate
@@ -27,7 +25,7 @@ struct HomeView: View {
             StudioDashboardBackground()
 
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 24) {
                     studioHeader
                     mainCreationCard
                     contentPipelineSection
@@ -56,7 +54,6 @@ struct HomeView: View {
         }
         .task {
             await appModel.refreshQuota()
-            inputPulse = true
         }
         .onChange(of: draft) { _, _ in
             appModel.generationError = nil
@@ -134,7 +131,6 @@ struct HomeView: View {
                         .padding(.bottom, 46)
                         .scrollContentBackground(.hidden)
                         .background(Color.clear)
-                        .focused($isBriefFocused)
 
                     if draft.topic.isEmpty {
                         Text(AppText.localized(
@@ -179,15 +175,6 @@ struct HomeView: View {
                     .frame(maxHeight: .infinity, alignment: .bottom)
                 }
                 .frame(minHeight: 154)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 18)
-                        .stroke(
-                            inputPulseColor,
-                            lineWidth: isBriefFocused || hasTopic ? 1.7 : 1
-                        )
-                        .shadow(color: inputPulseColor.opacity(isBriefFocused || hasTopic ? 0.34 : 0.0), radius: inputPulse ? 16 : 6)
-                        .animation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true), value: inputPulse)
-                }
 
                 if let message = visibleTopicValidationMessage {
                     Label(message, systemImage: "exclamationmark.circle.fill")
@@ -204,28 +191,46 @@ struct HomeView: View {
                     .foregroundStyle(hasTopic ? VFStudioDesign.accent : VFStudioDesign.secondaryText)
 
                     if hasTopic {
-                        BentoStrategyGrid(
-                            platform: draft.platform.displayName,
-                            audience: draft.audience.isEmpty ? AppText.localized("Recommended persona", "智能推荐画像") : draft.audience,
-                            tone: draft.tone.isEmpty ? AppText.localized("Professional seeding", "专业种草") : draft.tone,
-                            goal: draft.goal.displayName,
-                            brandTint: brandAccentColor,
-                            audienceAction: {
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                            StrategyMiniChip(
+                                icon: "paperplane.fill",
+                                title: AppText.localized("Platform", "平台"),
+                                value: draft.platform.displayName,
+                                tint: VFStudioDesign.accent
+                            ) {
+                                Haptics.selection()
+                            }
+
+                            StrategyMiniChip(
+                                icon: "person.3.fill",
+                                title: AppText.localized("Audience", "受众画像"),
+                                value: draft.audience.isEmpty ? AppText.localized("Recommended persona", "智能推荐画像") : draft.audience,
+                                tint: VFStudioDesign.teal
+                            ) {
                                 Haptics.selection()
                                 activeEditor = .audience
-                            },
-                            toneAction: {
+                            }
+
+                            StrategyMiniChip(
+                                icon: "mouth.fill",
+                                title: AppText.localized("Tone", "内容语气"),
+                                value: draft.tone.isEmpty ? AppText.localized("Professional seeding", "专业种草") : draft.tone,
+                                tint: VFStudioDesign.sky
+                            ) {
                                 Haptics.selection()
                                 activeEditor = .tone
-                            },
-                            platformAction: {
-                                Haptics.selection()
-                            },
-                            goalAction: {
-                                Haptics.selection()
-                                activeEditor = .goal
                             }
-                        )
+
+                            StrategyMiniChip(
+                                icon: "paintpalette.fill",
+                                title: AppText.localized("Poster style", "海报风格"),
+                                value: AppText.localized("Minimal white", "极简白系"),
+                                tint: brandAccentColor
+                            ) {
+                                Haptics.selection()
+                                activeEditor = .brand
+                            }
+                        }
                         .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))
                     }
                 }
@@ -255,16 +260,6 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(AppText.localized("Magic Paste", "智能粘贴"))
-    }
-
-    private var inputPulseColor: Color {
-        if isBriefFocused {
-            return VFStudioDesign.primaryBlue.opacity(inputPulse ? 0.36 : 0.16)
-        }
-        if hasTopic {
-            return VFStudioDesign.accent.opacity(inputPulse ? 0.28 : 0.12)
-        }
-        return Color.white.opacity(0.78)
     }
 
     private var contentPipelineSection: some View {
@@ -550,7 +545,16 @@ private enum Haptics {
 private struct StudioDashboardBackground: View {
     var body: some View {
         ZStack {
-            meshOrFallbackBackground
+            LinearGradient(
+                colors: [
+                    Color(red: 0.95, green: 0.97, blue: 1.0),
+                    Color(red: 0.985, green: 0.99, blue: 1.0),
+                    .white
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
             Circle()
                 .fill(VFStudioDesign.primaryBlue.opacity(0.06))
@@ -571,53 +575,8 @@ private struct StudioDashboardBackground: View {
                 .offset(x: 160, y: 440)
 
             StudioNoiseOverlay()
-                .opacity(0.34)
+                .opacity(0.28)
                 .ignoresSafeArea()
-        }
-    }
-
-    @ViewBuilder
-    private var meshOrFallbackBackground: some View {
-        if #available(iOS 18.0, *) {
-            MeshGradient(
-                width: 3,
-                height: 3,
-                points: [
-                    SIMD2<Float>(0.00, 0.00),
-                    SIMD2<Float>(0.52, 0.04),
-                    SIMD2<Float>(1.00, 0.00),
-                    SIMD2<Float>(0.04, 0.46),
-                    SIMD2<Float>(0.55, 0.48),
-                    SIMD2<Float>(1.00, 0.42),
-                    SIMD2<Float>(0.00, 1.00),
-                    SIMD2<Float>(0.48, 0.96),
-                    SIMD2<Float>(1.00, 1.00)
-                ],
-                colors: [
-                    Color(red: 0.98, green: 0.99, blue: 1.00),
-                    Color(red: 0.92, green: 0.95, blue: 1.00),
-                    .white,
-                    Color(red: 0.95, green: 0.98, blue: 1.00),
-                    Color(red: 0.91, green: 0.94, blue: 1.00),
-                    Color(red: 0.98, green: 1.00, blue: 0.99),
-                    .white,
-                    Color(red: 0.96, green: 0.98, blue: 1.00),
-                    Color(red: 0.94, green: 0.99, blue: 0.98)
-                ],
-                smoothsColors: true
-            )
-            .ignoresSafeArea()
-        } else {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.95, green: 0.97, blue: 1.0),
-                    Color(red: 0.985, green: 0.99, blue: 1.0),
-                    .white
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
         }
     }
 }
@@ -776,120 +735,6 @@ private struct StrategyMiniChip: View {
     }
 }
 
-private struct BentoStrategyGrid: View {
-    let platform: String
-    let audience: String
-    let tone: String
-    let goal: String
-    let brandTint: Color
-    let audienceAction: () -> Void
-    let toneAction: () -> Void
-    let platformAction: () -> Void
-    let goalAction: () -> Void
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            BentoCard(
-                icon: "person.2.fill",
-                title: AppText.localized("Audience", "目标人群"),
-                value: audience,
-                subtitle: AppText.localized("Primary conversion lens", "主转化视角"),
-                tint: brandTint,
-                size: .large,
-                action: audienceAction
-            )
-
-            VStack(spacing: 12) {
-                BentoCard(
-                    icon: "quote.bubble.fill",
-                    title: AppText.localized("Tone", "语气"),
-                    value: tone,
-                    subtitle: AppText.localized("Copy rhythm", "文案节奏"),
-                    tint: VFStudioDesign.sky,
-                    size: .small,
-                    action: toneAction
-                )
-
-                BentoCard(
-                    icon: "camera.fill",
-                    title: AppText.localized("Platform", "平台"),
-                    value: platform,
-                    subtitle: goal,
-                    tint: VFStudioDesign.accent,
-                    size: .small,
-                    action: platformAction
-                )
-            }
-        }
-    }
-}
-
-private enum BentoSize {
-    case small
-    case large
-}
-
-private struct BentoCard: View {
-    let icon: String
-    let title: String
-    let value: String
-    let subtitle: String
-    let tint: Color
-    let size: BentoSize
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: size == .large ? 32 : 11) {
-                HStack {
-                    Image(systemName: icon)
-                        .font(.system(size: size == .large ? 18 : 14, weight: .bold))
-                        .foregroundStyle(tint)
-                        .frame(width: size == .large ? 36 : 30, height: size == .large ? 36 : 30)
-                        .background(tint.opacity(0.10), in: Circle())
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(VFStudioDesign.secondaryText.opacity(0.45))
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(VFStudioDesign.secondaryText)
-                    Text(value)
-                        .font(size == .large ? .headline.weight(.bold) : .subheadline.weight(.bold))
-                        .foregroundStyle(VFStudioDesign.ink)
-                        .lineLimit(size == .large ? 2 : 1)
-                        .minimumScaleFactor(0.76)
-                    Text(subtitle)
-                        .font(.caption2.weight(.medium))
-                        .foregroundStyle(VFStudioDesign.secondaryText.opacity(0.82))
-                        .lineLimit(1)
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: size == .large ? 166 : 77, alignment: .topLeading)
-            .padding(size == .large ? 18 : 14)
-            .background(.white.opacity(0.64), in: RoundedRectangle(cornerRadius: 24))
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 24))
-            .overlay {
-                RoundedRectangle(cornerRadius: 24)
-                    .stroke(.white.opacity(0.68), lineWidth: 1)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 24)
-                            .stroke(tint.opacity(0.08), lineWidth: 6)
-                            .blur(radius: 10)
-                    }
-            }
-            .shadow(color: .white.opacity(0.54), radius: 10, x: -3, y: -4)
-            .shadow(color: .black.opacity(0.034), radius: 18, x: 0, y: 10)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 private struct PipelineItem: View {
     let title: String
     let status: String
@@ -898,33 +743,6 @@ private struct PipelineItem: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            ZStack(alignment: .bottomLeading) {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(
-                        LinearGradient(
-                            colors: [tint.opacity(0.18), .white.opacity(0.78)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-
-                VStack(alignment: .leading, spacing: 3) {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(tint)
-                        .frame(width: 34, height: 4)
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(VFStudioDesign.ink.opacity(0.22))
-                        .frame(width: 58, height: 4)
-                }
-                .padding(10)
-            }
-            .frame(height: 78)
-            .overlay {
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(.white.opacity(0.74), lineWidth: 1)
-            }
-            .shadow(color: tint.opacity(0.08), radius: 10, x: 0, y: 6)
-
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 5) {
                     Text(title)
