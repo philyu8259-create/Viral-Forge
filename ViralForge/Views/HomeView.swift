@@ -16,11 +16,12 @@ struct HomeView: View {
 
     var body: some View {
         ZStack {
-            DashboardBackground()
+            BrightDashboardBackground()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 26) {
                     headerSection
+                    quotaSection
                     platformSelector
                     briefCard
                     strategyGrid
@@ -38,6 +39,7 @@ struct HomeView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .preferredColorScheme(.light)
         .navigationDestination(item: $generatedProject) { project in
             ResultView(project: project)
         }
@@ -55,114 +57,80 @@ struct HomeView: View {
     }
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("ViralForge")
-                        .font(.system(size: 34, weight: .black, design: .rounded))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.white, Color(red: 0.78, green: 0.89, blue: 0.92)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 7) {
+                Text("ViralForge")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [BrightPalette.graphite, BrightPalette.ink],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
+                    )
 
-                    Text(AppText.localized("Production dashboard for viral content assets", "爆款内容资产生产台"))
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.white.opacity(0.62))
-                }
-
-                Spacer()
-
-                NavigationLink {
-                    BrandKitView()
-                } label: {
-                    Image(systemName: "briefcase.fill")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(width: 46, height: 46)
-                        .background(.ultraThinMaterial, in: Circle())
-                        .overlay {
-                            Circle()
-                                .stroke(.white.opacity(0.14), lineWidth: 1)
-                        }
-                        .shadow(color: Color(red: 0.10, green: 0.78, blue: 0.82).opacity(0.22), radius: 16, y: 8)
-                }
-                .accessibilityLabel(AppText.localized("Brand Kit", "品牌资料"))
+                Text(AppText.localized("Production dashboard for viral content assets", "爆款内容资产生产平台"))
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(BrightPalette.secondaryText)
             }
 
-            quotaPanel
+            Spacer()
+
+            NavigationLink {
+                BrandKitView()
+            } label: {
+                Image(systemName: "briefcase.fill")
+                    .font(.headline)
+                    .foregroundStyle(BrightPalette.sky)
+                    .frame(width: 48, height: 48)
+                    .background(.white.opacity(0.74), in: Circle())
+                    .overlay {
+                        Circle()
+                            .stroke(.white.opacity(0.92), lineWidth: 1.4)
+                    }
+                    .shadow(color: BrightPalette.sky.opacity(0.18), radius: 18, x: 0, y: 10)
+                    .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+            }
+            .accessibilityLabel(AppText.localized("Brand Kit", "品牌资料"))
         }
     }
 
-    private var quotaPanel: some View {
-        HStack(spacing: 12) {
-            quotaMetric(
+    private var quotaSection: some View {
+        HStack(spacing: 14) {
+            QuotaGlassCard(
                 title: AppText.localized("Copy left", "文案额度"),
                 value: appModel.quota.isPro ? AppText.localized("Unlimited", "不限") : "\(appModel.quota.remainingTextGenerations)",
                 icon: "doc.text.fill",
-                tint: Color(red: 0.12, green: 0.88, blue: 0.88)
+                color: BrightPalette.teal
             )
 
-            quotaMetric(
+            QuotaGlassCard(
                 title: AppText.localized("AI background", "AI 背景"),
                 value: appModel.quota.isPro ? AppText.localized("Pro", "会员") : "\(appModel.quota.remainingPosterExports)",
-                icon: "sparkles.rectangle.stack.fill",
-                tint: Color(red: 0.66, green: 0.44, blue: 0.98)
+                icon: "sparkles",
+                color: BrightPalette.lavender
             )
         }
-        .padding(14)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18))
-        .overlay {
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(.white.opacity(0.12), lineWidth: 1)
-        }
-    }
-
-    private func quotaMetric(title: String, value: String, icon: String, tint: Color) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(tint)
-                .frame(width: 30, height: 30)
-                .background(tint.opacity(0.14), in: Circle())
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.54))
-                Text(value)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.white)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity)
     }
 
     private var platformSelector: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionLabel(AppText.localized("Target platform", "目标平台"))
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(SocialPlatform.chinaLaunchPlatforms) { platform in
-                        Button {
-                            withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
-                                draft.platform = platform
-                            }
-                        } label: {
-                            PlatformPill(
-                                platform: platform,
-                                isSelected: draft.platform == platform
-                            )
+            HStack(spacing: 12) {
+                ForEach(SocialPlatform.chinaLaunchPlatforms) { platform in
+                    Button {
+                        withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+                            draft.platform = platform
                         }
-                        .buttonStyle(.plain)
+                    } label: {
+                        PlatformButton(
+                            platform: platform,
+                            isSelected: draft.platform == platform
+                        )
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.vertical, 2)
             }
         }
     }
@@ -172,14 +140,16 @@ struct HomeView: View {
             sectionLabel(AppText.localized("Product brief", "产品或主题简报"))
 
             ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 22)
-                    .fill(.ultraThinMaterial)
-                    .shadow(color: .black.opacity(0.34), radius: 20, x: 0, y: 12)
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(.white.opacity(0.42))
+                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 24))
+                    .shadow(color: .black.opacity(0.035), radius: 18, x: 0, y: 12)
+                    .shadow(color: BrightPalette.sky.opacity(0.06), radius: 28, x: 0, y: 10)
 
                 TextEditor(text: $draft.topic)
                     .font(.body.weight(.medium))
-                    .foregroundStyle(.white)
-                    .padding(16)
+                    .foregroundStyle(BrightPalette.ink)
+                    .padding(18)
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
 
@@ -189,29 +159,22 @@ struct HomeView: View {
                         "例如：一款适合上班族的便携榨汁杯，主打快速早餐、好清洗、适合办公室..."
                     ))
                     .font(.body.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.32))
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 24)
+                    .foregroundStyle(BrightPalette.secondaryText.opacity(0.74))
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 26)
                     .allowsHitTesting(false)
                 }
             }
-            .frame(minHeight: 152)
+            .frame(minHeight: 176)
             .overlay {
-                RoundedRectangle(cornerRadius: 22)
-                    .stroke(
-                        LinearGradient(
-                            colors: [.white.opacity(0.16), .white.opacity(0.04)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(.white.opacity(0.88), lineWidth: 1.5)
             }
 
             if let message = visibleTopicValidationMessage {
                 Label(message, systemImage: "exclamationmark.circle.fill")
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(Color(red: 1.0, green: 0.62, blue: 0.48))
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(BrightPalette.warning)
             }
         }
     }
@@ -220,39 +183,39 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionLabel(AppText.localized("Content strategy", "内容策略"))
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                StrategyCard(
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
+                StrategyGlassCard(
                     icon: "target",
                     title: AppText.localized("Goal", "目标"),
                     value: draft.goal.displayName,
-                    tint: Color(red: 0.66, green: 0.44, blue: 0.98)
+                    tint: BrightPalette.sky
                 ) {
                     activeEditor = .goal
                 }
 
-                StrategyCard(
+                StrategyGlassCard(
                     icon: "person.2.fill",
                     title: AppText.localized("Audience", "目标人群"),
                     value: draft.audience.isEmpty ? AppText.localized("Tap to set", "点击设置") : draft.audience,
-                    tint: Color(red: 0.14, green: 0.82, blue: 0.82)
+                    tint: BrightPalette.teal
                 ) {
                     activeEditor = .audience
                 }
 
-                StrategyCard(
+                StrategyGlassCard(
                     icon: "quote.bubble.fill",
                     title: AppText.localized("Tone", "语气风格"),
-                    value: draft.tone.isEmpty ? AppText.localized("Tap to set", "点击设置") : draft.tone,
-                    tint: Color(red: 0.98, green: 0.62, blue: 0.36)
+                    value: draft.tone.isEmpty ? AppText.localized("Not set", "未设置") : draft.tone,
+                    tint: BrightPalette.coral
                 ) {
                     activeEditor = .tone
                 }
 
-                StrategyCard(
-                    icon: "brain.head.profile",
-                    title: AppText.localized("Brand memory", "品牌记忆"),
+                StrategyGlassCard(
+                    icon: "building.2.fill",
+                    title: AppText.localized("Brand memory", "品牌背景"),
                     value: appModel.brandProfile.hasSavedMemory ? appModel.brandProfile.memorySummary : AppText.localized("Not set", "未设置"),
-                    tint: Color(red: 0.56, green: 0.82, blue: 0.38)
+                    tint: BrightPalette.lavender
                 ) {
                     activeEditor = .brand
                 }
@@ -264,14 +227,15 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionLabel(AppText.localized("Creation tools", "创作工具"))
 
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
                 NavigationLink {
                     BatchCreateView()
                 } label: {
-                    WorkflowTile(
+                    WorkflowGlassTile(
                         icon: "square.grid.2x2.fill",
                         title: AppText.localized("Batch", "批量创作"),
-                        subtitle: AppText.localized("7/14-day calendar", "7/14 天日历")
+                        subtitle: AppText.localized("7/14-day calendar", "7/14 天日历"),
+                        tint: BrightPalette.teal
                     )
                 }
                 .buttonStyle(.plain)
@@ -279,10 +243,11 @@ struct HomeView: View {
                 NavigationLink {
                     TemplatesView()
                 } label: {
-                    WorkflowTile(
+                    WorkflowGlassTile(
                         icon: "rectangle.on.rectangle.fill",
                         title: AppText.localized("Templates", "模板开始"),
-                        subtitle: AppText.localized("China-first layouts", "国内平台模板")
+                        subtitle: AppText.localized("China-first layouts", "国内平台模板"),
+                        tint: BrightPalette.sky
                     )
                 }
                 .buttonStyle(.plain)
@@ -305,25 +270,21 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
             .background {
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 22)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 0.48, green: 0.26, blue: 0.92),
-                                Color(red: 0.08, green: 0.76, blue: 0.80),
-                                Color(red: 0.14, green: 0.70, blue: 0.42)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
+                            colors: [BrightPalette.aqua, BrightPalette.sky, BrightPalette.teal],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
                     )
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(.white.opacity(0.20), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 22)
+                    .stroke(.white.opacity(0.52), lineWidth: 1.2)
             }
-            .shadow(color: Color(red: 0.08, green: 0.76, blue: 0.80).opacity(0.28), radius: 22, y: 10)
-            .opacity(canGenerate ? 1 : 0.48)
+            .shadow(color: BrightPalette.sky.opacity(0.34), radius: 18, x: 0, y: 10)
+            .opacity(canGenerate ? 1 : 0.46)
         }
         .buttonStyle(.plain)
         .disabled(!canGenerate)
@@ -333,31 +294,31 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label(message, systemImage: "exclamationmark.triangle.fill")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color(red: 1.0, green: 0.66, blue: 0.52))
+                .foregroundStyle(BrightPalette.warning)
 
             Button {
                 generate()
             } label: {
                 Label(AppText.localized("Retry", "重试"), systemImage: "arrow.clockwise")
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(BrightPalette.sky)
             }
             .disabled(!canGenerate)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(red: 0.44, green: 0.12, blue: 0.10).opacity(0.34), in: RoundedRectangle(cornerRadius: 18))
+        .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 18))
         .overlay {
             RoundedRectangle(cornerRadius: 18)
-                .stroke(Color(red: 1.0, green: 0.55, blue: 0.42).opacity(0.24), lineWidth: 1)
+                .stroke(BrightPalette.warning.opacity(0.22), lineWidth: 1)
         }
+        .shadow(color: .black.opacity(0.035), radius: 16, x: 0, y: 8)
     }
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
-            .font(.subheadline.weight(.bold))
-            .foregroundStyle(.white.opacity(0.70))
-            .textCase(.uppercase)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(BrightPalette.ink)
     }
 
     private func generate() {
@@ -367,75 +328,126 @@ struct HomeView: View {
     }
 }
 
-private struct DashboardBackground: View {
+private enum BrightPalette {
+    static let ink = Color(red: 0.17, green: 0.22, blue: 0.28)
+    static let graphite = Color(red: 0.29, green: 0.34, blue: 0.41)
+    static let secondaryText = Color(red: 0.47, green: 0.53, blue: 0.60)
+    static let sky = Color(red: 0.39, green: 0.70, blue: 0.93)
+    static let aqua = Color(red: 0.50, green: 0.84, blue: 0.91)
+    static let teal = Color(red: 0.31, green: 0.82, blue: 0.77)
+    static let lavender = Color(red: 0.72, green: 0.58, blue: 0.96)
+    static let coral = Color(red: 0.96, green: 0.58, blue: 0.40)
+    static let warning = Color(red: 0.86, green: 0.34, blue: 0.22)
+}
+
+private struct BrightDashboardBackground: View {
     var body: some View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(red: 0.035, green: 0.038, blue: 0.044),
-                    Color(red: 0.055, green: 0.058, blue: 0.072),
-                    Color(red: 0.025, green: 0.030, blue: 0.035)
+                    .white,
+                    Color(red: 0.96, green: 0.985, blue: 1.0),
+                    Color(red: 0.93, green: 0.965, blue: 0.99)
                 ],
-                startPoint: .top,
-                endPoint: .bottom
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
 
             RadialGradient(
                 colors: [
-                    Color(red: 0.12, green: 0.86, blue: 0.82).opacity(0.20),
-                    .clear
-                ],
-                center: .topLeading,
-                startRadius: 60,
-                endRadius: 520
-            )
-            .ignoresSafeArea()
-
-            RadialGradient(
-                colors: [
-                    Color(red: 0.62, green: 0.34, blue: 0.98).opacity(0.16),
-                    .clear
+                    Color(red: 0.86, green: 0.96, blue: 1.0),
+                    .white.opacity(0.0)
                 ],
                 center: .topTrailing,
-                startRadius: 80,
-                endRadius: 560
+                startRadius: 0,
+                endRadius: 620
             )
             .ignoresSafeArea()
+
+            Circle()
+                .fill(Color(red: 0.88, green: 0.91, blue: 1.0).opacity(0.62))
+                .frame(width: 420, height: 420)
+                .blur(radius: 90)
+                .offset(x: -210, y: 90)
+
+            Circle()
+                .fill(Color(red: 0.78, green: 0.96, blue: 0.95).opacity(0.36))
+                .frame(width: 300, height: 300)
+                .blur(radius: 80)
+                .offset(x: 160, y: 380)
         }
     }
 }
 
-private struct PlatformPill: View {
+private struct QuotaGlassCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 11) {
+            Image(systemName: icon)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(.white)
+                .frame(width: 34, height: 34)
+                .background(color.opacity(0.86), in: RoundedRectangle(cornerRadius: 10))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(BrightPalette.secondaryText)
+                Text(value)
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(BrightPalette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(.white.opacity(0.58), in: RoundedRectangle(cornerRadius: 18))
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(.white.opacity(0.92), lineWidth: 1.2)
+        }
+        .shadow(color: .black.opacity(0.035), radius: 16, x: 0, y: 10)
+    }
+}
+
+private struct PlatformButton: View {
     let platform: SocialPlatform
     let isSelected: Bool
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Image(systemName: platformIcon)
-                .font(.headline)
-            Text(platform.displayName)
                 .font(.subheadline.weight(.bold))
+            Text(platform.displayName)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
         }
-        .foregroundStyle(isSelected ? .white : .white.opacity(0.58))
-        .padding(.horizontal, 18)
-        .padding(.vertical, 13)
-        .background {
-            RoundedRectangle(cornerRadius: 18)
-                .fill(isSelected ? .white.opacity(0.14) : .white.opacity(0.055))
-        }
+        .foregroundStyle(isSelected ? Color(red: 0.17, green: 0.42, blue: 0.69) : BrightPalette.secondaryText)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity)
+        .background(isSelected ? Color(red: 0.92, green: 0.975, blue: 1.0) : .white.opacity(0.54), in: RoundedRectangle(cornerRadius: 16))
         .overlay {
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(isSelected ? Color(red: 0.12, green: 0.88, blue: 0.88).opacity(0.58) : .white.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(isSelected ? BrightPalette.sky.opacity(0.58) : .white.opacity(0.88), lineWidth: 1.4)
         }
-        .shadow(color: isSelected ? Color(red: 0.12, green: 0.88, blue: 0.88).opacity(0.22) : .clear, radius: 14, y: 7)
+        .shadow(color: isSelected ? BrightPalette.sky.opacity(0.16) : .black.opacity(0.025), radius: isSelected ? 14 : 8, x: 0, y: isSelected ? 8 : 4)
     }
 
     private var platformIcon: String {
         switch platform {
         case .xiaohongshu: "book.closed.fill"
         case .douyin: "play.rectangle.fill"
-        case .weChat: "message.fill"
+        case .weChat: "bubble.left.fill"
         case .tikTok: "music.note"
         case .instagram: "camera.fill"
         case .youtubeShorts: "play.square.stack.fill"
@@ -443,7 +455,7 @@ private struct PlatformPill: View {
     }
 }
 
-private struct StrategyCard: View {
+private struct StrategyGlassCard: View {
     let icon: String
     let title: String
     let value: String
@@ -452,72 +464,75 @@ private struct StrategyCard: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Image(systemName: icon)
                         .font(.headline)
                         .foregroundStyle(tint)
-                        .frame(width: 32, height: 32)
-                        .background(tint.opacity(0.14), in: Circle())
                     Spacer()
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.34))
+                        .foregroundStyle(BrightPalette.secondaryText.opacity(0.52))
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 5) {
                     Text(title)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.48))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(BrightPalette.secondaryText)
                     Text(value)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(.white)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(BrightPalette.ink)
                         .lineLimit(2)
-                        .minimumScaleFactor(0.82)
-                        .frame(minHeight: 36, alignment: .topLeading)
+                        .minimumScaleFactor(0.80)
+                        .frame(minHeight: 38, alignment: .topLeading)
                 }
             }
-            .padding(14)
+            .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18))
+            .background(.white.opacity(0.52), in: RoundedRectangle(cornerRadius: 20))
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
             .overlay {
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(.white.opacity(0.09), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(.white.opacity(0.88), lineWidth: 1.2)
             }
+            .shadow(color: .black.opacity(0.03), radius: 14, x: 0, y: 8)
         }
         .buttonStyle(.plain)
     }
 }
 
-private struct WorkflowTile: View {
+private struct WorkflowGlassTile: View {
     let icon: String
     let title: String
     let subtitle: String
+    let tint: Color
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Image(systemName: icon)
                 .font(.title3.weight(.bold))
-                .foregroundStyle(Color(red: 0.12, green: 0.88, blue: 0.88))
+                .foregroundStyle(.white)
                 .frame(width: 36, height: 36)
-                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                .background(tint.opacity(0.88), in: RoundedRectangle(cornerRadius: 12))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(BrightPalette.ink)
                 Text(subtitle)
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.48))
+                    .foregroundStyle(BrightPalette.secondaryText)
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .background(.white.opacity(0.56), in: RoundedRectangle(cornerRadius: 20))
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
         .overlay {
             RoundedRectangle(cornerRadius: 20)
-                .stroke(.white.opacity(0.10), lineWidth: 1)
+                .stroke(.white.opacity(0.88), lineWidth: 1.2)
         }
+        .shadow(color: .black.opacity(0.03), radius: 14, x: 0, y: 8)
     }
 }
 
