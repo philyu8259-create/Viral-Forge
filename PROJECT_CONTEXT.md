@@ -101,9 +101,10 @@ Viral Forge is a China-first iOS app for generating viral content packages and A
 
 ## Next Work
 
-1. Continue local MVP development before public deployment.
-2. Use `npm run smoke:local` after backend changes to verify health, provider status, quota, content generation, and poster background routes without consuming live model credits.
-3. The functional MVP is close to UI/UX handoff: a designer can now redesign the visible screens around real workflows instead of placeholders.
-4. Later, choose deployment architecture. Alibaba Cloud FC + Tablestore is viable but requires replacing SQLite persistence and adapting the HTTP server to a serverless handler.
-5. Before TestFlight, deploy a public HTTPS backend, update Release `BACKEND_BASE_URL`, and configure App Store Server Notifications V2.
-6. Prepare privacy policy, terms, and subscription screenshots after UI design.
+1. Use `CHINA_RELEASE_CHECKLIST.md` as the TestFlight readiness source of truth.
+2. Continue local MVP development only where it clears the checklist or removes launch risk.
+3. Use `npm run smoke:local` after backend changes to verify health, provider status, quota, content generation, and poster background routes without consuming live model credits.
+4. The functional MVP is close to UI/UX handoff: a designer can now redesign the visible screens around real workflows instead of placeholders.
+5. Before TestFlight, deploy a public HTTPS backend, update Release `BACKEND_BASE_URL`, regenerate the Xcode project, and validate the app against that backend.
+6. Prepare public Simplified Chinese privacy policy/terms, App Store metadata, and subscription screenshots.
+7. Later, Alibaba Cloud FC + Tablestore remains viable but requires replacing SQLite persistence and adapting the HTTP server to a serverless handler.

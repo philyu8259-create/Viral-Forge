@@ -48,6 +48,51 @@ SEEDREAM_IMAGES_URL=https://ark.cn-beijing.volces.com/api/v3/images/generations
 https://YOUR_BACKEND_DOMAIN/api/app-store/notifications/v2
 ```
 
+## TestFlight Readiness Gap List
+
+This is the source of truth for the first China TestFlight build. Keep the first beta China-only; do not add international/OpenAI scope to clear these items.
+
+### Verified Local Baseline
+
+- [x] Core creation flow works in Chinese mock mode: Home -> Result.
+- [x] Poster flow works in UI smoke tests: Result -> Poster Editor -> rendered PNG -> Assets > Posters.
+- [x] Backend local checks pass with mock/local providers: `npm run check` and `npm run smoke:local`.
+- [x] Local StoreKit configuration uses the China-first subscription products and prices.
+- [x] Release build keeps `BACKEND_BASE_URL` empty until a real public HTTPS backend is chosen.
+
+### P0 Before First TestFlight Upload
+
+- [ ] Deploy a public HTTPS backend for the beta build.
+- [ ] Configure backend production/sandbox environment variables without committing secrets:
+  - `AI_PROVIDER_MODE=china_live`
+  - `QWEN_API_KEY`
+  - `SEEDREAM_API_KEY` or `ARK_API_KEY`
+  - App Store Server API issuer/key/bundle/subscription configuration
+  - Persistent SQLite database path and backup plan
+- [ ] Update the iOS Release `BACKEND_BASE_URL` in `project.yml`, regenerate the Xcode project, and rebuild.
+- [ ] Validate the iOS app against the deployed backend, including quota, generation, poster background, project sync, and deletion.
+- [ ] Create public Simplified Chinese Privacy Policy and Terms URLs.
+- [ ] Localize the photo-library save permission copy. Current `NSPhotoLibraryAddUsageDescription` is English-only.
+- [ ] Finish App Store Connect agreements, tax, and banking so subscriptions can be tested and sold.
+- [ ] Add Simplified Chinese App Store metadata, app screenshots, and subscription review screenshots.
+- [ ] Archive and upload a TestFlight build from the final Release configuration.
+
+### P1 Before Wider External Beta
+
+- [ ] Test sandbox purchase, restore, renewal, cancellation, and expired subscription states.
+- [ ] Configure and verify App Store Server Notifications V2 against the deployed backend.
+- [ ] Add basic server-side quota/rate-limit protection for provider cost control.
+- [ ] Harden content safety for illegal, medical, financial, exaggerated, and platform-risky claims.
+- [ ] Polish backend-down, provider-error, empty-state, and no-quota user-facing messages.
+- [ ] Add minimal crash/error monitoring or an operational log review routine for beta support.
+
+### P2 Before App Review
+
+- [ ] Complete UI/UX expert pass and final screenshot set after the visible design stabilizes.
+- [ ] Verify layout on target iPhone sizes and any required iPad presentation paths.
+- [ ] Confirm ICP/domain requirements based on the final China hosting and domain plan.
+- [ ] Add final support/contact flow and account/data deletion instructions.
+
 ## Compliance And Operations
 
 - Prepare Simplified Chinese privacy policy and terms.
