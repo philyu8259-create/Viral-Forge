@@ -55,6 +55,10 @@ final class AppModel {
         self.projects = LocalProjectStore.load()
         self.posterAssets = assetsFromProjects(projects)
         if isUITesting {
+            if ProcessInfo.processInfo.arguments.contains("VF_UI_TEST_EMPTY_LIBRARY") {
+                projects = []
+                posterAssets = []
+            }
             quota = QuotaState(remainingTextGenerations: 10, remainingPosterExports: 10, isPro: false)
             if ProcessInfo.processInfo.arguments.contains("VF_UI_TEST_NO_QUOTA") {
                 quota = QuotaState(remainingTextGenerations: 0, remainingPosterExports: 0, isPro: false)
@@ -369,12 +373,17 @@ final class AppModel {
     func updateBackendSettings(_ settings: BackendSettings) {
         backendSettings = settings
         BackendSettingsStore.save(settings)
-        backendStatusMessage = settings.mode == .backend ? "Backend mode saved." : "Mock mode is active."
+        backendStatusMessage = settings.mode == .backend
+            ? AppText.localized("Backend mode saved. Test the connection before generating live content.", "后端模式已保存。生成真实内容前请先测试连接。")
+            : AppText.localized("Mock mode is active. You can keep building locally without a server.", "Mock 模式已启用。无需服务器也可以继续本地开发。")
     }
 
     func testBackendConnection() async {
         guard let dataService = makeBackendDataService() else {
-            backendStatusMessage = "Backend URL is invalid."
+            backendStatusMessage = AppText.localized(
+                "Backend URL is invalid. Use a full URL such as http://localhost:8787 or a public HTTPS endpoint.",
+                "后端地址无效。请填写完整地址，例如 http://localhost:8787 或公网 HTTPS 地址。"
+            )
             return
         }
 
@@ -383,16 +392,22 @@ final class AppModel {
 
         do {
             let response = try await dataService.health()
-            backendStatusMessage = "\(response.service): \(response.status)"
+            backendStatusMessage = AppText.localized(
+                "\(response.service) is reachable: \(response.status).",
+                "\(response.service) 连接正常：\(response.status)。"
+            )
         } catch {
-            backendStatusMessage = "Connection failed: \(error.localizedDescription)"
+            backendStatusMessage = userFacingBackendError(prefix: AppText.localized("Connection failed", "连接失败"), error: error)
         }
     }
 
     func syncFromBackend() async {
         guard backendSettings.mode == .backend else { return }
         guard let dataService = makeBackendDataService() else {
-            backendStatusMessage = "Backend URL is invalid."
+            backendStatusMessage = AppText.localized(
+                "Backend URL is invalid. Check the endpoint and try again.",
+                "后端地址无效。请检查接口地址后重试。"
+            )
             return
         }
 
@@ -411,9 +426,9 @@ final class AppModel {
             projects = try await remoteProjects
             posterAssets = assetsFromProjects(projects)
             persistProjectsLocally()
-            backendStatusMessage = "Synced from backend."
+            backendStatusMessage = AppText.localized("Synced from backend.", "已从后端同步数据。")
         } catch {
-            backendStatusMessage = "Sync failed: \(error.localizedDescription)"
+            backendStatusMessage = userFacingBackendError(prefix: AppText.localized("Sync failed", "同步失败"), error: error)
         }
     }
 
@@ -428,9 +443,11 @@ final class AppModel {
         if backendSettings.mode == .backend, let dataService = makeBackendDataService() {
             do {
                 quota = try await dataService.updateProStatus(isPro: isPro)
-                backendStatusMessage = isPro ? "Pro mode enabled." : "Pro mode disabled."
+                backendStatusMessage = isPro
+                    ? AppText.localized("Pro mode enabled.", "Pro 模式已开启。")
+                    : AppText.localized("Pro mode disabled.", "Pro 模式已关闭。")
             } catch {
-                backendStatusMessage = "Pro update failed: \(error.localizedDescription)"
+                backendStatusMessage = userFacingBackendError(prefix: AppText.localized("Pro update failed", "Pro 状态更新失败"), error: error)
             }
         } else {
             quota.isPro = isPro
@@ -858,6 +875,30 @@ final class AppModel {
         return AppText.localized(
             "Poster background failed: \(error.localizedDescription)",
             "AI 背景生成失败：\(error.localizedDescription)"
+        )
+    }
+
+    private func userFacingBackendError(prefix: String, error: Error) -> String {
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet:
+                return AppText.localized(
+                    "\(prefix): no internet connection. You can switch to Mock mode and keep working locally.",
+                    "\(prefix)：当前没有网络。你可以切回 Mock 模式继续本地创作。"
+                )
+            case .cannotConnectToHost, .cannotFindHost, .timedOut:
+                return AppText.localized(
+                    "\(prefix): backend is unreachable. Check whether the server is running or switch to Mock mode.",
+                    "\(prefix)：后端暂时不可用。请确认服务是否启动，或切回 Mock 模式。"
+                )
+            default:
+                break
+            }
+        }
+
+        return AppText.localized(
+            "\(prefix): \(error.localizedDescription). You can switch to Mock mode and retry later.",
+            "\(prefix)：\(error.localizedDescription)。可以先切回 Mock 模式，稍后再试。"
         )
     }
 }

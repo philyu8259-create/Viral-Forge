@@ -68,6 +68,22 @@ struct BackendSettingsView: View {
                 Label(appModel.backendStatusMessage, systemImage: statusIcon)
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(statusColor)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if statusIsError {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "lightbulb.fill")
+                            .foregroundStyle(VFStyle.sunset)
+                        Text(AppText.localized(
+                            "You can switch to Mock mode to keep using the app while the backend is down.",
+                            "后端不可用时，可以切回 Mock 模式继续使用 App。"
+                        ))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(VFStyle.secondaryText)
+                    }
+                    .padding(12)
+                    .background(VFStyle.sunset.opacity(0.08), in: RoundedRectangle(cornerRadius: 15))
+                }
 
                 VFPrimaryButton(
                     title: AppText.localized("Save Settings", "保存设置"),
@@ -92,7 +108,7 @@ struct BackendSettingsView: View {
     }
 
     private var statusIcon: String {
-        if appModel.backendStatusMessage.localizedCaseInsensitiveContains("failed") {
+        if statusIsError {
             return "xmark.octagon.fill"
         }
         if appModel.backendStatusMessage.localizedCaseInsensitiveContains("synced")
@@ -104,7 +120,17 @@ struct BackendSettingsView: View {
     }
 
     private var statusColor: Color {
-        appModel.backendStatusMessage.localizedCaseInsensitiveContains("failed") ? VFStyle.warning : VFStyle.secondaryText
+        statusIsError ? VFStyle.warning : VFStyle.secondaryText
+    }
+
+    private var statusIsError: Bool {
+        let message = appModel.backendStatusMessage.lowercased()
+        return message.contains("failed")
+            || message.contains("invalid")
+            || message.contains("unreachable")
+            || message.contains("不可用")
+            || message.contains("无效")
+            || message.contains("失败")
     }
 
     private func glassField(_ placeholder: String, text: Binding<String>, icon: String, tint: Color) -> some View {

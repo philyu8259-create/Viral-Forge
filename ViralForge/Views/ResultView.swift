@@ -262,7 +262,7 @@ struct ResultView: View {
         }
 
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.8))
+            try? await Task.sleep(for: .seconds(3.2))
             withAnimation(.easeOut(duration: 0.16)) {
                 copyStatusMessage = nil
             }

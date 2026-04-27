@@ -26,15 +26,51 @@ struct HistoryView: View {
             LazyVStack(spacing: 14) {
                 if projects.isEmpty {
                     VFGlassCard(level: .thick) {
-                        VStack(spacing: 12) {
-                            VFGradientIcon(icon: "tray", tint: VFStyle.purpleFlow, size: 46)
-                            Text(AppText.localized("No history yet", "暂无历史记录"))
+                        VStack(spacing: 13) {
+                            VFGradientIcon(icon: showFavoritesOnly ? "heart" : "tray", tint: VFStyle.purpleFlow, size: 46)
+                            Text(showFavoritesOnly ? AppText.localized("No favorites yet", "暂无收藏") : AppText.localized("No history yet", "暂无历史记录"))
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(VFStyle.ink)
+                            Text(showFavoritesOnly
+                                ? AppText.localized("Favorite a generated project to keep high-performing drafts within reach.", "收藏生成项目后，高价值草稿会集中出现在这里。")
+                                : AppText.localized("Generated content packs, poster edits, and saved drafts will appear here.", "生成的内容包、海报编辑和保存草稿都会出现在这里。")
+                            )
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(VFStyle.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                            HStack(spacing: 10) {
+                                Button {
+                                    appModel.selectedTab = .create
+                                } label: {
+                                    Label(AppText.localized("Start Creating", "去创作"), systemImage: "sparkles")
+                                        .font(.caption.weight(.black))
+                                        .foregroundStyle(VFStyle.primaryRed)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 11)
+                                        .background(VFStyle.primaryRed.opacity(0.10), in: Capsule())
+                                }
+                                .buttonStyle(.plain)
+
+                                Button {
+                                    appModel.selectedTab = .templates
+                                } label: {
+                                    Label(AppText.localized("Templates", "模板"), systemImage: "rectangle.3.group")
+                                        .font(.caption.weight(.black))
+                                        .foregroundStyle(VFStyle.purpleFlow)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 11)
+                                        .background(VFStyle.purpleFlow.opacity(0.10), in: Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.top, 4)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
                     }
+                    .accessibilityIdentifier("vf.history.emptyState")
                 } else {
                     ForEach(projects) { project in
                         NavigationLink {

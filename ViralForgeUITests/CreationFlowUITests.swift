@@ -104,6 +104,20 @@ final class CreationFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["今日免费文案额度已用完。"].exists)
     }
 
+    func testEmptyAssetsShowsNextAction() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_EMPTY_LIBRARY"])
+
+        app.tabBars.buttons["素材"].tap()
+        XCTAssertTrue(app.scrollViews["vf.assets.screen"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.descendants(matching: .any)["vf.assets.emptyState"].waitForExistence(timeout: 4))
+
+        let createButton = app.buttons["去创作"].firstMatch
+        XCTAssertTrue(createButton.waitForExistence(timeout: 4))
+        createButton.tap()
+        XCTAssertTrue(app.textViews["vf.home.topicEditor"].waitForExistence(timeout: 4))
+    }
+
     private func launch(
         _ app: XCUIApplication,
         appleLanguages: String = "(zh-Hans)",

@@ -65,11 +65,29 @@ struct BrandKitView: View {
                         .font(.caption.weight(.medium))
                         .foregroundStyle(VFStyle.secondaryText)
                         .lineLimit(3)
+
+                    if !profile.hasSavedMemory {
+                        HStack(spacing: 6) {
+                            setupChip(AppText.localized("Audience", "人群"))
+                            setupChip(AppText.localized("Tone", "语气"))
+                            setupChip(AppText.localized("Banned claims", "禁用表述"))
+                        }
+                        .padding(.top, 4)
+                    }
                 }
 
                 Spacer(minLength: 0)
             }
         }
+    }
+
+    private func setupChip(_ text: String) -> some View {
+        Text(text)
+            .font(.caption2.weight(.black))
+            .foregroundStyle(brandColor)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(brandColor.opacity(0.10), in: Capsule())
     }
 
     private var profileCard: some View {

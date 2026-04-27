@@ -51,10 +51,38 @@ struct PosterEditorView: View {
                 }
 
                 if let posterGenerationError = appModel.posterGenerationError {
-                    Text(posterGenerationError)
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(VFStyle.warning)
+                    VFGlassCard {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Label(posterGenerationError, systemImage: "exclamationmark.triangle.fill")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(VFStyle.warning)
+                            Text(AppText.localized(
+                                "Your poster text and layout are still safe. You can retry AI background generation or render the current poster manually.",
+                                "当前海报文案和版式不会丢失。你可以重试 AI 背景，也可以直接生成当前海报。"
+                            ))
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(VFStyle.secondaryText)
+
+                            Button {
+                                Task {
+                                    if let imageURL = await appModel.generatePosterBackground(for: project, poster: poster, aspectRatio: selectedTarget.apiAspectRatio) {
+                                        poster.backgroundImageURL = imageURL
+                                    }
+                                }
+                            } label: {
+                                Label(AppText.localized("Retry AI Background", "重试 AI 背景"), systemImage: "arrow.clockwise")
+                                    .font(.caption.weight(.black))
+                                    .foregroundStyle(VFStyle.primaryRed)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 9)
+                                    .background(VFStyle.primaryRed.opacity(0.10), in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(appModel.isGeneratingPosterBackground)
+                        }
                         .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .accessibilityIdentifier("vf.poster.backgroundError")
                 }
 
                 VFPrimaryButton(title: AppText.localized("Render Poster", "生成海报图片"), icon: "square.and.arrow.down") {

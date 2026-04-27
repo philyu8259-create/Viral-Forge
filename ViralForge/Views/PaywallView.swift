@@ -123,10 +123,29 @@ struct PaywallView: View {
                 .disabled(appModel.isPurchasingSubscription)
 
                 if let purchaseStatusMessage = appModel.purchaseStatusMessage {
-                    Text(purchaseStatusMessage)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(VFStyle.secondaryText)
-                        .multilineTextAlignment(.center)
+                    VStack(spacing: 10) {
+                        Text(purchaseStatusMessage)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(purchaseStatusIsError ? VFStyle.warning : VFStyle.secondaryText)
+                            .multilineTextAlignment(.center)
+
+                        if appModel.subscriptionProducts.isEmpty && !appModel.quota.isPro {
+                            Button {
+                                Task { await appModel.loadSubscriptionProducts() }
+                            } label: {
+                                Label(AppText.localized("Reload Products", "重新加载商品"), systemImage: "arrow.clockwise")
+                                    .font(.caption.weight(.black))
+                                    .foregroundStyle(VFStyle.primaryRed)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(VFStyle.primaryRed.opacity(0.10), in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(appModel.isLoadingStoreProducts)
+                        }
+                    }
+                    .padding(12)
+                    .background((purchaseStatusIsError ? VFStyle.warning : VFStyle.electricCyan).opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
                 }
 
                 Text(AppText.localized(
@@ -179,6 +198,16 @@ struct PaywallView: View {
         }
 
         return AppText.localized("Continue", "继续购买")
+    }
+
+    private var purchaseStatusIsError: Bool {
+        guard let message = appModel.purchaseStatusMessage?.lowercased() else { return false }
+        return message.contains("failed")
+            || message.contains("not loaded")
+            || message.contains("no storekit")
+            || message.contains("没有加载")
+            || message.contains("失败")
+            || message.contains("还没有加载")
     }
 
     private func feature(_ text: String, icon: String, tint: Color) -> some View {

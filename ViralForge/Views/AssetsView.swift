@@ -104,7 +104,13 @@ struct AssetsView: View {
     @ViewBuilder
     private func projectCards(_ projects: [ContentProject]) -> some View {
         if projects.isEmpty {
-            emptyCard(AppText.localized("No assets yet", "暂无素材"), icon: "folder")
+            emptyCard(
+                title: AppText.localized("No assets yet", "暂无素材"),
+                subtitle: AppText.localized("Generate your first content pack, then copy, poster, and snippets will appear here.", "先生成第一个内容资产包，之后文案、海报和片段都会出现在这里。"),
+                icon: "folder",
+                primaryTitle: AppText.localized("Start Creating", "去创作"),
+                secondaryTitle: AppText.localized("Browse Templates", "浏览模板")
+            )
         } else {
             ForEach(projects) { project in
                 NavigationLink {
@@ -122,7 +128,13 @@ struct AssetsView: View {
     @ViewBuilder
     private func posterCards(_ posters: [PosterAsset]) -> some View {
         if posters.isEmpty {
-            emptyCard(AppText.localized("No poster exports yet", "暂无海报导出"), icon: "photo")
+            emptyCard(
+                title: AppText.localized("No poster exports yet", "暂无海报导出"),
+                subtitle: AppText.localized("Open any result, edit the poster, then render a PNG to save it here.", "打开任意生成结果，进入海报编辑器并导出 PNG 后会保存到这里。"),
+                icon: "photo",
+                primaryTitle: AppText.localized("Create a Pack", "先生成内容"),
+                secondaryTitle: AppText.localized("Use a Template", "使用模板")
+            )
         } else {
             ForEach(posters) { poster in
                 if let project = appModel.projects.first(where: { $0.id == poster.projectId }) {
@@ -144,7 +156,13 @@ struct AssetsView: View {
     @ViewBuilder
     private func snippetCards(_ snippets: [CopySnippet]) -> some View {
         if snippets.isEmpty {
-            emptyCard(AppText.localized("No copy snippets yet", "暂无可复用文案"), icon: "doc.text")
+            emptyCard(
+                title: AppText.localized("No copy snippets yet", "暂无可复用文案"),
+                subtitle: AppText.localized("Titles, hooks, captions, and hashtags from generated projects become reusable snippets.", "生成项目里的标题、钩子、正文和标签会自动变成可复用文案。"),
+                icon: "doc.text",
+                primaryTitle: AppText.localized("Generate Copy", "生成文案"),
+                secondaryTitle: AppText.localized("Pick Template", "选择模板")
+            )
         } else {
             ForEach(snippets) { snippet in
                 CopySnippetCard(snippet: snippet)
@@ -152,17 +170,49 @@ struct AssetsView: View {
         }
     }
 
-    private func emptyCard(_ title: String, icon: String) -> some View {
+    private func emptyCard(title: String, subtitle: String, icon: String, primaryTitle: String, secondaryTitle: String) -> some View {
         VFGlassCard(level: .thick) {
-            VStack(spacing: 12) {
+            VStack(spacing: 13) {
                 VFGradientIcon(icon: icon, tint: selectedSection.tint, size: 46)
                 Text(title)
                     .font(.headline.weight(.bold))
                     .foregroundStyle(VFStyle.ink)
+                Text(subtitle)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(VFStyle.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 10) {
+                    emptyAction(primaryTitle, icon: "sparkles", tint: VFStyle.primaryRed) {
+                        appModel.selectedTab = .create
+                    }
+                    emptyAction(secondaryTitle, icon: "rectangle.3.group", tint: VFStyle.purpleFlow) {
+                        appModel.selectedTab = .templates
+                    }
+                }
+                .padding(.top, 4)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
         }
+        .accessibilityIdentifier("vf.assets.emptyState")
+    }
+
+    private func emptyAction(_ title: String, icon: String, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: icon)
+                .font(.caption.weight(.black))
+                .foregroundStyle(tint)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(tint.opacity(0.10), in: Capsule())
+                .overlay {
+                    Capsule()
+                        .stroke(tint.opacity(0.18), lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
     }
 }
 
