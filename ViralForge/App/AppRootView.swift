@@ -40,7 +40,7 @@ struct AppRootView: View {
                 Label(AppText.localized("Pro", "会员"), systemImage: "crown")
             }
         }
-        .tint(Color(red: 0.28, green: 0.58, blue: 0.82))
+        .tint(VFStyle.primaryRed)
         .toolbarBackground(.ultraThinMaterial, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarColorScheme(.light, for: .tabBar)

@@ -19,6 +19,7 @@
 		4C725A02C61AA20E52A76A9A /* ViralForgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE34A96FAAB6CA2E2369217B /* ViralForgeApp.swift */; };
 		4E9CA4F44AE23FCFE75E00DC /* AppText.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9EE0CA669A23A4BE74282E /* AppText.swift */; };
 		4F17DB62D597B4C5060B7D25 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B3517FED465E57D7E238B59 /* AppRootView.swift */; };
+		5B8BA184FDF86DC812D90D4A /* VFGlobalStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0295E570E4E64BAF3200F2 /* VFGlobalStyle.swift */; };
 		6EEB30F52BD5F87097807B3D /* TemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A692A256A45B27A1D796A3D2 /* TemplatesView.swift */; };
 		7A23E5648596D58AF9D7AD50 /* QuotaStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0856B85C79DB28A552029E28 /* QuotaStatusView.swift */; };
 		7B4BCF433D429A58D6A99240 /* ModelRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF7DB1105294A475EF485A28 /* ModelRouting.swift */; };
@@ -66,6 +67,7 @@
 		C83815749F09EADCA87A06CC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		CC02973674BE989B04A852F9 /* AssetsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetsView.swift; sourceTree = "<group>"; };
 		DC9EE0CA669A23A4BE74282E /* AppText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppText.swift; sourceTree = "<group>"; };
+		EA0295E570E4E64BAF3200F2 /* VFGlobalStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VFGlobalStyle.swift; sourceTree = "<group>"; };
 		EE34A96FAAB6CA2E2369217B /* ViralForgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViralForgeApp.swift; sourceTree = "<group>"; };
 		FF7DB1105294A475EF485A28 /* ModelRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelRouting.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -130,6 +132,7 @@
 				0856B85C79DB28A552029E28 /* QuotaStatusView.swift */,
 				AC38B989C06A1E6BC56891B3 /* ResultView.swift */,
 				A692A256A45B27A1D796A3D2 /* TemplatesView.swift */,
+				EA0295E570E4E64BAF3200F2 /* VFGlobalStyle.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -241,6 +244,7 @@
 				47912C696A40595977E2F893 /* SampleData.swift in Sources */,
 				F5DE66E363E609C00EF58EDA /* SubscriptionModels.swift in Sources */,
 				6EEB30F52BD5F87097807B3D /* TemplatesView.swift in Sources */,
+				5B8BA184FDF86DC812D90D4A /* VFGlobalStyle.swift in Sources */,
 				4C725A02C61AA20E52A76A9A /* ViralForgeApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

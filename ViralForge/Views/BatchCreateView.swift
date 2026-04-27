@@ -7,82 +7,110 @@ struct BatchCreateView: View {
     @State private var batchSize = 7
     @State private var ideas: [CampaignIdea] = []
     @State private var generatedProject: ContentProject?
-    @State private var calendarVersion = 0
-
-    private let calendarSectionID = "batch-content-calendar"
 
     private var canGenerateCalendar: Bool {
         productBrief.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 && !selectedPlatforms.isEmpty
     }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            Form {
-                Section(AppText.localized("Campaign Brief", "活动简报")) {
-                    TextField(AppText.localized("Product or campaign", "产品或活动"), text: $productBrief, axis: .vertical)
-                        .lineLimit(4, reservesSpace: true)
-                    Picker(AppText.localized("Calendar length", "日历周期"), selection: $batchSize) {
-                        Text(AppText.localized("7 days", "7 天")).tag(7)
-                        Text(AppText.localized("14 days", "14 天")).tag(14)
-                    }
-                    .pickerStyle(.segmented)
-                }
+        VFPage {
+            VFPageHeader(
+                title: AppText.localized("Batch Campaign", "批量创作"),
+                subtitle: AppText.localized("Turn one product brief into a content calendar", "把一个产品简报变成内容日历"),
+                icon: "calendar.badge.plus",
+                tint: VFStyle.teal
+            )
 
-                Section(AppText.localized("Platforms", "平台")) {
-                    ForEach(SocialPlatform.chinaLaunchPlatforms) { platform in
-                        Toggle(platform.displayName, isOn: binding(for: platform))
-                    }
-                }
+            briefCard
 
-                if appModel.brandProfile.hasSavedMemory {
-                    Section(AppText.localized("Brand Memory", "品牌记忆")) {
-                        Label(appModel.brandProfile.memorySummary, systemImage: "brain")
-                    }
+            if appModel.brandProfile.hasSavedMemory {
+                VFGlassCard {
+                    Label(appModel.brandProfile.memorySummary, systemImage: "brain")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(VFStyle.secondaryText)
                 }
+            }
 
-                Section {
-                    Button {
-                        generateCalendar()
-                    } label: {
-                        Label(AppText.localized("Generate Content Calendar", "生成内容日历"), systemImage: "calendar.badge.sparkles")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .disabled(!canGenerateCalendar)
-                } footer: {
-                    Text(AppText.localized(
-                        "Each calendar day can become a full copy pack and poster draft.",
-                        "每一天都可以继续生成完整文案包和海报草稿。"
-                    ))
-                }
+            VFPrimaryButton(
+                title: AppText.localized("Generate Content Calendar", "生成内容日历"),
+                icon: "calendar.badge.sparkles",
+                isEnabled: canGenerateCalendar
+            ) {
+                generateCalendar()
+            }
 
-                if !ideas.isEmpty {
-                    Section(AppText.localized("Content Calendar", "内容日历")) {
+            if !ideas.isEmpty {
+                VStack(alignment: .leading, spacing: 14) {
+                    VFSectionHeader(
+                        title: AppText.localized("Content Calendar", "内容日历"),
+                        subtitle: AppText.localized("Each day can become a full content pack", "每一天都可以继续生成完整内容包")
+                    )
+
+                    LazyVStack(spacing: 14) {
                         ForEach(ideas) { idea in
-                            CampaignIdeaRow(idea: idea) {
+                            CampaignIdeaCard(idea: idea) {
                                 generateProject(from: idea)
                             }
                         }
                     }
-                    .id(calendarSectionID)
+                }
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $generatedProject) { project in
+            ResultView(project: project)
+        }
+    }
 
-                    Section {
-                        Color.clear
-                            .frame(height: 72)
+    private var briefCard: some View {
+        VFGlassCard(level: .thick) {
+            VStack(alignment: .leading, spacing: 16) {
+                VFSectionHeader(
+                    title: AppText.localized("Campaign Brief", "活动简报"),
+                    subtitle: AppText.localized("Set the product, calendar length, and target platforms", "设置产品、周期和目标平台")
+                )
+
+                TextField(AppText.localized("Product or campaign", "产品或活动"), text: $productBrief, axis: .vertical)
+                    .lineLimit(4, reservesSpace: true)
+                    .font(.subheadline.weight(.semibold))
+                    .padding(14)
+                    .background(.white.opacity(0.66), in: RoundedRectangle(cornerRadius: 16))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(.white.opacity(0.82), lineWidth: 1)
                     }
-                    .listRowBackground(Color.clear)
+
+                Picker(AppText.localized("Calendar length", "日历周期"), selection: $batchSize) {
+                    Text(AppText.localized("7 days", "7 天")).tag(7)
+                    Text(AppText.localized("14 days", "14 天")).tag(14)
                 }
-            }
-            .navigationTitle(AppText.localized("Batch Campaign", "批量创作"))
-            .onChange(of: calendarVersion) { _, _ in
-                guard !ideas.isEmpty else { return }
-                DispatchQueue.main.async {
-                    withAnimation(.snappy) {
-                        proxy.scrollTo(calendarSectionID, anchor: .top)
+                .pickerStyle(.segmented)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(AppText.localized("Platforms", "平台"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+
+                    HStack(spacing: 10) {
+                        ForEach(SocialPlatform.chinaLaunchPlatforms) { platform in
+                            Button {
+                                toggle(platform)
+                            } label: {
+                                Text(platform.displayName)
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(selectedPlatforms.contains(platform) ? .white : VFStyle.ink)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(selectedPlatforms.contains(platform) ? VFStyle.platformTint(platform) : .white.opacity(0.62), in: Capsule())
+                                    .overlay {
+                                        Capsule()
+                                            .stroke(.white.opacity(0.78), lineWidth: 1)
+                                    }
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
-            }
-            .navigationDestination(item: $generatedProject) { project in
-                ResultView(project: project)
             }
         }
     }
@@ -93,7 +121,6 @@ struct BatchCreateView: View {
             platforms: Array(selectedPlatforms).sorted { $0.rawValue < $1.rawValue },
             count: batchSize
         )
-        calendarVersion += 1
     }
 
     private func generateProject(from idea: CampaignIdea) {
@@ -103,69 +130,81 @@ struct BatchCreateView: View {
         }
     }
 
-    private func binding(for platform: SocialPlatform) -> Binding<Bool> {
-        Binding {
-            selectedPlatforms.contains(platform)
-        } set: { isSelected in
-            if isSelected {
-                selectedPlatforms.insert(platform)
-            } else {
-                selectedPlatforms.remove(platform)
-            }
+    private func toggle(_ platform: SocialPlatform) {
+        if selectedPlatforms.contains(platform) {
+            selectedPlatforms.remove(platform)
+        } else {
+            selectedPlatforms.insert(platform)
         }
     }
 }
 
-private struct CampaignIdeaRow: View {
+private struct CampaignIdeaCard: View {
     let idea: CampaignIdea
     let generate: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack {
-                        Text(AppText.localized("Day \(idea.day)", "第 \(idea.day) 天"))
-                            .font(.caption.weight(.bold))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(.thinMaterial, in: Capsule())
-                        Text(idea.platform.displayName)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 13) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 8) {
+                            Text(AppText.localized("Day \(idea.day)", "第 \(idea.day) 天"))
+                                .font(.caption.weight(.black))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 9)
+                                .padding(.vertical, 5)
+                                .background(VFStyle.platformTint(idea.platform), in: Capsule())
+                            Text(idea.platform.displayName)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(VFStyle.secondaryText)
+                        }
+
+                        Text(idea.pillar)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(VFStyle.secondaryText)
                     }
-                    Text(idea.pillar)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(idea.objective)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText.opacity(0.75))
                 }
-                Spacer()
-                Text(idea.objective)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
 
-            Text(idea.title)
-                .font(.headline)
-            Text(idea.hook)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                Text(idea.title)
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(VFStyle.ink)
+                Text(idea.hook)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(VFStyle.secondaryText)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Label(idea.posterAngle, systemImage: "photo.on.rectangle")
-                Label(idea.cta, systemImage: "hand.tap")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+                HStack(spacing: 10) {
+                    miniMeta(idea.posterAngle, icon: "photo.on.rectangle", tint: VFStyle.sunset)
+                    miniMeta(idea.cta, icon: "hand.tap.fill", tint: VFStyle.electricCyan)
+                }
 
-            Button {
-                generate()
-            } label: {
-                Label(AppText.localized("Generate This Day", "生成当天完整内容"), systemImage: "wand.and.stars")
-                    .frame(maxWidth: .infinity)
+                Button {
+                    generate()
+                } label: {
+                    Label(AppText.localized("Generate This Day", "生成当天完整内容"), systemImage: "wand.and.stars")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(VFStyle.primaryRed)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(.white.opacity(0.62), in: Capsule())
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.bordered)
         }
-        .padding(.vertical, 6)
+    }
+
+    private func miniMeta(_ text: String, icon: String, tint: Color) -> some View {
+        Label(text, systemImage: icon)
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(tint)
+            .lineLimit(1)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(tint.opacity(0.10), in: Capsule())
     }
 }
 

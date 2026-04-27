@@ -6,57 +6,154 @@ struct BrandKitView: View {
     @State private var didSave = false
 
     var body: some View {
-        Form {
-            Section(AppText.localized("Brand Profile", "品牌资料")) {
-                TextField(AppText.localized("Brand name", "品牌名称"), text: $profile.brandName)
-                TextField(AppText.localized("Industry", "行业"), text: $profile.industry)
-                TextField(AppText.localized("Target audience", "目标人群"), text: $profile.audience, axis: .vertical)
-                    .lineLimit(2, reservesSpace: true)
-                TextField(AppText.localized("Tone", "语气风格"), text: $profile.tone)
-            }
+        VFPage {
+            VFPageHeader(
+                title: AppText.localized("Brand Kit", "品牌"),
+                subtitle: AppText.localized("Keep every asset on-brand automatically", "让每次生成自动贴合品牌"),
+                icon: "person.text.rectangle.fill",
+                tint: brandColor
+            )
 
-            Section(AppText.localized("Content Rules", "内容规则")) {
-                TextField(AppText.localized("Banned words or claims", "禁用词或禁用表述"), text: $profile.bannedWords, axis: .vertical)
-                    .lineLimit(3, reservesSpace: true)
-                Picker(AppText.localized("Default platform", "默认平台"), selection: $profile.defaultPlatform) {
-                    ForEach(SocialPlatform.chinaLaunchPlatforms) { platform in
-                        Text(platform.displayName).tag(platform)
+            brandMemoryCard
+            profileCard
+            rulesCard
+            saveCard
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            profile = appModel.brandProfile
+        }
+        .onChange(of: profile) { _, _ in
+            didSave = false
+            appModel.brandStatusMessage = nil
+        }
+    }
+
+    private var brandColor: Color {
+        switch profile.primaryColorName {
+        case "Coral": VFStyle.primaryRed
+        case "Indigo": VFStyle.accent
+        case "Graphite": VFStyle.ink
+        default: VFStyle.teal
+        }
+    }
+
+    private var brandMemoryCard: some View {
+        VFGlassCard(level: .thick) {
+            HStack(spacing: 15) {
+                ZStack {
+                    Circle()
+                        .fill(brandColor.opacity(0.18))
+                        .frame(width: 62, height: 62)
+                        .blur(radius: 10)
+                    Circle()
+                        .fill(brandColor)
+                        .frame(width: 28, height: 28)
+                        .shadow(color: brandColor.opacity(0.38), radius: 12, x: 0, y: 5)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(AppText.localized("Active generation memory", "当前生成记忆"))
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(VFStyle.ink)
+                    Text(profile.memorySummary)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(VFStyle.secondaryText)
+                        .lineLimit(3)
+                }
+
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private var profileCard: some View {
+        VFGlassCard(level: .thick) {
+            VStack(alignment: .leading, spacing: 14) {
+                VFSectionHeader(
+                    title: AppText.localized("Brand Profile", "品牌资料"),
+                    subtitle: AppText.localized("Basic fields used in every prompt", "每次生成都会使用的基础资料")
+                )
+
+                brandedField(AppText.localized("Brand name", "品牌名称"), text: $profile.brandName, icon: "signature", tint: VFStyle.primaryRed)
+                brandedField(AppText.localized("Industry", "行业"), text: $profile.industry, icon: "building.2.fill", tint: VFStyle.sunset)
+                brandedField(AppText.localized("Target audience", "目标人群"), text: $profile.audience, icon: "person.3.fill", tint: VFStyle.electricCyan, lines: 2)
+                brandedField(AppText.localized("Tone", "语气风格"), text: $profile.tone, icon: "quote.bubble.fill", tint: VFStyle.purpleFlow)
+            }
+        }
+    }
+
+    private var rulesCard: some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 14) {
+                VFSectionHeader(
+                    title: AppText.localized("Content Rules", "内容规则"),
+                    subtitle: AppText.localized("Control platform, visual tone, and risky claims", "控制平台、视觉调性与风险表述")
+                )
+
+                brandedField(AppText.localized("Banned words or claims", "禁用词或禁用表述"), text: $profile.bannedWords, icon: "exclamationmark.shield.fill", tint: VFStyle.warning, lines: 3)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(AppText.localized("Default platform", "默认平台"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+
+                    HStack(spacing: 10) {
+                        ForEach(SocialPlatform.chinaLaunchPlatforms) { platform in
+                            Button {
+                                profile.defaultPlatform = platform
+                            } label: {
+                                Text(platform.displayName)
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(profile.defaultPlatform == platform ? .white : VFStyle.ink)
+                                    .padding(.horizontal, 13)
+                                    .padding(.vertical, 9)
+                                    .frame(maxWidth: .infinity)
+                                    .background(profile.defaultPlatform == platform ? VFStyle.platformTint(platform) : .white.opacity(0.62), in: Capsule())
+                                    .overlay {
+                                        Capsule()
+                                            .stroke(.white.opacity(0.78), lineWidth: 1)
+                                    }
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
-                Picker(AppText.localized("Brand color", "品牌色"), selection: $profile.primaryColorName) {
-                    Text(AppText.localized("Emerald", "青绿")).tag("Emerald")
-                    Text(AppText.localized("Coral", "珊瑚")).tag("Coral")
-                    Text(AppText.localized("Indigo", "靛蓝")).tag("Indigo")
-                    Text(AppText.localized("Graphite", "石墨")).tag("Graphite")
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(AppText.localized("Brand color", "品牌色"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+
+                    HStack(spacing: 12) {
+                        colorSwatch(AppText.localized("Emerald", "青绿"), value: "Emerald", color: VFStyle.teal)
+                        colorSwatch(AppText.localized("Coral", "珊瑚"), value: "Coral", color: VFStyle.primaryRed)
+                        colorSwatch(AppText.localized("Indigo", "靛蓝"), value: "Indigo", color: VFStyle.accent)
+                        colorSwatch(AppText.localized("Graphite", "石墨"), value: "Graphite", color: VFStyle.ink)
+                    }
                 }
             }
+        }
+    }
 
-            Section(AppText.localized("Brand Assets", "品牌素材")) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Label(AppText.localized("Active generation memory", "当前生成记忆"), systemImage: "brain")
-                        .font(.headline)
-                    Text(profile.memorySummary)
-                        .foregroundStyle(.secondary)
-                }
-
-                Label(AppText.localized("Brand name, audience, tone, industry, and banned claims are applied automatically when generating.", "生成时会自动套用品牌名称、目标人群、语气、行业和禁用表述。"), systemImage: "wand.and.stars")
-            }
-
-            Section {
-                Button {
+    private var saveCard: some View {
+        VFGlassCard {
+            VStack(spacing: 13) {
+                VFPrimaryButton(
+                    title: didSave ? AppText.localized("Saved", "已保存") : AppText.localized("Save Brand Kit", "保存品牌资料"),
+                    icon: didSave ? "checkmark.circle.fill" : "checkmark.circle"
+                ) {
                     Task {
                         await appModel.saveBrandProfile(profile)
                         didSave = true
                     }
-                } label: {
-                    Label(didSave ? AppText.localized("Saved", "已保存") : AppText.localized("Save Brand Kit", "保存品牌资料"), systemImage: "checkmark.circle")
-                        .frame(maxWidth: .infinity)
                 }
 
                 if let brandStatusMessage = appModel.brandStatusMessage {
                     Text(brandStatusMessage)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(VFStyle.secondaryText)
+                        .multilineTextAlignment(.center)
                 }
 
                 if appModel.backendSettings.mode == .backend {
@@ -68,23 +165,67 @@ struct BrandKitView: View {
                         }
                     } label: {
                         Label(AppText.localized("Sync From Backend", "从后端同步"), systemImage: "arrow.triangle.2.circlepath")
+                            .font(.subheadline.weight(.bold))
                             .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(.white.opacity(0.58), in: Capsule())
                     }
+                    .buttonStyle(.plain)
 
                     Text(appModel.backendStatusMessage)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(VFStyle.secondaryText)
                 }
             }
         }
-        .navigationTitle(AppText.localized("Brand Kit", "品牌"))
-        .onAppear {
-            profile = appModel.brandProfile
+    }
+
+    private func brandedField(_ placeholder: String, text: Binding<String>, icon: String, tint: Color, lines: Int = 1) -> some View {
+        HStack(alignment: lines > 1 ? .top : .center, spacing: 12) {
+            VFGradientIcon(icon: icon, tint: tint, size: 34)
+            TextField(placeholder, text: text, axis: .vertical)
+                .lineLimit(lines, reservesSpace: lines > 1)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(VFStyle.ink)
+                .padding(12)
+                .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 15))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 15)
+                        .stroke(.white.opacity(0.82), lineWidth: 1)
+                }
         }
-        .onChange(of: profile) { _, _ in
-            didSave = false
-            appModel.brandStatusMessage = nil
+    }
+
+    private func colorSwatch(_ label: String, value: String, color: Color) -> some View {
+        Button {
+            profile.primaryColorName = value
+        } label: {
+            VStack(spacing: 7) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 28, height: 28)
+                    .overlay {
+                        if profile.primaryColorName == value {
+                            Image(systemName: "checkmark")
+                                .font(.caption.weight(.black))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    .shadow(color: color.opacity(0.28), radius: 8, x: 0, y: 4)
+                Text(label)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(VFStyle.secondaryText)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(profile.primaryColorName == value ? color.opacity(0.10) : .white.opacity(0.52), in: RoundedRectangle(cornerRadius: 16))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(profile.primaryColorName == value ? color.opacity(0.42) : .white.opacity(0.76), lineWidth: 1)
+            }
         }
+        .buttonStyle(.plain)
     }
 }
 
