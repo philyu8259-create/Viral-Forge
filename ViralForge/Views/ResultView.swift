@@ -135,9 +135,7 @@ struct ResultView: View {
                 }
 
                 if let generationError = appModel.generationError {
-                    Label(generationError, systemImage: "exclamationmark.triangle.fill")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(VFStyle.warning)
+                    resultErrorCard(generationError)
                 }
             }
         }
@@ -273,6 +271,49 @@ struct ResultView: View {
         Task {
             regeneratedProject = await appModel.generateProject(from: currentProject.draft)
         }
+    }
+
+    private func resultErrorCard(_ message: String) -> some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Label(message, systemImage: "exclamationmark.triangle.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(VFStyle.warning)
+
+                HStack(spacing: 12) {
+                    Button {
+                        regenerate()
+                    } label: {
+                        Label(AppText.localized("Retry", "重试"), systemImage: "arrow.clockwise")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(VFStyle.accent)
+                    }
+                    .disabled(appModel.isGenerating)
+                    .accessibilityIdentifier("vf.result.generationError.retryButton")
+
+                    if !appModel.quota.isPro {
+                        Button {
+                            appModel.generationError = nil
+                            appModel.selectedTab = .pro
+                        } label: {
+                            Label(AppText.localized("Upgrade Pro", "升级 Pro"), systemImage: "crown.fill")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                                .background(
+                                    LinearGradient(colors: [VFStyle.primaryRed, VFStyle.sunset], startPoint: .leading, endPoint: .trailing),
+                                    in: Capsule()
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(AppText.localized("Upgrade Pro", "升级 Pro"))
+                        .accessibilityIdentifier("vf.result.generationError.upgradeButton")
+                    }
+                }
+            }
+        }
+        .accessibilityIdentifier("vf.result.generationError")
     }
 }
 

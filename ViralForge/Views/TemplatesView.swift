@@ -324,9 +324,7 @@ struct TemplateDetailView: View {
                     .accessibilityIdentifier("vf.templateDetail.useTemplateButton")
 
                     if let generationError = appModel.generationError {
-                        Label(generationError, systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(VFStyle.warning)
+                        templateErrorCard(generationError)
                     }
                 }
             }
@@ -419,6 +417,49 @@ struct TemplateDetailView: View {
             templateDraft.tone = draft.tone
             generatedProject = await appModel.generateProject(from: templateDraft)
         }
+    }
+
+    private func templateErrorCard(_ message: String) -> some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Label(message, systemImage: "exclamationmark.triangle.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(VFStyle.warning)
+
+                HStack(spacing: 12) {
+                    Button {
+                        generate()
+                    } label: {
+                        Label(AppText.localized("Retry", "重试"), systemImage: "arrow.clockwise")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(VFStyle.accent)
+                    }
+                    .disabled(!canGenerate)
+                    .accessibilityIdentifier("vf.templateDetail.generationError.retryButton")
+
+                    if !appModel.quota.isPro {
+                        Button {
+                            appModel.generationError = nil
+                            appModel.selectedTab = .pro
+                        } label: {
+                            Label(AppText.localized("Upgrade Pro", "升级 Pro"), systemImage: "crown.fill")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                                .background(
+                                    LinearGradient(colors: [VFStyle.primaryRed, VFStyle.sunset], startPoint: .leading, endPoint: .trailing),
+                                    in: Capsule()
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(AppText.localized("Upgrade Pro", "升级 Pro"))
+                        .accessibilityIdentifier("vf.templateDetail.generationError.upgradeButton")
+                    }
+                }
+            }
+        }
+        .accessibilityIdentifier("vf.templateDetail.generationError")
     }
 }
 

@@ -7,6 +7,7 @@ struct BatchCreateView: View {
     @State private var batchSize = 7
     @State private var ideas: [CampaignIdea] = []
     @State private var generatedProject: ContentProject?
+    @State private var retryIdea: CampaignIdea?
 
     private var canGenerateCalendar: Bool {
         productBrief.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 && !selectedPlatforms.isEmpty
@@ -37,6 +38,10 @@ struct BatchCreateView: View {
                 isEnabled: canGenerateCalendar
             ) {
                 generateCalendar()
+            }
+
+            if let generationError = appModel.generationError, retryIdea != nil {
+                batchErrorCard(generationError)
             }
 
             if !ideas.isEmpty {
@@ -119,6 +124,8 @@ struct BatchCreateView: View {
     }
 
     private func generateCalendar() {
+        appModel.generationError = nil
+        retryIdea = nil
         ideas = appModel.batchIdeas(
             for: productBrief,
             platforms: Array(selectedPlatforms).sorted { $0.rawValue < $1.rawValue },
@@ -127,10 +134,56 @@ struct BatchCreateView: View {
     }
 
     private func generateProject(from idea: CampaignIdea) {
+        retryIdea = idea
         let draft = appModel.draft(from: idea, productBrief: productBrief)
         Task {
             generatedProject = await appModel.generateProject(from: draft)
         }
+    }
+
+    private func batchErrorCard(_ message: String) -> some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Label(message, systemImage: "exclamationmark.triangle.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(VFStyle.warning)
+
+                HStack(spacing: 12) {
+                    Button {
+                        if let retryIdea {
+                            generateProject(from: retryIdea)
+                        }
+                    } label: {
+                        Label(AppText.localized("Retry", "重试"), systemImage: "arrow.clockwise")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(VFStyle.accent)
+                    }
+                    .disabled(retryIdea == nil || appModel.isGenerating)
+                    .accessibilityIdentifier("vf.batch.generationError.retryButton")
+
+                    if !appModel.quota.isPro {
+                        Button {
+                            appModel.generationError = nil
+                            appModel.selectedTab = .pro
+                        } label: {
+                            Label(AppText.localized("Upgrade Pro", "升级 Pro"), systemImage: "crown.fill")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                                .background(
+                                    LinearGradient(colors: [VFStyle.primaryRed, VFStyle.sunset], startPoint: .leading, endPoint: .trailing),
+                                    in: Capsule()
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(AppText.localized("Upgrade Pro", "升级 Pro"))
+                        .accessibilityIdentifier("vf.batch.generationError.upgradeButton")
+                    }
+                }
+            }
+        }
+        .accessibilityIdentifier("vf.batch.generationError")
     }
 
     private func toggle(_ platform: SocialPlatform) {
