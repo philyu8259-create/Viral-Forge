@@ -4,6 +4,9 @@ import UIKit
 struct AssetsView: View {
     @Environment(AppModel.self) private var appModel
     @State private var selectedSection: AssetSection = .projects
+    @State private var assetStatusMessage: String?
+    @State private var projectPendingDeletion: ContentProject?
+    @State private var posterPendingRemoval: PosterAsset?
 
     var body: some View {
         VFPage {
@@ -15,6 +18,7 @@ struct AssetsView: View {
             )
 
             sectionStrip
+            assetStatusBanner
 
             VStack(alignment: .leading, spacing: 14) {
                 VFSectionHeader(title: selectedSection.displayName, subtitle: sectionSubtitle)
@@ -37,6 +41,52 @@ struct AssetsView: View {
         .accessibilityIdentifier("vf.assets.screen")
         .task {
             await appModel.refreshProjectsIfNeeded()
+        }
+        .confirmationDialog(
+            AppText.localized("Delete this project?", "删除这个项目？"),
+            isPresented: Binding(
+                get: { projectPendingDeletion != nil },
+                set: { if !$0 { projectPendingDeletion = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: projectPendingDeletion
+        ) { project in
+            Button(AppText.localized("Delete Project", "删除项目"), role: .destructive) {
+                appModel.deleteProjects([project])
+                projectPendingDeletion = nil
+                showAssetStatus(AppText.localized("Project deleted.", "项目已删除。"))
+            }
+            Button(AppText.localized("Cancel", "取消"), role: .cancel) {
+                projectPendingDeletion = nil
+            }
+        } message: { project in
+            Text(AppText.localized(
+                "This removes the content pack and linked poster export from this device.",
+                "这会从本机移除该内容包和关联海报导出。"
+            ) + "\n\(project.draft.topic)")
+        }
+        .confirmationDialog(
+            AppText.localized("Remove this poster export?", "移除这个海报导出？"),
+            isPresented: Binding(
+                get: { posterPendingRemoval != nil },
+                set: { if !$0 { posterPendingRemoval = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: posterPendingRemoval
+        ) { poster in
+            Button(AppText.localized("Remove Poster Export", "移除海报导出"), role: .destructive) {
+                appModel.removePosterAsset(poster)
+                posterPendingRemoval = nil
+                showAssetStatus(AppText.localized("Poster export removed.", "海报导出已移除。"))
+            }
+            Button(AppText.localized("Cancel", "取消"), role: .cancel) {
+                posterPendingRemoval = nil
+            }
+        } message: { poster in
+            Text(AppText.localized(
+                "The project copy stays available. Only this poster asset is removed from Assets.",
+                "项目文案仍会保留，只会从素材里移除该海报资产。"
+            ) + "\n\(poster.headline)")
         }
     }
 
@@ -70,6 +120,24 @@ struct AssetsView: View {
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("vf.assets.section.\(section.rawValue)")
             }
+        }
+    }
+
+    @ViewBuilder
+    private var assetStatusBanner: some View {
+        if let assetStatusMessage {
+            Label(assetStatusMessage, systemImage: "checkmark.circle.fill")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(VFStyle.teal)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(VFStyle.teal.opacity(0.09), in: RoundedRectangle(cornerRadius: 16))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(VFStyle.teal.opacity(0.18), lineWidth: 1)
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+                .accessibilityIdentifier("vf.assets.statusMessage")
         }
     }
 
@@ -113,14 +181,61 @@ struct AssetsView: View {
             )
         } else {
             ForEach(projects) { project in
-                NavigationLink {
-                    ResultView(project: project)
-                } label: {
-                    ProjectAssetCard(project: project) {
-                        appModel.deleteProjects([project])
+                ProjectAssetCard(
+                    project: project,
+                    copy: {
+                        UIPasteboard.general.string = project.formattedPublishPackage
+                        showAssetStatus(AppText.localized("Publish pack copied.", "整套发布稿已复制。"))
+                    },
+                    toggleFavorite: {
+                        appModel.toggleFavorite(project)
+                        showAssetStatus(project.isFavorite ? AppText.localized("Removed from favorites.", "已取消收藏。") : AppText.localized("Added to favorites.", "已加入收藏。"))
+                    },
+                    requestDelete: {
+                        projectPendingDeletion = project
                     }
+                )
+                .accessibilityIdentifier("vf.assets.projectCard")
+            }
+        }
+    }
+
+    private func posterCopy(for poster: PosterAsset) -> String {
+        switch poster.platform {
+        case .tikTok, .instagram, .youtubeShorts:
+            [
+                "Platform: \(poster.platform.displayName)",
+                "Topic: \(poster.projectTopic)",
+                "",
+                "Poster headline",
+                poster.headline,
+                "",
+                "Style: \(poster.style.displayName)"
+            ].joined(separator: "\n")
+        default:
+            [
+                "【平台】\(poster.platform.displayName)",
+                "【主题】\(poster.projectTopic)",
+                "",
+                "【海报标题】",
+                poster.headline,
+                "",
+                "【风格】\(poster.style.displayName)"
+            ].joined(separator: "\n")
+        }
+    }
+
+    private func showAssetStatus(_ message: String) {
+        withAnimation(.easeOut(duration: 0.16)) {
+            assetStatusMessage = message
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3.2))
+            if assetStatusMessage == message {
+                withAnimation(.easeOut(duration: 0.16)) {
+                    assetStatusMessage = nil
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -137,18 +252,18 @@ struct AssetsView: View {
             )
         } else {
             ForEach(posters) { poster in
-                if let project = appModel.projects.first(where: { $0.id == poster.projectId }) {
-                    NavigationLink {
-                        PosterEditorView(project: project)
-                    } label: {
-                        PosterAssetCard(poster: poster)
+                PosterAssetCard(
+                    poster: poster,
+                    project: appModel.projects.first(where: { $0.id == poster.projectId }),
+                    copy: {
+                        UIPasteboard.general.string = posterCopy(for: poster)
+                        showAssetStatus(AppText.localized("Poster copy copied.", "海报文案已复制。"))
+                    },
+                    requestRemove: {
+                        posterPendingRemoval = poster
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("vf.assets.posterCard")
-                } else {
-                    PosterAssetCard(poster: poster)
-                        .accessibilityIdentifier("vf.assets.posterCard")
-                }
+                )
+                .accessibilityIdentifier("vf.assets.posterCard")
             }
         }
     }
@@ -218,7 +333,9 @@ struct AssetsView: View {
 
 private struct ProjectAssetCard: View {
     let project: ContentProject
-    let delete: () -> Void
+    let copy: () -> Void
+    let toggleFavorite: () -> Void
+    let requestDelete: () -> Void
 
     var body: some View {
         VFGlassCard {
@@ -244,18 +361,18 @@ private struct ProjectAssetCard: View {
 
                     Spacer()
 
-                    Menu {
-                        Button(role: .destructive) {
-                            delete()
-                        } label: {
-                            Label(AppText.localized("Delete", "删除"), systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(VFStyle.secondaryText)
-                            .frame(width: 32, height: 32)
-                            .background(.white.opacity(0.52), in: Circle())
+                    HStack(spacing: 8) {
+                        compactAction(icon: "doc.on.doc.fill", tint: VFStyle.electricCyan, action: copy)
+                            .accessibilityLabel(AppText.localized("Copy project", "复制项目"))
+                            .accessibilityIdentifier("vf.assets.project.copyButton")
+
+                        compactAction(icon: project.isFavorite ? "heart.fill" : "heart", tint: VFStyle.primaryRed, action: toggleFavorite)
+                            .accessibilityLabel(project.isFavorite ? AppText.localized("Unfavorite project", "取消收藏项目") : AppText.localized("Favorite project", "收藏项目"))
+                            .accessibilityIdentifier("vf.assets.project.favoriteButton")
+
+                        compactAction(icon: "trash", tint: VFStyle.warning, action: requestDelete)
+                            .accessibilityLabel(AppText.localized("Delete project", "删除项目"))
+                            .accessibilityIdentifier("vf.assets.project.deleteButton")
                     }
                 }
 
@@ -274,6 +391,34 @@ private struct ProjectAssetCard: View {
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(VFStyle.secondaryText.opacity(0.75))
                 }
+
+                HStack(spacing: 8) {
+                    NavigationLink {
+                        ResultView(project: project)
+                    } label: {
+                        assetAction(AppText.localized("Open", "打开"), icon: "arrow.up.right", tint: VFStyle.ink)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.assets.project.openButton")
+
+                    Button(action: copy) {
+                        assetAction(AppText.localized("Copy", "复制"), icon: "doc.on.doc.fill", tint: VFStyle.electricCyan)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(AppText.localized("Copy project publish pack", "复制项目文案包"))
+
+                    Button(action: toggleFavorite) {
+                        assetAction(project.isFavorite ? AppText.localized("Saved", "已收藏") : AppText.localized("Save", "收藏"), icon: project.isFavorite ? "heart.fill" : "heart", tint: VFStyle.primaryRed)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(project.isFavorite ? AppText.localized("Unfavorite project", "取消收藏项目") : AppText.localized("Favorite project", "收藏项目"))
+
+                    Button(action: requestDelete) {
+                        assetAction(AppText.localized("Delete", "删除"), icon: "trash", tint: VFStyle.warning)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(AppText.localized("Delete project", "删除项目"))
+                }
             }
         }
     }
@@ -286,50 +431,120 @@ private struct ProjectAssetCard: View {
             .padding(.vertical, 5)
             .background(tint.opacity(0.10), in: Capsule())
     }
+
+    private func assetAction(_ text: String, icon: String, tint: Color) -> some View {
+        Label(text, systemImage: icon)
+            .font(.caption.weight(.black))
+            .foregroundStyle(tint)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
+            .background(tint.opacity(0.08), in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(tint.opacity(0.14), lineWidth: 1)
+            }
+    }
+
+    private func compactAction(icon: String, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.caption.weight(.black))
+                .foregroundStyle(tint)
+                .frame(width: 30, height: 30)
+                .background(tint.opacity(0.09), in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(tint.opacity(0.16), lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 private struct PosterAssetCard: View {
     let poster: PosterAsset
+    let project: ContentProject?
+    let copy: () -> Void
+    let requestRemove: () -> Void
 
     var body: some View {
         VFGlassCard {
-            HStack(spacing: 14) {
-                PosterPreview(
-                    poster: PosterDraft(
-                        headline: poster.headline,
-                        subtitle: poster.projectTopic,
-                        cta: poster.platform.displayName,
-                        style: poster.style,
-                        backgroundImageURL: poster.backgroundImageURL
-                    ),
-                    platform: poster.platform
-                )
-                .frame(width: 78, height: 106)
-                .clipShape(RoundedRectangle(cornerRadius: 17))
-                .shadow(color: VFStyle.platformTint(poster.platform).opacity(0.14), radius: 12, x: 0, y: 7)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 14) {
+                    PosterPreview(
+                        poster: PosterDraft(
+                            headline: poster.headline,
+                            subtitle: poster.projectTopic,
+                            cta: poster.platform.displayName,
+                            style: poster.style,
+                            backgroundImageURL: poster.backgroundImageURL
+                        ),
+                        platform: poster.platform
+                    )
+                    .frame(width: 78, height: 106)
+                    .clipShape(RoundedRectangle(cornerRadius: 17))
+                    .shadow(color: VFStyle.platformTint(poster.platform).opacity(0.14), radius: 12, x: 0, y: 7)
 
-                VStack(alignment: .leading, spacing: 7) {
-                    Text(poster.headline)
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(VFStyle.ink)
-                        .lineLimit(2)
-                    Text("\(poster.projectTopic) · \(poster.platform.displayName)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(VFStyle.secondaryText)
-                        .lineLimit(2)
-                    if poster.backgroundImageURL != nil {
-                        Label(AppText.localized("AI background", "AI 背景"), systemImage: "sparkles.rectangle.stack")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(VFStyle.purpleFlow)
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text(poster.headline)
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(VFStyle.ink)
+                            .lineLimit(2)
+                        Text("\(poster.projectTopic) · \(poster.platform.displayName)")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(VFStyle.secondaryText)
+                            .lineLimit(2)
+                        if poster.backgroundImageURL != nil {
+                            Label(AppText.localized("AI background", "AI 背景"), systemImage: "sparkles.rectangle.stack")
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(VFStyle.purpleFlow)
+                        }
+                        Text(poster.createdAt, style: .date)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(VFStyle.secondaryText.opacity(0.75))
                     }
-                    Text(poster.createdAt, style: .date)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(VFStyle.secondaryText.opacity(0.75))
+
+                    Spacer()
                 }
 
-                Spacer()
+                HStack(spacing: 8) {
+                    if let project {
+                        NavigationLink {
+                            PosterEditorView(project: project)
+                        } label: {
+                            posterAction(AppText.localized("Edit", "编辑"), icon: "slider.horizontal.3", tint: VFStyle.sunset)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("vf.assets.poster.editButton")
+                    }
+
+                    Button(action: copy) {
+                        posterAction(AppText.localized("Copy", "复制"), icon: "doc.on.doc.fill", tint: VFStyle.electricCyan)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.assets.poster.copyButton")
+
+                    Button(action: requestRemove) {
+                        posterAction(AppText.localized("Remove", "移除"), icon: "trash", tint: VFStyle.warning)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.assets.poster.removeButton")
+                }
             }
         }
+    }
+
+    private func posterAction(_ text: String, icon: String, tint: Color) -> some View {
+        Label(text, systemImage: icon)
+            .font(.caption.weight(.black))
+            .foregroundStyle(tint)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
+            .background(tint.opacity(0.08), in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(tint.opacity(0.14), lineWidth: 1)
+            }
     }
 }
 
@@ -381,6 +596,8 @@ private struct CopySnippetCard: View {
                             .background(.white.opacity(0.58), in: Capsule())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.assets.snippet.copyButton")
+                    .accessibilityLabel(AppText.localized("Copy snippet", "复制文案片段"))
                 }
             }
         }

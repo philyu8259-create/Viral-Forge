@@ -203,6 +203,21 @@ final class AppModel {
         }
     }
 
+    func removePosterAsset(_ poster: PosterAsset) {
+        posterAssets.removeAll { $0.projectId == poster.projectId }
+        if let index = projects.firstIndex(where: { $0.id == poster.projectId }) {
+            projects[index].hasPosterExport = false
+            projects[index].poster.backgroundImageURL = nil
+            let updatedProject = projects[index]
+            persistProjectsLocally()
+            Task {
+                await persistProjectIfNeeded(updatedProject)
+            }
+        } else {
+            persistProjectsLocally()
+        }
+    }
+
     func clearLocalWorkspaceData() {
         projects = []
         posterAssets = []

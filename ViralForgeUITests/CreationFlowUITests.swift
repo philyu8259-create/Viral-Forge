@@ -118,6 +118,30 @@ final class CreationFlowUITests: XCTestCase {
         XCTAssertTrue(app.textViews["vf.home.topicEditor"].waitForExistence(timeout: 4))
     }
 
+    func testAssetsExposeProjectAndSnippetSections() throws {
+        let app = XCUIApplication()
+        launch(app)
+        createContentPack(in: app)
+
+        app.tabBars.buttons["素材"].tap()
+        let assetsScreen = app.scrollViews["vf.assets.screen"]
+        XCTAssertTrue(assetsScreen.waitForExistence(timeout: 8))
+
+        if !app.staticTexts["文案包"].waitForExistence(timeout: 2) {
+            assetsScreen.swipeUp()
+        }
+        XCTAssertTrue(app.staticTexts["文案包"].waitForExistence(timeout: 4))
+
+        let snippetsSection = app.buttons["vf.assets.section.Snippets"]
+        XCTAssertTrue(snippetsSection.waitForExistence(timeout: 4))
+        snippetsSection.tap()
+
+        if !app.staticTexts["标题"].waitForExistence(timeout: 2) {
+            assetsScreen.swipeUp()
+        }
+        XCTAssertTrue(app.staticTexts["标题"].waitForExistence(timeout: 4))
+    }
+
     func testPaywallShowsChinaSubscriptionPlans() throws {
         let app = XCUIApplication()
         launch(app)
