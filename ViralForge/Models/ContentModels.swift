@@ -605,6 +605,14 @@ extension CreativeTemplate {
         return AppText.localized("Poster Direction", "海报方向")
     }
 
+    var isVisualTemplate: Bool {
+        let lowercasedName = name.lowercased()
+        let lowercasedHint = promptHint.lowercased()
+        let text = "\(lowercasedName) \(lowercasedHint)"
+        return ["海报", "封面", "图片", "视觉", "poster", "cover", "image", "visual", "card", "story", "first-frame"]
+            .contains { text.contains($0) }
+    }
+
     var sampleOutcome: String {
         switch category {
         case .productSeeding:

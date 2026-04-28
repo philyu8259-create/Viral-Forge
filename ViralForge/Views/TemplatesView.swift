@@ -8,11 +8,18 @@ struct TemplatesView: View {
         appModel.visibleTemplates.filter { $0.category == selectedCategory }
     }
 
+    private var visualTemplateCount: Int {
+        appModel.visibleTemplates.filter(\.isVisualTemplate).count
+    }
+
     var body: some View {
         VFPage {
             VFPageHeader(
                 title: AppText.localized("Templates", "模板"),
-                subtitle: AppText.localized("Ready-made workflows for repeatable content production", "可复用的内容生产工作流"),
+                subtitle: AppText.localized(
+                    "\(appModel.visibleTemplates.count) workflows, \(visualTemplateCount) visual templates",
+                    "\(appModel.visibleTemplates.count) 个工作流，其中 \(visualTemplateCount) 个视觉模板"
+                ),
                 icon: "rectangle.on.rectangle.fill",
                 tint: VFStyle.purpleFlow
             )
@@ -22,7 +29,10 @@ struct TemplatesView: View {
             VStack(alignment: .leading, spacing: 14) {
                 VFSectionHeader(
                     title: AppText.localized("Template Library", "模板库"),
-                    subtitle: AppText.localized("Pick a template, fill the product, and generate a structured pack", "选择模板，填入产品，一键生成结构化内容包")
+                    subtitle: AppText.localized(
+                        "\(filteredTemplates.count) templates in this category. Pick one, fill the product, and generate a structured pack.",
+                        "当前类目 \(filteredTemplates.count) 个模板。选择模板，填入产品，一键生成结构化内容包。"
+                    )
                 )
 
                 LazyVStack(spacing: 14) {
@@ -71,6 +81,12 @@ struct TemplatesView: View {
                         HStack(spacing: 7) {
                             Image(systemName: categoryIcon(category))
                             Text(category.displayName)
+                            Text("\(templateCount(for: category))")
+                                .font(.caption2.weight(.black))
+                                .foregroundStyle(selectedCategory == category ? VFStyle.ink : .white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(selectedCategory == category ? .white.opacity(0.88) : VFStyle.templateTint(category), in: Capsule())
                         }
                         .font(.caption.weight(.bold))
                         .foregroundStyle(selectedCategory == category ? .white : VFStyle.ink)
@@ -91,6 +107,10 @@ struct TemplatesView: View {
             }
             .padding(.vertical, 2)
         }
+    }
+
+    private func templateCount(for category: TemplateCategory) -> Int {
+        appModel.visibleTemplates.filter { $0.category == category }.count
     }
 
     private func moduleRow(_ text: String, icon: String, tint: Color) -> some View {
