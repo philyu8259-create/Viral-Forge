@@ -17,14 +17,6 @@ struct HomeView: View {
         draft.topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : draft.topicValidationMessage
     }
 
-    private var hasTopic: Bool {
-        !draft.topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
-    private var hasStrategyContext: Bool {
-        hasTopic || appliedWorkflow != nil
-    }
-
     private var launchPlatforms: [SocialPlatform] {
         appModel.launchPlatforms
     }
@@ -216,57 +208,53 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 7) {
-                        Image(systemName: hasStrategyContext ? "sparkles" : "lightbulb")
+                        Image(systemName: "sparkles")
                         Text(strategyHintText)
                     }
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(hasStrategyContext ? VFStudioDesign.primaryRed : VFStudioDesign.secondaryText)
+                    .foregroundStyle(VFStudioDesign.primaryRed)
 
-                    if hasStrategyContext {
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                            StrategyMiniChip(
-                                icon: "paperplane.fill",
-                                title: AppText.localized("Platform", "平台"),
-                                value: draft.platform.displayName,
-                                tint: VFStudioDesign.primaryRed
-                            ) {
-                                Haptics.selection()
-                            }
-
-                            StrategyMiniChip(
-                                icon: "person.3.fill",
-                                title: AppText.localized("Audience", "受众画像"),
-                                value: draft.audience.isEmpty ? AppText.localized("Recommended persona", "智能推荐画像") : draft.audience,
-                                tint: VFStudioDesign.electricCyan
-                            ) {
-                                Haptics.selection()
-                                activeEditor = .audience
-                            }
-
-                            StrategyMiniChip(
-                                icon: "mouth.fill",
-                                title: AppText.localized("Tone", "内容语气"),
-                                value: draft.tone.isEmpty ? AppText.localized("Professional seeding", "专业种草") : draft.tone,
-                                tint: VFStudioDesign.sunset
-                            ) {
-                                Haptics.selection()
-                                activeEditor = .tone
-                            }
-
-                            StrategyMiniChip(
-                                icon: "paintpalette.fill",
-                                title: AppText.localized("Poster style", "海报风格"),
-                                value: AppText.localized("Minimal white", "极简白系"),
-                                tint: brandAccentColor
-                            ) {
-                                Haptics.selection()
-                                activeEditor = .brand
-                            }
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                        StrategyMiniChip(
+                            icon: "paperplane.fill",
+                            title: AppText.localized("Platform", "平台"),
+                            value: draft.platform.displayName,
+                            tint: VFStudioDesign.primaryRed
+                        ) {
+                            Haptics.selection()
                         }
-                        .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))
+
+                        StrategyMiniChip(
+                            icon: "person.3.fill",
+                            title: AppText.localized("Audience", "受众画像"),
+                            value: draft.audience.isEmpty ? AppText.localized("Recommended persona", "智能推荐画像") : draft.audience,
+                            tint: VFStudioDesign.electricCyan
+                        ) {
+                            Haptics.selection()
+                            activeEditor = .audience
+                        }
+
+                        StrategyMiniChip(
+                            icon: "mouth.fill",
+                            title: AppText.localized("Tone", "内容语气"),
+                            value: draft.tone.isEmpty ? AppText.localized("Professional seeding", "专业种草") : draft.tone,
+                            tint: VFStudioDesign.sunset
+                        ) {
+                            Haptics.selection()
+                            activeEditor = .tone
+                        }
+
+                        StrategyMiniChip(
+                            icon: "paintpalette.fill",
+                            title: AppText.localized("Poster style", "海报风格"),
+                            value: AppText.localized("Minimal white", "极简白系"),
+                            tint: brandAccentColor
+                        ) {
+                            Haptics.selection()
+                            activeEditor = .brand
+                        }
                     }
                 }
-                .animation(.spring(response: 0.36, dampingFraction: 0.86), value: hasStrategyContext)
 
                 generateFAB
                     .padding(.top, 2)
@@ -575,9 +563,7 @@ struct HomeView: View {
         if appliedWorkflow != nil {
             return AppText.localized("Template strategy is ready", "模板策略已准备")
         }
-        return hasTopic
-            ? AppText.localized("Strategy suggestions are ready", "智能策略已准备")
-            : AppText.localized("Add a topic to unlock strategy suggestions", "输入主题后展开智能策略")
+        return AppText.localized("Strategy suggestions are ready", "智能策略已准备")
     }
 
     private func sectionHeader(title: String, subtitle: String) -> some View {
