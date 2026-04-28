@@ -49,9 +49,17 @@ final class AppModel {
     private var transactionUpdatesTask: Task<Void, Never>?
 
     init(contentService: ContentGenerating = MockContentService(), settings: BackendSettings = BackendSettingsStore.load()) {
-        let isUITesting = ProcessInfo.processInfo.arguments.contains("VF_UI_TESTING")
+        let processInfo = ProcessInfo.processInfo
+        let isUITesting = processInfo.arguments.contains("VF_UI_TESTING")
+        let isLiveBackendTesting = processInfo.arguments.contains("VF_LIVE_BACKEND_TESTING")
         self.fallbackContentService = contentService
-        self.backendSettings = isUITesting ? BackendSettings() : settings
+        self.backendSettings = if isUITesting {
+            BackendSettings()
+        } else if isLiveBackendTesting {
+            Self.liveBackendTestSettings(processInfo: processInfo)
+        } else {
+            settings
+        }
         self.brandProfile = BrandProfileStore.load()
         self.projects = LocalProjectStore.load()
         self.posterAssets = assetsFromProjects(projects)
@@ -64,6 +72,12 @@ final class AppModel {
             if ProcessInfo.processInfo.arguments.contains("VF_UI_TEST_NO_QUOTA") {
                 quota = QuotaState(remainingTextGenerations: 0, remainingPosterExports: 0, isPro: false)
             }
+        }
+        if isLiveBackendTesting {
+            projects = []
+            posterAssets = []
+            brandProfile = BrandProfile()
+            quota = QuotaState(remainingTextGenerations: 10, remainingPosterExports: 10, isPro: false)
         }
         startTransactionListener()
     }
@@ -684,6 +698,24 @@ final class AppModel {
     private func makeAPIClient() -> APIClient? {
         guard let baseURL = backendSettings.baseURL else { return nil }
         return APIClient(baseURL: baseURL, userId: backendSettings.userId)
+    }
+
+    private static func liveBackendTestSettings(processInfo: ProcessInfo) -> BackendSettings {
+        let baseURLString = processInfo.environment["VF_LIVE_BACKEND_URL"]
+            ?? launchArgumentValue(named: "VF_LIVE_BACKEND_URL", arguments: processInfo.arguments)
+            ?? "http://127.0.0.1:8787"
+        let userId = processInfo.environment["VF_LIVE_BACKEND_USER_ID"]
+            ?? launchArgumentValue(named: "VF_LIVE_BACKEND_USER_ID", arguments: processInfo.arguments)
+            ?? "live-ui-test"
+
+        return BackendSettings(mode: .backend, baseURLString: baseURLString, userId: userId)
+    }
+
+    private static func launchArgumentValue(named name: String, arguments: [String]) -> String? {
+        guard let index = arguments.firstIndex(of: name) else { return nil }
+        let valueIndex = arguments.index(after: index)
+        guard arguments.indices.contains(valueIndex) else { return nil }
+        return arguments[valueIndex]
     }
 
     private func persistProjectIfNeeded(_ project: ContentProject) async {

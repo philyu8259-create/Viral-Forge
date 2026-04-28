@@ -47,9 +47,9 @@ function imageSize(aspectRatio) {
   case "1:1":
     return process.env.SEEDREAM_SIZE_SQUARE || "2048x2048";
   case "3:4":
-    return process.env.SEEDREAM_SIZE_SOCIAL_COVER || "1440x1920";
+    return process.env.SEEDREAM_SIZE_SOCIAL_COVER || "1728x2304";
   case "16:9":
-    return process.env.SEEDREAM_SIZE_LANDSCAPE || "2048x1152";
+    return process.env.SEEDREAM_SIZE_LANDSCAPE || "2560x1440";
   case "9:16":
   default:
     return process.env.SEEDREAM_SIZE_PORTRAIT || "1440x2560";

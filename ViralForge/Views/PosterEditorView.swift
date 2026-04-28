@@ -49,6 +49,7 @@ struct PosterEditorView: View {
                         }
                     }
                 }
+                .accessibilityIdentifier("vf.poster.generateBackgroundButton")
 
                 if let posterGenerationError = appModel.posterGenerationError {
                     VFGlassCard {

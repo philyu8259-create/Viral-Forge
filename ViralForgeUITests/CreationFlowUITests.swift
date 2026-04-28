@@ -35,8 +35,7 @@ final class CreationFlowUITests: XCTestCase {
         let exportStatus = app.staticTexts["vf.poster.exportStatus"]
         XCTAssertTrue(exportStatus.waitForExistence(timeout: 8))
 
-        app.tabBars.buttons["素材"].tap()
-        XCTAssertTrue(app.scrollViews["vf.assets.screen"].waitForExistence(timeout: 8))
+        openAssetsTab(in: app)
 
         let postersSection = app.buttons["vf.assets.section.Posters"]
         XCTAssertTrue(postersSection.waitForExistence(timeout: 4))
@@ -45,6 +44,51 @@ final class CreationFlowUITests: XCTestCase {
         let posterCard = app.buttons["vf.assets.posterCard"].firstMatch
         XCTAssertTrue(posterCard.waitForExistence(timeout: 8))
         saveScreenshot(named: "e2e-04-assets-poster.png")
+    }
+
+    func testLiveChinaBackendGeneratesPosterBackgroundAndAssets() throws {
+        guard shouldRunLiveBackendUITests else {
+            throw XCTSkip("Set VF_RUN_LIVE_UI_TESTS=1 or create /tmp/viralforge-run-live-ui-tests to run the paid live China backend UI flow.")
+        }
+
+        let app = XCUIApplication()
+        launchLiveBackend(app)
+        createContentPack(
+            in: app,
+            topic: "便携榨汁杯，适合上班族办公室快速早餐，主打便携、好清洗、低噪音、颜值高。",
+            resultTimeout: 75,
+            attempts: 2
+        )
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 20))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 20))
+
+        let backgroundButton = app.buttons["vf.poster.generateBackgroundButton"]
+        XCTAssertTrue(backgroundButton.waitForExistence(timeout: 10))
+        backgroundButton.tap()
+        waitForEnabled(backgroundButton, timeout: 120)
+        XCTAssertFalse(app.descendants(matching: .any)["vf.poster.backgroundError"].exists)
+
+        let renderButton = app.buttons["vf.poster.renderButton"]
+        XCTAssertTrue(renderButton.waitForExistence(timeout: 10))
+        renderButton.tap()
+
+        let exportStatus = app.staticTexts["vf.poster.exportStatus"]
+        XCTAssertTrue(exportStatus.waitForExistence(timeout: 15))
+
+        openAssetsTab(in: app, timeout: 15)
+
+        let postersSection = app.buttons["vf.assets.section.Posters"]
+        XCTAssertTrue(postersSection.waitForExistence(timeout: 8))
+        postersSection.tap()
+
+        let posterCard = app.buttons["vf.assets.posterCard"].firstMatch
+        XCTAssertTrue(posterCard.waitForExistence(timeout: 15))
+        saveScreenshot(named: "e2e-live-china-assets-poster.png")
     }
 
     func testEnglishLocaleUsesGlobalPlatforms() throws {
@@ -114,8 +158,7 @@ final class CreationFlowUITests: XCTestCase {
         let app = XCUIApplication()
         launch(app, extraArguments: ["VF_UI_TEST_EMPTY_LIBRARY"])
 
-        app.tabBars.buttons["素材"].tap()
-        XCTAssertTrue(app.scrollViews["vf.assets.screen"].waitForExistence(timeout: 8))
+        openAssetsTab(in: app)
         XCTAssertTrue(app.descendants(matching: .any)["vf.assets.emptyState"].waitForExistence(timeout: 4))
 
         let createButton = app.buttons["去创作"].firstMatch
@@ -129,9 +172,8 @@ final class CreationFlowUITests: XCTestCase {
         launch(app)
         createContentPack(in: app)
 
-        app.tabBars.buttons["素材"].tap()
+        openAssetsTab(in: app)
         let assetsScreen = app.scrollViews["vf.assets.screen"]
-        XCTAssertTrue(assetsScreen.waitForExistence(timeout: 8))
 
         if !app.staticTexts["文案包"].waitForExistence(timeout: 2) {
             assetsScreen.swipeUp()
@@ -211,9 +253,50 @@ final class CreationFlowUITests: XCTestCase {
         app.launch()
     }
 
+    private func launchLiveBackend(
+        _ app: XCUIApplication,
+        appleLanguages: String = "(zh-Hans)",
+        appleLocale: String = "zh_CN"
+    ) {
+        app.launchEnvironment["VF_LIVE_BACKEND_URL"] = liveBackendURL
+        app.launchEnvironment["VF_LIVE_BACKEND_USER_ID"] = liveBackendUserID
+        app.launchArguments = [
+            "VF_LIVE_BACKEND_TESTING",
+            "-AppleLanguages", appleLanguages,
+            "-AppleLocale", appleLocale
+        ]
+        app.launch()
+    }
+
+    private var shouldRunLiveBackendUITests: Bool {
+        ProcessInfo.processInfo.environment["VF_RUN_LIVE_UI_TESTS"] == "1"
+            || FileManager.default.fileExists(atPath: "/tmp/viralforge-run-live-ui-tests")
+    }
+
+    private var liveBackendURL: String {
+        if let value = ProcessInfo.processInfo.environment["VF_LIVE_BACKEND_URL"], !value.isEmpty {
+            return value
+        }
+        if let value = try? String(contentsOfFile: "/tmp/viralforge-live-backend-url", encoding: .utf8)
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !value.isEmpty {
+            return value
+        }
+        return "http://127.0.0.1:8787"
+    }
+
+    private var liveBackendUserID: String {
+        if let value = ProcessInfo.processInfo.environment["VF_LIVE_BACKEND_USER_ID"], !value.isEmpty {
+            return value
+        }
+        return "live-ui-\(UUID().uuidString)"
+    }
+
     private func createContentPack(
         in app: XCUIApplication,
-        topic: String = "便携榨汁杯，适合上班族办公室快速早餐，主打便携、好清洗、低噪音、颜值高。"
+        topic: String = "便携榨汁杯，适合上班族办公室快速早餐，主打便携、好清洗、低噪音、颜值高。",
+        resultTimeout: TimeInterval = 8,
+        attempts: Int = 1
     ) {
         let topicEditor = app.textViews["vf.home.topicEditor"]
         XCTAssertTrue(topicEditor.waitForExistence(timeout: 8))
@@ -223,16 +306,51 @@ final class CreationFlowUITests: XCTestCase {
         let generateButton = app.buttons["vf.home.generateButton"]
         XCTAssertTrue(generateButton.waitForExistence(timeout: 4))
         XCTAssertTrue(generateButton.isEnabled)
-        generateButton.tap()
 
         let resultScreen = app.scrollViews["vf.result.screen"]
-        XCTAssertTrue(resultScreen.waitForExistence(timeout: 8))
+        for attempt in 1...attempts {
+            generateButton.tap()
+            if resultScreen.waitForExistence(timeout: resultTimeout) {
+                return
+            }
+
+            let retryButton = app.buttons["vf.home.generationError.retryButton"]
+            if retryButton.waitForExistence(timeout: 2), attempt < attempts {
+                retryButton.tap()
+                if resultScreen.waitForExistence(timeout: resultTimeout) {
+                    return
+                }
+            }
+
+            if attempt < attempts,
+               generateButton.waitForExistence(timeout: 2),
+               generateButton.isEnabled {
+                continue
+            }
+        }
+
+        XCTFail("Result screen did not appear after \(attempts) generation attempt(s).")
     }
 
     private func openSettings(in app: XCUIApplication) {
         app.tabBars.buttons["品牌"].tap()
         XCTAssertTrue(app.buttons["vf.brand.settingsLink"].waitForExistence(timeout: 8))
         app.buttons["vf.brand.settingsLink"].tap()
+    }
+
+    private func openAssetsTab(in app: XCUIApplication, timeout: TimeInterval = 8) {
+        let assetsScreen = app.scrollViews["vf.assets.screen"]
+        app.tabBars.buttons["素材"].tap()
+        if assetsScreen.waitForExistence(timeout: timeout) {
+            return
+        }
+
+        let backButton = app.navigationBars.buttons.firstMatch
+        if backButton.exists {
+            backButton.tap()
+        }
+        app.tabBars.buttons["素材"].tap()
+        XCTAssertTrue(assetsScreen.waitForExistence(timeout: timeout))
     }
 
     private func assertCopyPackWorks(in app: XCUIApplication, statusText: String) {
@@ -266,6 +384,12 @@ final class CreationFlowUITests: XCTestCase {
         }
 
         XCTAssertTrue(app.staticTexts[statusText].waitForExistence(timeout: 4))
+    }
+
+    private func waitForEnabled(_ element: XCUIElement, timeout: TimeInterval) {
+        let predicate = NSPredicate(format: "enabled == true")
+        expectation(for: predicate, evaluatedWith: element)
+        waitForExpectations(timeout: timeout)
     }
 
     private func saveScreenshot(named fileName: String) {
