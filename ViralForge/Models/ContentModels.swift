@@ -609,7 +609,7 @@ extension CreativeTemplate {
         let lowercasedName = name.lowercased()
         let lowercasedHint = promptHint.lowercased()
         let text = "\(lowercasedName) \(lowercasedHint)"
-        return ["海报", "封面", "图片", "视觉", "poster", "cover", "image", "visual", "card", "story", "first-frame"]
+        return ["海报", "封面", "图片", "视觉", "图文", "首帧", "清单", "poster", "cover", "image", "visual", "card", "story", "first-frame", "carousel", "checklist", "lineup"]
             .contains { text.contains($0) }
     }
 

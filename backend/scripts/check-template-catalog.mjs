@@ -39,7 +39,7 @@ try {
     );
   }
 
-  const visualKeywords = ["海报", "封面", "图片", "视觉", "poster", "cover", "image", "visual", "card", "story"];
+  const visualKeywords = ["海报", "封面", "图片", "视觉", "图文", "首帧", "清单", "poster", "cover", "image", "visual", "card", "story", "first-frame", "carousel", "checklist", "lineup"];
   const visualTemplates = templates.filter((template) => {
     const text = `${template.name} ${template.promptHint}`.toLowerCase();
     return visualKeywords.some((keyword) => text.includes(keyword.toLowerCase()));
