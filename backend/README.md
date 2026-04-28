@@ -83,6 +83,14 @@ Use this endpoint to check whether the backend can see the required keys without
 curl http://localhost:8787/api/providers/status
 ```
 
+To verify the full paid China provider chain with a temporary SQLite database, run:
+
+```sh
+npm run smoke:china-live
+```
+
+This starts an isolated local backend, forces `AI_PROVIDER_MODE=china_live`, calls Qwen for Chinese copy, calls Seedream for a poster background, and prints only non-secret status fields.
+
 Suggested live settings:
 
 ```text

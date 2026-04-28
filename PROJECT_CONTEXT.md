@@ -63,7 +63,7 @@ Viral Forge is a single-bundle dual-locale iOS app for generating viral content 
 
 - Backend `npm run check` passed.
 - Backend `npm run smoke:local` passed with a temporary SQLite database and mock providers.
-- Live China provider test passed locally: Qwen generated a Chinese content package, and Seedream returned a poster background image URL.
+- Live China provider test is now reproducible as `npm run smoke:china-live`; it starts an isolated temporary SQLite backend, verifies `china_live`, calls Qwen for Chinese copy, and calls Seedream for a poster background image URL.
 - Content topic-guard was added after a live simulator run drifted from "便携榨汁杯" to another product. `npm run check` now includes `scripts/check-content-guard.mjs`, and a live Qwen text-only request confirmed the result included "便携榨汁杯".
 - iOS generation input validation was added for empty, punctuation-only, and too-short topics. Home and template generation now disable invalid submissions, show inline guidance only after invalid input, clear stale generation errors while editing, and expose retry buttons on generation failure.
 - Brand memory is now functional: brand profile saves locally, syncs to backend when available, appears on Home/Templates, and generation requests carry brand name, industry, audience, tone, and banned words. Backend `/api/content/generate` also enriches requests from saved brand profiles.
@@ -121,7 +121,7 @@ Viral Forge is a single-bundle dual-locale iOS app for generating viral content 
 
 1. Use `CHINA_RELEASE_CHECKLIST.md` as the TestFlight readiness source of truth, with the added dual-locale requirements.
 2. Continue local MVP development only where it clears the checklist or removes launch risk.
-3. Use `npm run smoke:local` after backend changes to verify health, provider status, quota, content generation, and poster background routes without consuming live model credits.
+3. Use `npm run smoke:local` after backend changes to verify health, provider status, quota, content generation, and poster background routes without consuming live model credits. Use `npm run smoke:china-live` only when intentionally validating paid Qwen/Seedream integration.
 4. The functional MVP is close to UI/UX handoff: a designer can now redesign the visible screens around real workflows instead of placeholders.
 5. Before TestFlight, deploy a public HTTPS backend, update Release `BACKEND_BASE_URL`, regenerate the Xcode project, and validate the app against that backend.
 6. Prepare public Simplified Chinese and English privacy policy/terms, App Store metadata, and subscription screenshots.
