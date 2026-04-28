@@ -23,7 +23,7 @@ struct AppliedTemplateWorkflow: Identifiable, Hashable {
 @Observable
 final class AppModel {
     var selectedTab: AppTab = .create
-    var projects: [ContentProject] = SampleData.projects
+    var projects: [ContentProject] = []
     var templates: [CreativeTemplate] = SampleData.templates
     var posterAssets: [PosterAsset] = []
     var brandProfile = BrandProfile()
@@ -1006,7 +1006,7 @@ private enum LocalProjectStore {
     static func load() -> [ContentProject] {
         guard let data = UserDefaults.standard.data(forKey: storageKey),
               let projects = try? JSONDecoder().decode([ContentProject].self, from: data) else {
-            return SampleData.projects
+            return []
         }
         return projects
     }

@@ -29,6 +29,10 @@ struct HomeView: View {
         appModel.launchPlatforms
     }
 
+    private var shouldShowContentPipeline: Bool {
+        appModel.isGenerating || !appModel.projects.isEmpty
+    }
+
     var body: some View {
         ZStack {
             GeometryReader { proxy in
@@ -38,7 +42,9 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         studioHeader
                         mainCreationCard
-                        contentPipelineSection
+                        if shouldShowContentPipeline {
+                            contentPipelineSection
+                        }
                         templatePreviewSection
                         brandKitShortcut
                         workflowShortcuts
