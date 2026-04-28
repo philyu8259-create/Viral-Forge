@@ -102,6 +102,12 @@ final class CreationFlowUITests: XCTestCase {
         let errorCard = app.descendants(matching: .any)["vf.home.generationError"]
         XCTAssertTrue(errorCard.waitForExistence(timeout: 4))
         XCTAssertTrue(app.staticTexts["今日免费文案额度已用完。"].exists)
+
+        let upgradeButton = app.descendants(matching: .any)["升级 Pro"].firstMatch
+        XCTAssertTrue(upgradeButton.waitForExistence(timeout: 4))
+        upgradeButton.tap()
+
+        XCTAssertTrue(app.scrollViews["vf.paywall.screen"].waitForExistence(timeout: 8))
     }
 
     func testEmptyAssetsShowsNextAction() throws {

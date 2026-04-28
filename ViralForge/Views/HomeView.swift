@@ -600,14 +600,44 @@ struct HomeView: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(VFStudioDesign.warning)
 
-            Button {
-                generate()
-            } label: {
-                Label(AppText.localized("Retry", "重试"), systemImage: "arrow.clockwise")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(VFStudioDesign.accent)
+            HStack(spacing: 12) {
+                Button {
+                    generate()
+                } label: {
+                    Label(AppText.localized("Retry", "重试"), systemImage: "arrow.clockwise")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(VFStudioDesign.accent)
+                }
+                .disabled(!canGenerate)
+                .accessibilityIdentifier("vf.home.generationError.retryButton")
+
+                if shouldOfferProRecovery(for: message) {
+                    Button {
+                        Haptics.selection()
+                        appModel.generationError = nil
+                        appModel.selectedTab = .pro
+                    } label: {
+                        Label(AppText.localized("Upgrade Pro", "升级 Pro"), systemImage: "crown.fill")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                            .background(
+                                LinearGradient(
+                                    colors: [VFStudioDesign.primaryRed, VFStudioDesign.sunset],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ),
+                                in: Capsule()
+                            )
+                            .shadow(color: VFStudioDesign.primaryRed.opacity(0.18), radius: 10, x: 0, y: 5)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(AppText.localized("Upgrade Pro", "升级 Pro"))
+                    .accessibilityIdentifier("vf.home.generationError.upgradeButton")
+                }
             }
-            .disabled(!canGenerate)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -618,6 +648,10 @@ struct HomeView: View {
         }
         .shadow(color: .black.opacity(0.035), radius: 16, x: 0, y: 8)
         .accessibilityIdentifier("vf.home.generationError")
+    }
+
+    private func shouldOfferProRecovery(for message: String) -> Bool {
+        !appModel.quota.isPro && !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private func generate() {
