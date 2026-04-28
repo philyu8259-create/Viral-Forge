@@ -582,6 +582,29 @@ extension CreativeTemplate {
         }
     }
 
+    var outputBadges: [String] {
+        [
+            AppText.localized("Copy", "文案"),
+            visualOutputBadge,
+            AppText.localized("Publish Pack", "发布包")
+        ]
+    }
+
+    private var visualOutputBadge: String {
+        let lowercasedName = name.lowercased()
+        let lowercasedHint = promptHint.lowercased()
+        if lowercasedName.contains("海报") || lowercasedHint.contains("海报") || lowercasedName.contains("poster") || lowercasedHint.contains("poster") {
+            return AppText.localized("Poster", "海报")
+        }
+        if lowercasedName.contains("封面") || lowercasedHint.contains("封面") || lowercasedName.contains("cover") || lowercasedHint.contains("cover") {
+            return AppText.localized("Cover", "封面")
+        }
+        if lowercasedName.contains("视觉") || lowercasedHint.contains("图片") || lowercasedName.contains("visual") || lowercasedHint.contains("image") {
+            return AppText.localized("Image Direction", "图片方向")
+        }
+        return AppText.localized("Poster Direction", "海报方向")
+    }
+
     var sampleOutcome: String {
         switch category {
         case .productSeeding:

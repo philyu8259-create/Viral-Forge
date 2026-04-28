@@ -40,14 +40,15 @@ struct TemplatesView: View {
 
             VFGlassCard {
                 VStack(alignment: .leading, spacing: 14) {
-                    Label(AppText.localized("Canva-like MVP Modules", "类 Canva 模块"), systemImage: "sparkles.rectangle.stack")
+                    Label(AppText.localized("Viral Template Studio", "爆款模板工作台"), systemImage: "sparkles.rectangle.stack")
                         .font(.headline.weight(.bold))
                         .foregroundStyle(VFStyle.ink)
 
                     VStack(spacing: 12) {
                         moduleRow(AppText.localized("Six monetization-focused template modules", "六类变现导向模板模块"), icon: "rectangle.3.group", tint: VFStyle.primaryRed)
                         moduleRow(AppText.localized("Built-in audience, tone, and content structure", "内置人群、语气和内容结构"), icon: "list.bullet.rectangle", tint: VFStyle.electricCyan)
-                        moduleRow(AppText.localized("One template can produce copy, poster direction, and publish pack", "一个模板同时产出文案、海报方向和发布包"), icon: "sparkles", tint: VFStyle.sunset)
+                        moduleRow(AppText.localized("One template can produce copy, poster or image direction, and publish pack", "一个模板同时产出文案、海报/图片方向和发布包"), icon: "sparkles", tint: VFStyle.sunset)
+                        moduleRow(AppText.localized("Visual templates open directly into AI background and poster editing", "视觉模板可直接进入 AI 背景和海报编辑"), icon: "photo.on.rectangle.angled", tint: VFStyle.purpleFlow)
                     }
                 }
             }
@@ -172,7 +173,7 @@ private struct TemplateCard: View {
                         .lineLimit(2)
 
                     HStack(spacing: 6) {
-                        ForEach(template.contentStructure.prefix(2), id: \.self) { item in
+                        ForEach(template.outputBadges.prefix(3), id: \.self) { item in
                             Text(item)
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(tint)
