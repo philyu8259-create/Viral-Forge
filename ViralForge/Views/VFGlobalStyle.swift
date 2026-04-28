@@ -235,6 +235,73 @@ struct VFGradientIcon: View {
     }
 }
 
+struct VFEmptyMomentumVisual: View {
+    let icon: String
+    let tint: Color
+    var secondary: Color = VFStyle.sunset
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(tint.opacity(0.16))
+                .frame(width: 160, height: 160)
+                .blur(radius: 22)
+                .offset(x: -42, y: -28)
+
+            Circle()
+                .fill(secondary.opacity(0.15))
+                .frame(width: 132, height: 132)
+                .blur(radius: 24)
+                .offset(x: 48, y: 26)
+
+            RoundedRectangle(cornerRadius: 24)
+                .fill(.white.opacity(0.76))
+                .frame(width: 190, height: 118)
+                .rotationEffect(.degrees(-5))
+                .overlay(alignment: .topLeading) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Capsule()
+                            .fill(tint.opacity(0.72))
+                            .frame(width: 68, height: 10)
+                        Capsule()
+                            .fill(VFStyle.ink.opacity(0.12))
+                            .frame(width: 118, height: 8)
+                        Capsule()
+                            .fill(VFStyle.ink.opacity(0.08))
+                            .frame(width: 92, height: 8)
+                    }
+                    .padding(18)
+                }
+                .shadow(color: tint.opacity(0.13), radius: 20, x: 0, y: 12)
+
+            RoundedRectangle(cornerRadius: 22)
+                .fill(
+                    LinearGradient(
+                        colors: [tint.opacity(0.95), secondary.opacity(0.90)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 78, height: 100)
+                .rotationEffect(.degrees(8))
+                .offset(x: 52, y: 6)
+                .overlay {
+                    Image(systemName: icon)
+                        .font(.system(size: 30, weight: .black))
+                        .foregroundStyle(.white)
+                }
+                .shadow(color: tint.opacity(0.24), radius: 18, x: 0, y: 10)
+
+            Image(systemName: "sparkles")
+                .font(.system(size: 24, weight: .black))
+                .foregroundStyle(secondary)
+                .offset(x: -72, y: -52)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 148)
+    }
+}
+
 struct VFPrimaryButton: View {
     let title: String
     let icon: String

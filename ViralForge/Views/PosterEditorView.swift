@@ -281,6 +281,9 @@ struct PosterPreview: View {
         ZStack {
             RoundedRectangle(cornerRadius: 8)
                 .fill(palette.background)
+            if poster.backgroundImageURL == nil {
+                PosterFallbackVisual(palette: palette, platform: platform)
+            }
             if let backgroundImageURL = poster.backgroundImageURL {
                 AsyncImage(url: backgroundImageURL) { phase in
                     switch phase {
@@ -289,7 +292,7 @@ struct PosterPreview: View {
                             .resizable()
                             .scaledToFill()
                     case .failure:
-                        palette.background
+                        PosterFallbackVisual(palette: palette, platform: platform)
                     case .empty:
                         ProgressView()
                     @unknown default:
@@ -340,6 +343,78 @@ struct PosterPreview: View {
         }
         .aspectRatio(target.aspectRatio, contentMode: .fit)
         .shadow(color: .black.opacity(0.08), radius: 18, y: 8)
+    }
+}
+
+private struct PosterFallbackVisual: View {
+    let palette: PosterPalette
+    let platform: SocialPlatform
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let height = proxy.size.height
+
+            ZStack {
+                Circle()
+                    .fill(palette.accent.opacity(0.20))
+                    .frame(width: width * 0.92, height: width * 0.92)
+                    .blur(radius: width * 0.15)
+                    .offset(x: -width * 0.34, y: -height * 0.30)
+
+                Circle()
+                    .fill(palette.primary.opacity(platform == .douyin || platform == .tikTok ? 0.12 : 0.07))
+                    .frame(width: width * 0.78, height: width * 0.78)
+                    .blur(radius: width * 0.12)
+                    .offset(x: width * 0.30, y: -height * 0.04)
+
+                RoundedRectangle(cornerRadius: width * 0.07)
+                    .fill(.white.opacity(platform == .douyin || platform == .tikTok ? 0.14 : 0.70))
+                    .frame(width: width * 0.50, height: height * 0.34)
+                    .rotationEffect(.degrees(-8))
+                    .offset(x: -width * 0.12, y: -height * 0.10)
+                    .shadow(color: palette.accent.opacity(0.16), radius: width * 0.08, x: 0, y: width * 0.05)
+
+                RoundedRectangle(cornerRadius: width * 0.08)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                palette.accent.opacity(0.92),
+                                palette.primary.opacity(platform == .douyin || platform == .tikTok ? 0.68 : 0.22)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: width * 0.27, height: height * 0.38)
+                    .rotationEffect(.degrees(7))
+                    .offset(x: width * 0.18, y: -height * 0.04)
+                    .overlay {
+                        Image(systemName: fallbackIcon)
+                            .font(.system(size: max(28, width * 0.12), weight: .black))
+                            .foregroundStyle(.white.opacity(0.90))
+                    }
+                    .shadow(color: palette.accent.opacity(0.22), radius: width * 0.08, x: 0, y: width * 0.05)
+
+                HStack(spacing: width * 0.035) {
+                    ForEach(0..<4, id: \.self) { index in
+                        Capsule()
+                            .fill(index.isMultiple(of: 2) ? palette.accent.opacity(0.70) : .white.opacity(0.72))
+                            .frame(width: width * 0.035, height: height * CGFloat([0.13, 0.22, 0.16, 0.26][index]))
+                    }
+                }
+                .rotationEffect(.degrees(18))
+                .offset(x: width * 0.28, y: -height * 0.28)
+            }
+        }
+    }
+
+    private var fallbackIcon: String {
+        switch platform {
+        case .xiaohongshu, .instagram: "camera.fill"
+        case .douyin, .tikTok, .youtubeShorts: "play.fill"
+        case .weChat: "bubble.left.and.bubble.right.fill"
+        }
     }
 }
 

@@ -7,9 +7,24 @@ export async function mockGenerateContent(request) {
 
 export async function mockGeneratePosterBackground(request) {
   const style = request.style || "Clean";
+  const palette = posterPalette(style);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1536" viewBox="0 0 1024 1536"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${palette.start}"/><stop offset="0.52" stop-color="${palette.mid}"/><stop offset="1" stop-color="${palette.end}"/></linearGradient><radialGradient id="glow" cx="35%" cy="18%" r="60%"><stop offset="0" stop-color="${palette.glow}" stop-opacity="0.65"/><stop offset="1" stop-color="${palette.glow}" stop-opacity="0"/></radialGradient></defs><rect width="1024" height="1536" fill="url(#bg)"/><circle cx="260" cy="260" r="390" fill="url(#glow)"/><circle cx="860" cy="420" r="290" fill="${palette.accent}" opacity="0.18"/><rect x="185" y="250" width="560" height="690" rx="80" fill="#ffffff" opacity="0.38" transform="rotate(-8 465 595)"/><rect x="540" y="360" width="260" height="500" rx="72" fill="${palette.accent}" opacity="0.72" transform="rotate(8 670 610)"/><circle cx="748" cy="310" r="42" fill="#ffffff" opacity="0.74"/><circle cx="815" cy="945" r="70" fill="#ffffff" opacity="0.46"/></svg>`;
   return {
-    imageUrl: `https://example.com/mock/poster-backgrounds/${encodeURIComponent(style)}.png`
+    imageUrl: `data:image/svg+xml,${encodeURIComponent(svg)}`
   };
+}
+
+function posterPalette(style) {
+  switch (style) {
+    case "Bold":
+      return { start: "#18071f", mid: "#79182b", end: "#ff6a1a", glow: "#ffcc33", accent: "#ff3b30" };
+    case "Soft":
+      return { start: "#fff4f0", mid: "#ffd9df", end: "#f6f9ff", glow: "#ff8fb3", accent: "#b84a62" };
+    case "Editorial":
+      return { start: "#eef2f7", mid: "#dbe7ff", end: "#ffffff", glow: "#4c6fff", accent: "#3554d1" };
+    default:
+      return { start: "#f6fff8", mid: "#e6fbf2", end: "#ffffff", glow: "#31c8a7", accent: "#1a7a66" };
+  }
 }
 
 function chineseResponse(request) {

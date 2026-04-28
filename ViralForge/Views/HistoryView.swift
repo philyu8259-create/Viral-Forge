@@ -27,7 +27,11 @@ struct HistoryView: View {
                 if projects.isEmpty {
                     VFGlassCard(level: .thick) {
                         VStack(spacing: 13) {
-                            VFGradientIcon(icon: showFavoritesOnly ? "heart" : "tray", tint: VFStyle.purpleFlow, size: 46)
+                            VFEmptyMomentumVisual(
+                                icon: showFavoritesOnly ? "heart.fill" : "clock.arrow.circlepath",
+                                tint: showFavoritesOnly ? VFStyle.primaryRed : VFStyle.purpleFlow,
+                                secondary: VFStyle.electricCyan
+                            )
                             Text(showFavoritesOnly ? AppText.localized("No favorites yet", "暂无收藏") : AppText.localized("No history yet", "暂无历史记录"))
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(VFStyle.ink)

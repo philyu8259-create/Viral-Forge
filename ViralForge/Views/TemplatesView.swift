@@ -206,7 +206,7 @@ private struct TemplateCard: View {
     }
 }
 
-private struct TemplatePosterPreview: View {
+struct TemplatePosterPreview: View {
     let template: CreativeTemplate
     var isLarge = false
 
@@ -414,12 +414,12 @@ private struct TemplatePosterSpec {
 
     var subtitle: String {
         switch template.category {
-        case .productSeeding: isChinese ? "真实商品示例" : "Product hero sample"
-        case .storeTraffic: isChinese ? "门店场景示例" : "Local scene sample"
-        case .personalBrand: isChinese ? "专家人设示例" : "Creator authority sample"
-        case .liveLaunch: isChinese ? "直播爆点示例" : "Live commerce sample"
-        case .seasonalPromo: isChinese ? "节日促销示例" : "Seasonal promo sample"
-        case .newLaunch: isChinese ? "新品主视觉示例" : "Launch visual sample"
+        case .productSeeding: isChinese ? "商品主视觉" : "Product hero visual"
+        case .storeTraffic: isChinese ? "门店打卡场景" : "Local visit hook"
+        case .personalBrand: isChinese ? "专家信任背书" : "Creator authority"
+        case .liveLaunch: isChinese ? "直播成交氛围" : "Live commerce drop"
+        case .seasonalPromo: isChinese ? "节日促销氛围" : "Seasonal promo visual"
+        case .newLaunch: isChinese ? "新品发布主视觉" : "Launch key visual"
         }
     }
 

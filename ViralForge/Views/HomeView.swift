@@ -1052,32 +1052,8 @@ private struct HotTemplateCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             ZStack(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(
-                        LinearGradient(
-                            colors: [tint.opacity(0.92), template.style.palette.accent.opacity(0.72), .white.opacity(0.9)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay(alignment: .bottomLeading) {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(template.platform.displayName)
-                                .font(.caption2.weight(.black))
-                                .foregroundStyle(.white.opacity(0.82))
-                            Text(template.category.displayName)
-                                .font(.headline.weight(.black))
-                                .foregroundStyle(.white)
-                        }
-                        .padding(12)
-                    }
-                    .overlay {
-                        Circle()
-                            .fill(.white.opacity(0.22))
-                            .frame(width: 74, height: 74)
-                            .blur(radius: 5)
-                            .offset(x: 44, y: -42)
-                    }
+                TemplatePosterPreview(template: template)
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
 
                 if template.lockedToPro {
                     Image(systemName: "crown.fill")

@@ -288,7 +288,7 @@ struct AssetsView: View {
     private func emptyCard(title: String, subtitle: String, icon: String, primaryTitle: String, secondaryTitle: String) -> some View {
         VFGlassCard(level: .thick) {
             VStack(spacing: 13) {
-                VFGradientIcon(icon: icon, tint: selectedSection.tint, size: 46)
+                VFEmptyMomentumVisual(icon: icon, tint: selectedSection.tint, secondary: VFStyle.auroraPink)
                 Text(title)
                     .font(.headline.weight(.bold))
                     .foregroundStyle(VFStyle.ink)
