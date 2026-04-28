@@ -888,6 +888,11 @@ final class AppModel {
                     "Free generations are used up for today. Upgrade to Pro or try again tomorrow.",
                     "今日免费文案额度已用完。可以升级 Pro，或明天再试。"
                 )
+            case "upstream_timeout":
+                return AppText.localized(
+                    "The AI provider is taking longer than expected. Please retry; your brief is still saved.",
+                    "AI 服务响应超时。请稍后重试，当前简报不会丢失。"
+                )
             default:
                 if apiError.statusCode == 502 {
                     return AppText.localized(
@@ -924,6 +929,11 @@ final class AppModel {
                 return AppText.localized(
                     "Free AI background exports are used up for today.",
                     "今日免费 AI 背景额度已用完。"
+                )
+            case "upstream_timeout":
+                return AppText.localized(
+                    "AI background generation timed out. Retry, or render the current poster first.",
+                    "AI 背景生成超时。你可以重试，或先生成当前海报。"
                 )
             default:
                 if apiError.statusCode == 502 {

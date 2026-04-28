@@ -1,10 +1,12 @@
+import { fetchWithTimeout, timeoutMsFromEnv } from "../fetchWithTimeout.mjs";
+
 export async function seedreamGeneratePosterBackground(request) {
   const apiKey = process.env.SEEDREAM_API_KEY || process.env.ARK_API_KEY;
   if (!apiKey) {
     throw missingKey("SEEDREAM_API_KEY or ARK_API_KEY");
   }
 
-  const response = await fetch(process.env.SEEDREAM_IMAGES_URL ?? "https://ark.cn-beijing.volces.com/api/v3/images/generations", {
+  const response = await fetchWithTimeout(process.env.SEEDREAM_IMAGES_URL ?? "https://ark.cn-beijing.volces.com/api/v3/images/generations", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
@@ -17,6 +19,9 @@ export async function seedreamGeneratePosterBackground(request) {
       response_format: "url",
       watermark: false
     })
+  }, {
+    provider: "seedream",
+    timeoutMs: timeoutMsFromEnv(["SEEDREAM_TIMEOUT_MS", "AI_IMAGE_TIMEOUT_MS", "AI_PROVIDER_TIMEOUT_MS"], 120000)
   });
 
   if (!response.ok) {

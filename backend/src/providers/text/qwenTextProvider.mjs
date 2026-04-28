@@ -1,4 +1,5 @@
 import { buildContentPrompt, normalizeContentResponse, parseContentJSON } from "../contentSchema.mjs";
+import { fetchWithTimeout, timeoutMsFromEnv } from "../fetchWithTimeout.mjs";
 
 const defaultBaseURL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 
@@ -8,7 +9,7 @@ export async function qwenGenerateContent(request) {
     throw missingKey("QWEN_API_KEY");
   }
 
-  const response = await fetch(process.env.QWEN_CHAT_COMPLETIONS_URL ?? defaultBaseURL, {
+  const response = await fetchWithTimeout(process.env.QWEN_CHAT_COMPLETIONS_URL ?? defaultBaseURL, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
@@ -30,6 +31,9 @@ export async function qwenGenerateContent(request) {
         type: "json_object"
       }
     })
+  }, {
+    provider: "qwen",
+    timeoutMs: timeoutMsFromEnv(["QWEN_TIMEOUT_MS", "AI_TEXT_TIMEOUT_MS", "AI_PROVIDER_TIMEOUT_MS"], 45000)
   });
 
   if (!response.ok) {

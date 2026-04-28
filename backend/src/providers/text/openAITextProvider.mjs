@@ -1,4 +1,5 @@
 import { buildContentPrompt, contentResponseSchema, normalizeContentResponse, parseContentJSON } from "../contentSchema.mjs";
+import { fetchWithTimeout, timeoutMsFromEnv } from "../fetchWithTimeout.mjs";
 
 const defaultBaseURL = "https://api.openai.com/v1/responses";
 
@@ -8,7 +9,7 @@ export async function openAIGenerateContent(request) {
     throw missingKey("OPENAI_API_KEY");
   }
 
-  const response = await fetch(process.env.OPENAI_RESPONSES_URL ?? defaultBaseURL, {
+  const response = await fetchWithTimeout(process.env.OPENAI_RESPONSES_URL ?? defaultBaseURL, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
@@ -35,6 +36,9 @@ export async function openAIGenerateContent(request) {
         }
       }
     })
+  }, {
+    provider: "openai",
+    timeoutMs: timeoutMsFromEnv(["OPENAI_TEXT_TIMEOUT_MS", "AI_TEXT_TIMEOUT_MS", "AI_PROVIDER_TIMEOUT_MS"], 45000)
   });
 
   if (!response.ok) {

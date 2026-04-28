@@ -1,3 +1,5 @@
+import { fetchWithTimeout, timeoutMsFromEnv } from "../fetchWithTimeout.mjs";
+
 const defaultBaseURL = "https://api.openai.com/v1/images";
 
 export async function openAIGeneratePosterBackground(request) {
@@ -6,7 +8,7 @@ export async function openAIGeneratePosterBackground(request) {
     throw missingKey("OPENAI_API_KEY");
   }
 
-  const response = await fetch(process.env.OPENAI_IMAGES_URL ?? defaultBaseURL, {
+  const response = await fetchWithTimeout(process.env.OPENAI_IMAGES_URL ?? defaultBaseURL, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
@@ -18,6 +20,9 @@ export async function openAIGeneratePosterBackground(request) {
       size: imageSize(request.aspectRatio),
       response_format: "url"
     })
+  }, {
+    provider: "openai-image",
+    timeoutMs: timeoutMsFromEnv(["OPENAI_IMAGE_TIMEOUT_MS", "AI_IMAGE_TIMEOUT_MS", "AI_PROVIDER_TIMEOUT_MS"], 120000)
   });
 
   if (!response.ok) {
