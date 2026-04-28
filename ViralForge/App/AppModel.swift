@@ -658,27 +658,85 @@ final class AppModel {
     }
 
     private func posterBackgroundPrompt(for project: ContentProject, poster: PosterDraft) -> String {
+        let scene = posterVisualScene(for: project, poster: poster)
         if project.draft.language == .english {
             return [
-                "Generate a clean commercial social poster background for \(project.draft.platform.displayName).",
+                "Generate a pure commercial photography background layer, not a finished poster design.",
+                "It will be used inside \(project.draft.platform.displayName), but the image itself must not contain platform UI.",
                 "Product or topic: \(project.draft.topic).",
                 "Audience: \(project.draft.audience.isEmpty ? brandProfile.audience : project.draft.audience).",
-                "Poster headline meaning: \(poster.headline).",
+                "Scene direction: \(scene).",
+                "The app will overlay this headline later: \(poster.headline).",
                 "Style: \(poster.style.displayName).",
-                "Do not generate any text, logos, watermarks, or QR codes.",
-                "Leave clean negative space in the upper or middle area so the app can overlay title and CTA text."
+                "Strictly no text, letters, numbers, logos, brand marks, watermarks, QR codes, labels, stickers, buttons, captions, or interface elements anywhere in the image.",
+                "Leave clean negative space in the upper or middle area for app-rendered title and CTA text.",
+                "Realistic high-end product photography, clean lighting, strong commercial quality."
             ].joined(separator: " ")
         }
 
         return [
-            "为\(project.draft.platform.displayName)商业海报生成一张背景图。",
+            "生成一张纯商业摄影背景底图，不要生成成品海报设计。",
+            "用途是\(project.draft.platform.displayName)内容封面，但画面里不能出现平台界面。",
             "产品或主题：\(project.draft.topic)。",
             "目标人群：\(project.draft.audience.isEmpty ? brandProfile.audience : project.draft.audience)。",
-            "海报标题含义：\(poster.headline)。",
+            "场景方向：\(scene)。",
+            "App 后续会叠加这个标题：\(poster.headline)。",
             "风格：\(poster.style.displayName)。",
-            "不要生成任何文字、logo、水印或二维码。",
-            "画面中上部或中部保留干净留白，方便 App 叠加标题和按钮。"
+            "画面里严禁出现任何文字、汉字、英文字母、数字、logo、品牌标识、水印、二维码、标签、贴纸、按钮、字幕或 UI 元素。",
+            "画面中上部或中部保留干净留白，方便 App 叠加标题和按钮。",
+            "真实高级商品摄影质感，光线干净，适合电商种草。"
         ].joined(separator: " ")
+    }
+
+    private func posterVisualScene(for project: ContentProject, poster: PosterDraft) -> String {
+        let draft = project.draft
+        let topic = draft.topic.trimmingCharacters(in: .whitespacesAndNewlines)
+        let templateContext = [
+            draft.templateName,
+            draft.templatePromptHint,
+            draft.goal.rawValue,
+            poster.style.rawValue
+        ].joined(separator: " ").lowercased()
+
+        if draft.language == .english {
+            if matches(templateContext, keywords: ["store", "traffic", "local", "visit", "restaurant", "cafe", "shop"]) {
+                return "A warm local shop or cafe visit scene with the featured product naturally placed on a table, lifestyle depth, no signage or readable menus."
+            }
+            if matches(templateContext, keywords: ["live", "stream", "launch room"]) {
+                return "A livestream product setup with soft studio lighting, product display props, phone tripod silhouette, energetic but clean, no screens with text."
+            }
+            if matches(templateContext, keywords: ["season", "holiday", "promo", "festival", "gift"]) {
+                return "A festive product still life with tasteful seasonal props, ribbons, soft glow, premium ecommerce styling, no printed words."
+            }
+            if matches(templateContext, keywords: ["new", "launch", "drop", "release"]) {
+                return "A new product launch hero shot on a clean pedestal with crisp light beams, premium minimal backdrop, generous negative space."
+            }
+            if matches(templateContext, keywords: ["personal", "brand", "expert", "coach", "founder"]) {
+                return "A creator workspace scene with notebook, camera, soft daylight, professional personal-brand atmosphere, no visible text."
+            }
+            return "A realistic product still life for \(topic), placed in a bright daily-use scene with premium props and clean negative space."
+        }
+
+        if matches(templateContext, keywords: ["探店", "门店", "到店", "店铺", "餐厅", "咖啡", "打卡", "store", "traffic"]) {
+            return "真实探店场景，产品自然摆放在门店桌面或橱窗光线里，有生活氛围和空间纵深，但不要出现招牌、菜单或任何可读文字。"
+        }
+        if matches(templateContext, keywords: ["直播", "live", "预热", "开播"]) {
+            return "直播间产品陈列场景，柔和补光、桌面道具、手机支架剪影、热闹但干净，不要出现屏幕文字或直播界面。"
+        }
+        if matches(templateContext, keywords: ["节日", "促销", "季节", "双11", "春节", "礼物", "season", "promo"]) {
+            return "节日促销商品静物场景，搭配高级礼盒、丝带、暖光和季节道具，质感丰富但不出现任何印刷字。"
+        }
+        if matches(templateContext, keywords: ["新品", "发布", "上新", "new", "launch"]) {
+            return "新品发布主视觉，产品放在干净展台或亚克力台面上，光束清晰、背景极简、留白充足。"
+        }
+        if matches(templateContext, keywords: ["个人", "ip", "专家", "创始人", "人设", "personal", "brand"]) {
+            return "个人品牌创作者工作台场景，有笔记本、相机、柔和自然光和专业感道具，但不要出现纸面文字。"
+        }
+        return "真实商品静物场景，\(topic) 放在明亮日常使用环境中，搭配高级道具和干净留白。"
+    }
+
+    private func matches(_ text: String, keywords: [String]) -> Bool {
+        keywords.contains { text.localizedCaseInsensitiveContains($0) }
     }
 
     private func activeContentService() -> ContentGenerating {

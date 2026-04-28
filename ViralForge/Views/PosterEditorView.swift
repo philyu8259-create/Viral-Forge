@@ -309,40 +309,121 @@ struct PosterPreview: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            VStack(alignment: .leading, spacing: 18) {
-                HStack {
-                    Text(platform.displayName.uppercased())
-                        .font(.caption.weight(.bold))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .foregroundStyle(palette.background)
-                        .background(palette.accent, in: Capsule())
-                    Spacer()
-                }
-
-                Spacer()
-
-                Text(poster.headline)
-                    .font(.system(size: 44, weight: .black, design: .rounded))
-                    .minimumScaleFactor(0.45)
-                    .lineLimit(3)
-                    .foregroundStyle(palette.primary)
-
-                Text(poster.subtitle)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(palette.primary.opacity(0.75))
-
-                Text(poster.cta)
-                    .font(.headline)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .foregroundStyle(palette.background)
-                    .background(palette.accent, in: RoundedRectangle(cornerRadius: 8))
-            }
-            .padding(28)
+            posterContentOverlay(palette: palette)
         }
         .aspectRatio(target.aspectRatio, contentMode: .fit)
         .shadow(color: .black.opacity(0.08), radius: 18, y: 8)
+    }
+
+    @ViewBuilder
+    private func posterContentOverlay(palette: PosterPalette) -> some View {
+        switch poster.style {
+        case .cleanProduct:
+            VStack(alignment: .leading, spacing: 18) {
+                platformBadge(palette: palette)
+                Spacer()
+                posterTitle(palette: palette, size: 44, lineLimit: 3)
+                posterSubtitle(palette: palette)
+                ctaButton(palette: palette, cornerRadius: 8)
+            }
+            .padding(28)
+        case .boldLaunch:
+            VStack(alignment: .leading, spacing: 18) {
+                HStack {
+                    platformBadge(palette: palette)
+                    Spacer()
+                    Text(AppText.localized("NEW", "上新"))
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(palette.accent)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.black.opacity(0.22), in: Capsule())
+                }
+                Spacer()
+                VStack(alignment: .leading, spacing: 12) {
+                    posterTitle(palette: palette, size: 48, lineLimit: 3)
+                    posterSubtitle(palette: palette)
+                }
+                .padding(18)
+                .background(.black.opacity(0.20), in: RoundedRectangle(cornerRadius: 18))
+                ctaButton(palette: palette, cornerRadius: 18)
+            }
+            .padding(26)
+        case .softLifestyle:
+            VStack(alignment: .leading, spacing: 16) {
+                platformBadge(palette: palette)
+                Spacer()
+                VStack(alignment: .leading, spacing: 12) {
+                    posterTitle(palette: palette, size: 36, lineLimit: 3)
+                    posterSubtitle(palette: palette)
+                    ctaButton(palette: palette, cornerRadius: 14)
+                }
+                .padding(18)
+                .background(.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 22))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22)
+                        .stroke(.white.opacity(0.72), lineWidth: 1)
+                }
+            }
+            .padding(24)
+        case .editorial:
+            VStack(alignment: .leading, spacing: 18) {
+                platformBadge(palette: palette)
+                Spacer()
+                HStack(alignment: .top, spacing: 14) {
+                    Rectangle()
+                        .fill(palette.accent)
+                        .frame(width: 5)
+                        .clipShape(Capsule())
+                    VStack(alignment: .leading, spacing: 12) {
+                        posterTitle(palette: palette, size: 42, lineLimit: 3)
+                        posterSubtitle(palette: palette)
+                    }
+                }
+                Text(poster.cta)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(palette.primary)
+                    .padding(.bottom, 4)
+                    .overlay(alignment: .bottomLeading) {
+                        Rectangle()
+                            .fill(palette.accent)
+                            .frame(height: 3)
+                    }
+            }
+            .padding(28)
+        }
+    }
+
+    private func platformBadge(palette: PosterPalette) -> some View {
+        Text(platform.displayName.uppercased())
+            .font(.caption.weight(.bold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .foregroundStyle(palette.background)
+            .background(palette.accent, in: Capsule())
+    }
+
+    private func posterTitle(palette: PosterPalette, size: CGFloat, lineLimit: Int) -> some View {
+        Text(poster.headline)
+            .font(.system(size: size, weight: .black, design: .rounded))
+            .minimumScaleFactor(0.45)
+            .lineLimit(lineLimit)
+            .foregroundStyle(palette.primary)
+    }
+
+    private func posterSubtitle(palette: PosterPalette) -> some View {
+        Text(poster.subtitle)
+            .font(.title3.weight(.semibold))
+            .foregroundStyle(palette.primary.opacity(0.75))
+    }
+
+    private func ctaButton(palette: PosterPalette, cornerRadius: CGFloat) -> some View {
+        Text(poster.cta)
+            .font(.headline)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .foregroundStyle(palette.background)
+            .background(palette.accent, in: RoundedRectangle(cornerRadius: cornerRadius))
     }
 }
 

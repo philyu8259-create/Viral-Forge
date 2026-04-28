@@ -39,11 +39,13 @@ export async function seedreamGeneratePosterBackground(request) {
 
 function buildImagePrompt(request) {
   return [
-    request.prompt || "小红书商业海报背景",
-    "不要生成文字，不要生成水印。",
-    "为 App 后续叠加标题、副标题和按钮保留干净留白。",
-    `海报风格：${request.style || "Clean"}。`,
-    "商业摄影质感，高级、清晰、适合社交媒体封面。"
+    request.prompt || "纯商业商品摄影背景底图",
+    "这是一张给 App 叠加文字使用的纯背景摄影素材，不是成品海报设计。",
+    "不要生成海报排版，不要生成标题区，不要生成按钮，不要生成平台贴纸或社交媒体界面。",
+    "画面里绝对不要出现任何文字、汉字、英文字母、数字、logo、品牌标识、标签、贴纸、水印、二维码、字幕或 UI 元素。",
+    "为 App 后续叠加标题、副标题和按钮保留干净留白，优先在画面上方或中部留白。",
+    `视觉风格：${request.style || "Clean"}。`,
+    "真实高级商业摄影质感，光线干净，主体清晰，适合电商种草封面。"
   ].join(" ");
 }
 
