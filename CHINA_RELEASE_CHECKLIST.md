@@ -82,7 +82,8 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 - [x] Draft separate Simplified Chinese and English Privacy Policy, Terms, and Support pages under `docs/zh/` and `docs/en/`.
 - [x] Deploy public locale-specific Privacy Policy, Terms, and Support URLs through GitHub Pages and verify they open outside GitHub file view.
 - [ ] Finish App Store Connect agreements, tax, and banking so subscriptions can be tested and sold.
-- [ ] Add Simplified Chinese and English App Store metadata, app screenshots, and subscription review screenshots.
+- [x] Draft Simplified Chinese and English App Store metadata in `APP_STORE_METADATA.md`.
+- [ ] Add final app screenshots and subscription review screenshots after UI/UX design is final.
 - [ ] Archive and upload a TestFlight build from the final Release configuration.
 
 ### P1 Before Wider External Beta
