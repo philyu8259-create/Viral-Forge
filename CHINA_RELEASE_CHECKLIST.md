@@ -101,7 +101,7 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 - [ ] Complete UI/UX expert pass and final screenshot set after the visible design stabilizes.
 - [ ] Verify layout on target iPhone sizes and any required iPad presentation paths.
 - [ ] Confirm ICP/domain requirements based on the final China hosting and domain plan.
-- [ ] Add final support/contact flow and account/data deletion instructions.
+- [x] Add final support/contact flow and local data deletion controls; backend/account deletion remains handled through email support.
 
 ## Compliance And Operations
 

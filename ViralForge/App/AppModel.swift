@@ -39,6 +39,7 @@ final class AppModel {
     var posterGenerationError: String?
     var brandStatusMessage: String?
     var purchaseStatusMessage: String?
+    var localDataStatusMessage: String?
     var subscriptionProducts: [Product] = []
     var purchasedSubscriptionIDs: Set<String> = []
     var pendingTemplateWorkflow: AppliedTemplateWorkflow?
@@ -200,6 +201,24 @@ final class AppModel {
                 await deleteProjectFromBackendIfNeeded(projectID)
             }
         }
+    }
+
+    func clearLocalWorkspaceData() {
+        projects = []
+        posterAssets = []
+        brandProfile = BrandProfile()
+        pendingTemplateWorkflow = nil
+        generationError = nil
+        posterGenerationError = nil
+        brandStatusMessage = nil
+
+        LocalProjectStore.save([])
+        BrandProfileStore.clear()
+
+        localDataStatusMessage = AppText.localized(
+            "Local projects, poster assets, snippets, and brand memory were cleared on this device.",
+            "本机项目、海报素材、文案片段和品牌记忆已清空。"
+        )
     }
 
     func draft(from template: CreativeTemplate) -> GenerationDraft {
@@ -917,6 +936,10 @@ private enum BrandProfileStore {
     static func save(_ profile: BrandProfile) {
         guard let data = try? JSONEncoder().encode(profile) else { return }
         UserDefaults.standard.set(data, forKey: storageKey)
+    }
+
+    static func clear() {
+        UserDefaults.standard.removeObject(forKey: storageKey)
     }
 }
 

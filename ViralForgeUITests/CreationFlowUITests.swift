@@ -137,9 +137,7 @@ final class CreationFlowUITests: XCTestCase {
         let app = XCUIApplication()
         launch(app)
 
-        app.tabBars.buttons["品牌"].tap()
-        XCTAssertTrue(app.buttons["vf.brand.settingsLink"].waitForExistence(timeout: 8))
-        app.buttons["vf.brand.settingsLink"].tap()
+        openSettings(in: app)
 
         XCTAssertTrue(app.scrollViews["vf.settings.screen"].waitForExistence(timeout: 4))
         XCTAssertTrue(app.buttons["vf.settings.privacyLink"].waitForExistence(timeout: 4))
@@ -147,8 +145,26 @@ final class CreationFlowUITests: XCTestCase {
         XCTAssertTrue(app.buttons["vf.settings.supportLink"].exists)
         XCTAssertTrue(app.buttons["vf.settings.emailSupportLink"].exists)
         XCTAssertTrue(app.buttons["vf.settings.dataDeletionLink"].exists)
+        XCTAssertTrue(app.buttons["vf.settings.clearLocalDataButton"].exists)
         XCTAssertTrue(app.buttons["vf.settings.restorePurchasesButton"].exists)
         XCTAssertTrue(app.staticTexts["版本"].exists)
+    }
+
+    func testClearLocalWorkspaceDataShowsConfirmation() throws {
+        let app = XCUIApplication()
+        launch(app)
+
+        openSettings(in: app)
+
+        let clearButton = app.buttons["vf.settings.clearLocalDataButton"]
+        XCTAssertTrue(clearButton.waitForExistence(timeout: 4))
+        clearButton.tap()
+
+        let alert = app.alerts["清空本机数据？"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 4))
+        alert.buttons["清空"].tap()
+
+        XCTAssertTrue(app.staticTexts["vf.settings.localDataStatus"].waitForExistence(timeout: 4))
     }
 
     private func launch(
@@ -181,6 +197,12 @@ final class CreationFlowUITests: XCTestCase {
 
         let resultScreen = app.scrollViews["vf.result.screen"]
         XCTAssertTrue(resultScreen.waitForExistence(timeout: 8))
+    }
+
+    private func openSettings(in app: XCUIApplication) {
+        app.tabBars.buttons["品牌"].tap()
+        XCTAssertTrue(app.buttons["vf.brand.settingsLink"].waitForExistence(timeout: 8))
+        app.buttons["vf.brand.settingsLink"].tap()
     }
 
     private func assertCopyPackWorks(in app: XCUIApplication, statusText: String) {

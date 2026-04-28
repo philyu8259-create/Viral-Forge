@@ -26,6 +26,7 @@ enum AppLegalLinks {
 struct SettingsView: View {
     @Environment(AppModel.self) private var appModel
     @Environment(\.openURL) private var openURL
+    @State private var showClearLocalDataConfirmation = false
 
     var body: some View {
         VFPage {
@@ -43,6 +44,17 @@ struct SettingsView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("vf.settings.screen")
+        .alert(AppText.localized("Clear local data?", "清空本机数据？"), isPresented: $showClearLocalDataConfirmation) {
+            Button(AppText.localized("Cancel", "取消"), role: .cancel) {}
+            Button(AppText.localized("Clear", "清空"), role: .destructive) {
+                appModel.clearLocalWorkspaceData()
+            }
+        } message: {
+            Text(AppText.localized(
+                "This removes local projects, poster assets, snippets, and brand memory from this device. Subscriptions are not affected. Backend-synced data still requires an email deletion request.",
+                "这会从本机移除项目、海报素材、文案片段和品牌记忆，不影响订阅。后端同步数据仍需通过邮件申请删除。"
+            ))
+        }
     }
 
     private var accountCard: some View {
@@ -178,6 +190,34 @@ struct SettingsView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("vf.settings.dataDeletionLink")
+
+                Button {
+                    showClearLocalDataConfirmation = true
+                } label: {
+                    Label(AppText.localized("Clear Local Workspace Data", "清空本机工作台数据"), systemImage: "trash.fill")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(VFStyle.warning)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                        .background(VFStyle.warning.opacity(0.10), in: Capsule())
+                        .overlay {
+                            Capsule()
+                                .stroke(VFStyle.warning.opacity(0.22), lineWidth: 1)
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("vf.settings.clearLocalDataButton")
+
+                if let localDataStatusMessage = appModel.localDataStatusMessage {
+                    Text(localDataStatusMessage)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(VFStyle.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(12)
+                        .background(.white.opacity(0.56), in: RoundedRectangle(cornerRadius: 16))
+                        .accessibilityIdentifier("vf.settings.localDataStatus")
+                }
             }
         }
     }
