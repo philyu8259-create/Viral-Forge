@@ -703,6 +703,10 @@ struct TemplateDetailView: View {
         !appModel.isGenerating && draft.isReadyToGenerate
     }
 
+    private var requiresPro: Bool {
+        template.lockedToPro && !appModel.quota.isPro
+    }
+
     private var visibleTopicValidationMessage: String? {
         draft.topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : draft.topicValidationMessage
     }
@@ -756,6 +760,10 @@ struct TemplateDetailView: View {
 
                     structureCard
 
+                    if requiresPro {
+                        proLockedCard
+                    }
+
                     VStack(spacing: 12) {
                         glassTextField(AppText.localized("Topic or product", "主题或产品"), text: $draft.topic, lines: 3)
                         glassTextField(AppText.localized("Audience", "目标人群"), text: $draft.audience, lines: 1)
@@ -774,6 +782,10 @@ struct TemplateDetailView: View {
                     }
 
                     Button {
+                        guard !requiresPro else {
+                            openTemplatePaywall()
+                            return
+                        }
                         appModel.applyTemplateToStudio(template, draft: draft)
                     } label: {
                         HStack(spacing: 10) {
@@ -802,10 +814,10 @@ struct TemplateDetailView: View {
                     .accessibilityIdentifier("vf.templateDetail.applyToStudioButton")
 
                     VFPrimaryButton(
-                        title: appModel.isGenerating ? AppText.localized("Generating...", "生成中...") : AppText.localized("Use Template", "使用模板"),
-                        icon: "wand.and.stars",
+                        title: templateActionTitle,
+                        icon: requiresPro ? "crown.fill" : "wand.and.stars",
                         isLoading: appModel.isGenerating,
-                        isEnabled: canGenerate
+                        isEnabled: requiresPro || canGenerate
                     ) {
                         generate()
                     }
@@ -864,6 +876,42 @@ struct TemplateDetailView: View {
         }
     }
 
+    private var proLockedCard: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VFGradientIcon(icon: "crown.fill", tint: VFStyle.sunset, size: 36)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(AppText.localized("Pro workflow", "会员专属工作流"))
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(VFStyle.ink)
+                Text(AppText.localized(
+                    "This template is built for higher-value campaigns and unlocks with ViralForge Pro.",
+                    "该模板面向更高价值的活动场景，开通 ViralForge Pro 后可使用。"
+                ))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(VFStyle.secondaryText)
+            }
+        }
+        .padding(14)
+        .background(VFStyle.sunset.opacity(0.10), in: RoundedRectangle(cornerRadius: 18))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(VFStyle.sunset.opacity(0.22), lineWidth: 1)
+        }
+        .accessibilityIdentifier("vf.templateDetail.proLockedCard")
+    }
+
+    private var templateActionTitle: String {
+        if requiresPro {
+            return AppText.localized("Upgrade to Use Template", "升级后使用模板")
+        }
+
+        if appModel.isGenerating {
+            return AppText.localized("Generating...", "生成中...")
+        }
+
+        return AppText.localized("Use Template", "使用模板")
+    }
+
     private func detailInfoRow(title: String, value: String, icon: String, tint: Color) -> some View {
         HStack(alignment: .top, spacing: 11) {
             VFGradientIcon(icon: icon, tint: tint, size: 34)
@@ -898,6 +946,11 @@ struct TemplateDetailView: View {
     }
 
     private func generate() {
+        guard !requiresPro else {
+            openTemplatePaywall()
+            return
+        }
+
         Task {
             var templateDraft = appModel.draft(from: template)
             templateDraft.topic = draft.topic
@@ -905,6 +958,13 @@ struct TemplateDetailView: View {
             templateDraft.tone = draft.tone
             generatedProject = await appModel.generateProject(from: templateDraft)
         }
+    }
+
+    private func openTemplatePaywall() {
+        appModel.openPaywall(reason: AppText.localized(
+            "This is a Pro template. Upgrade to unlock premium templates, AI background generation, and watermark-free exports.",
+            "这是会员模板。升级后可解锁会员模板、AI 背景生成和无水印导出。"
+        ))
     }
 
     private func templateErrorCard(_ message: String) -> some View {

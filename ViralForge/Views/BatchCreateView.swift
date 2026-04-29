@@ -13,6 +13,10 @@ struct BatchCreateView: View {
         productBrief.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 && !selectedPlatforms.isEmpty
     }
 
+    private var requiresProForSelectedBatch: Bool {
+        batchSize > 7 && !appModel.quota.isPro
+    }
+
     var body: some View {
         VFPage {
             VFPageHeader(
@@ -33,11 +37,28 @@ struct BatchCreateView: View {
             }
 
             VFPrimaryButton(
-                title: AppText.localized("Generate Content Calendar", "生成内容日历"),
-                icon: "calendar.badge.sparkles",
+                title: requiresProForSelectedBatch
+                    ? AppText.localized("Upgrade for 14-Day Calendar", "升级解锁 14 天日历")
+                    : AppText.localized("Generate Content Calendar", "生成内容日历"),
+                icon: requiresProForSelectedBatch ? "crown.fill" : "calendar.badge.sparkles",
                 isEnabled: canGenerateCalendar
             ) {
                 generateCalendar()
+            }
+
+            if requiresProForSelectedBatch {
+                VFGlassCard {
+                    Label(
+                        AppText.localized(
+                            "14-day calendars are a Pro workflow for sustained campaigns. Free users can still create 7-day calendars.",
+                            "14 天内容日历属于会员工作流，适合持续活动。免费版仍可生成 7 天日历。"
+                        ),
+                        systemImage: "crown.fill"
+                    )
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(VFStyle.sunset)
+                }
+                .accessibilityIdentifier("vf.batch.proLockedCard")
             }
 
             if let generationError = appModel.generationError, retryIdea != nil {
@@ -124,6 +145,14 @@ struct BatchCreateView: View {
     }
 
     private func generateCalendar() {
+        guard !requiresProForSelectedBatch else {
+            appModel.openPaywall(reason: AppText.localized(
+                "Upgrade to Pro to create 14-day content calendars for sustained campaigns.",
+                "升级 Pro 后可创建 14 天内容日历，用于持续活动排期。"
+            ))
+            return
+        }
+
         appModel.generationError = nil
         retryIdea = nil
         ideas = appModel.batchIdeas(

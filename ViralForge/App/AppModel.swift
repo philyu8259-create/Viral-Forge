@@ -40,6 +40,7 @@ final class AppModel {
     var brandStatusMessage: String?
     var purchaseStatusMessage: String?
     var localDataStatusMessage: String?
+    var paywallReasonMessage: String?
     var subscriptionProducts: [Product] = []
     var purchasedSubscriptionIDs: Set<String> = []
     var pendingTemplateWorkflow: AppliedTemplateWorkflow?
@@ -111,7 +112,11 @@ final class AppModel {
         }
 
         guard quota.remainingTextGenerations > 0 || quota.isPro else {
-            generationError = AppText.localized("Free generations are used up for today.", "今日免费文案额度已用完。")
+            generationError = AppText.localized(
+                "Free generations are used up for today. Upgrade to Pro to keep creating.",
+                "今日免费文案额度已用完。升级 Pro 后可继续创作。"
+            )
+            openPaywall(reason: generationError)
             return nil
         }
 
@@ -159,7 +164,11 @@ final class AppModel {
 
     func generatePosterBackground(for project: ContentProject, poster: PosterDraft, aspectRatio: String = "9:16") async -> URL? {
         guard quota.remainingPosterExports > 0 || quota.isPro else {
-            posterGenerationError = "Free poster exports are used up for today."
+            posterGenerationError = AppText.localized(
+                "Free AI background exports are used up for today. Upgrade to Pro to keep generating visuals.",
+                "今日免费 AI 背景额度已用完。升级 Pro 后可继续生成视觉素材。"
+            )
+            openPaywall(reason: posterGenerationError)
             return nil
         }
         guard backendSettings.mode == .backend, let apiClient = makeAPIClient() else {
@@ -500,6 +509,13 @@ final class AppModel {
         } else {
             quota.isPro = isPro
         }
+    }
+
+    func openPaywall(reason: String? = nil) {
+        if let reason, !reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            paywallReasonMessage = reason
+        }
+        selectedTab = .pro
     }
 
     func configureStoreKitIfNeeded() async {
@@ -884,6 +900,11 @@ final class AppModel {
         }
 
         purchasedSubscriptionIDs = activeSubscriptionIDs
+        if !activeSubscriptionIDs.isEmpty {
+            quota.isPro = true
+        } else if backendSettings.mode != .backend {
+            quota.isPro = false
+        }
 
         guard syncBackend else { return }
         if let latestActiveTransaction {

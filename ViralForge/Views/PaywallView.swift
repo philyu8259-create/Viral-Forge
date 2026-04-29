@@ -7,6 +7,7 @@ struct PaywallView: View {
     var body: some View {
         VFPage {
             proHero
+            reasonCard
             QuotaStatusView(quota: appModel.quota)
             featureGrid
             planPicker
@@ -16,6 +17,38 @@ struct PaywallView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("vf.paywall.screen")
+    }
+
+    @ViewBuilder
+    private var reasonCard: some View {
+        if let reason = appModel.paywallReasonMessage,
+           !reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+           !appModel.quota.isPro {
+            VFGlassCard {
+                HStack(alignment: .top, spacing: 12) {
+                    VFGradientIcon(icon: "lock.open.fill", tint: VFStyle.primaryRed, size: 36)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(AppText.localized("Upgrade to continue", "升级后继续"))
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(VFStyle.ink)
+                        Text(reason)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(VFStyle.secondaryText)
+                    }
+                    Spacer(minLength: 0)
+                    Button {
+                        appModel.paywallReasonMessage = nil
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(VFStyle.secondaryText.opacity(0.55))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.paywall.dismissReasonButton")
+                }
+            }
+            .accessibilityIdentifier("vf.paywall.reasonCard")
+        }
     }
 
     private var proHero: some View {
@@ -58,7 +91,7 @@ struct PaywallView: View {
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 feature(AppText.localized("Unlimited copy", "不限文案"), icon: "sparkles", tint: VFStyle.primaryRed)
-                feature(AppText.localized("100 AI backgrounds", "100 张 AI 背景"), icon: "sparkles.rectangle.stack", tint: VFStyle.purpleFlow)
+                feature(AppText.localized("Unlimited AI backgrounds", "不限 AI 背景"), icon: "sparkles.rectangle.stack", tint: VFStyle.purpleFlow)
                 feature(AppText.localized("Premium templates", "会员模板"), icon: "rectangle.3.group", tint: VFStyle.sunset)
                 feature(AppText.localized("No watermark", "无水印导出"), icon: "checkmark.seal.fill", tint: VFStyle.electricCyan)
             }

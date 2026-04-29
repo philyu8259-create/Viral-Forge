@@ -143,15 +143,30 @@ final class CreationFlowUITests: XCTestCase {
         XCTAssertTrue(generateButton.waitForExistence(timeout: 4))
         generateButton.tap()
 
-        let errorCard = app.descendants(matching: .any)["vf.home.generationError"]
-        XCTAssertTrue(errorCard.waitForExistence(timeout: 4))
-        XCTAssertTrue(app.staticTexts["今日免费文案额度已用完。"].exists)
+        XCTAssertTrue(app.scrollViews["vf.paywall.screen"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.descendants(matching: .any)["vf.paywall.reasonCard"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.staticTexts["升级后继续"].exists)
+    }
 
-        let upgradeButton = app.descendants(matching: .any)["升级 Pro"].firstMatch
-        XCTAssertTrue(upgradeButton.waitForExistence(timeout: 4))
-        upgradeButton.tap()
+    func testLockedTemplateRoutesToPaywall() throws {
+        let app = XCUIApplication()
+        launch(app)
+
+        app.tabBars.buttons["模板"].tap()
+        XCTAssertTrue(app.staticTexts["直播预热"].waitForExistence(timeout: 8))
+        app.staticTexts["直播预热"].tap()
+
+        let templateCard = app.buttons["vf.templateCard.直播间预约预热"]
+        XCTAssertTrue(templateCard.waitForExistence(timeout: 4))
+        templateCard.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["vf.templateDetail.proLockedCard"].waitForExistence(timeout: 4))
+        let useButton = app.buttons["vf.templateDetail.useTemplateButton"]
+        XCTAssertTrue(useButton.waitForExistence(timeout: 4))
+        useButton.tap()
 
         XCTAssertTrue(app.scrollViews["vf.paywall.screen"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.descendants(matching: .any)["vf.paywall.reasonCard"].waitForExistence(timeout: 4))
     }
 
     func testEmptyAssetsShowsNextAction() throws {
