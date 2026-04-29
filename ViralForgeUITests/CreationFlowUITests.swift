@@ -1,4 +1,5 @@
 import XCTest
+import StoreKitTest
 
 final class CreationFlowUITests: XCTestCase {
     override func setUpWithError() throws {
@@ -220,6 +221,34 @@ final class CreationFlowUITests: XCTestCase {
         XCTAssertTrue(app.buttons["vf.paywall.restoreButton"].waitForExistence(timeout: 4))
     }
 
+    @MainActor
+    func testLocalStoreKitPurchaseActivatesPro() async throws {
+        guard shouldRunLocalStoreKitPurchaseTests else {
+            throw XCTSkip("Set VF_RUN_STOREKIT_PURCHASE_TESTS=1 or create /tmp/viralforge-run-storekit-purchase-tests to run the local StoreKit purchase flow.")
+        }
+
+        let session = try localStoreKitSession()
+        session.resetToDefaultState()
+        session.clearTransactions()
+        session.disableDialogs = true
+        do {
+            try await session.buyProduct(identifier: "viralforge_pro_monthly")
+        } catch {
+            let message = String(describing: error)
+            if message.contains("notEntitled") {
+                throw XCTSkip("Current runner is not entitled for off-device StoreKitTest purchases. Use Xcode's StoreKit Transaction Manager or a sandbox account on device.")
+            }
+            throw error
+        }
+
+        let app = XCUIApplication()
+        launch(app)
+
+        app.tabBars.buttons["会员"].tap()
+        XCTAssertTrue(app.scrollViews["vf.paywall.screen"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["会员已开通"].waitForExistence(timeout: 12) || app.staticTexts["Pro Active"].waitForExistence(timeout: 1))
+    }
+
     func testSettingsShowsRequiredAppStoreLinks() throws {
         let app = XCUIApplication()
         launch(app)
@@ -286,6 +315,11 @@ final class CreationFlowUITests: XCTestCase {
     private var shouldRunLiveBackendUITests: Bool {
         ProcessInfo.processInfo.environment["VF_RUN_LIVE_UI_TESTS"] == "1"
             || FileManager.default.fileExists(atPath: "/tmp/viralforge-run-live-ui-tests")
+    }
+
+    private var shouldRunLocalStoreKitPurchaseTests: Bool {
+        ProcessInfo.processInfo.environment["VF_RUN_STOREKIT_PURCHASE_TESTS"] == "1"
+            || FileManager.default.fileExists(atPath: "/tmp/viralforge-run-storekit-purchase-tests")
     }
 
     private var liveBackendURL: String {
@@ -405,6 +439,15 @@ final class CreationFlowUITests: XCTestCase {
         let predicate = NSPredicate(format: "enabled == true")
         expectation(for: predicate, evaluatedWith: element)
         waitForExpectations(timeout: timeout)
+    }
+
+    private func localStoreKitSession() throws -> SKTestSession {
+        let testFileURL = URL(fileURLWithPath: #filePath)
+        let projectRoot = testFileURL
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let storeKitURL = projectRoot.appendingPathComponent("ViralForge.storekit")
+        return try SKTestSession(contentsOf: storeKitURL)
     }
 
     private func saveScreenshot(named fileName: String) {
