@@ -47,6 +47,33 @@ final class CreationFlowUITests: XCTestCase {
         saveScreenshot(named: "e2e-04-assets-poster.png")
     }
 
+    func testFreePosterExportOffersProWatermarkUpgrade() throws {
+        let app = XCUIApplication()
+        launch(app)
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let renderButton = app.buttons["vf.poster.renderButton"]
+        XCTAssertTrue(renderButton.waitForExistence(timeout: 8))
+        renderButton.tap()
+
+        let exportStatus = app.staticTexts["vf.poster.exportStatus"]
+        XCTAssertTrue(exportStatus.waitForExistence(timeout: 8))
+
+        let noWatermarkButton = app.buttons["vf.poster.noWatermarkButton"]
+        XCTAssertTrue(noWatermarkButton.waitForExistence(timeout: 4))
+        noWatermarkButton.tap()
+
+        XCTAssertTrue(app.scrollViews["vf.paywall.screen"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.descendants(matching: .any)["vf.paywall.reasonCard"].waitForExistence(timeout: 4))
+    }
+
     func testLiveChinaBackendGeneratesPosterBackgroundAndAssets() throws {
         guard shouldRunLiveBackendUITests else {
             throw XCTSkip("Set VF_RUN_LIVE_UI_TESTS=1 or create /tmp/viralforge-run-live-ui-tests to run the paid live China backend UI flow.")

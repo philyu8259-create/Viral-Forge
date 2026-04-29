@@ -1,6 +1,11 @@
 import SwiftUI
 import Photos
 
+private enum PosterExportMode: Hashable {
+    case watermarked
+    case clean
+}
+
 struct PosterEditorView: View {
     @Environment(AppModel.self) private var appModel
     let project: ContentProject
@@ -11,6 +16,7 @@ struct PosterEditorView: View {
     @State private var exportStatusMessage: String?
     @State private var isSavingToPhotos = false
     @State private var selectedTarget: PosterCanvasTarget
+    @State private var exportMode: PosterExportMode = .watermarked
 
     init(project: ContentProject) {
         self.project = project
@@ -28,12 +34,18 @@ struct PosterEditorView: View {
             )
 
             VStack(spacing: 18) {
-                PosterPreview(poster: poster, platform: project.draft.platform, target: selectedTarget)
+                PosterPreview(
+                    poster: poster,
+                    platform: project.draft.platform,
+                    target: selectedTarget,
+                    showsWatermark: showsWatermarkForExport
+                )
                     .frame(height: 520)
                     .clipShape(RoundedRectangle(cornerRadius: 28))
                     .shadow(color: VFStyle.platformTint(project.draft.platform).opacity(0.16), radius: 22, x: 0, y: 12)
 
                 controls
+                exportOptions
 
                 QuotaStatusView(quota: appModel.quota, compact: true)
 
@@ -86,7 +98,12 @@ struct PosterEditorView: View {
                     .accessibilityIdentifier("vf.poster.backgroundError")
                 }
 
-                VFPrimaryButton(title: AppText.localized("Render Poster", "生成海报图片"), icon: "square.and.arrow.down") {
+                VFPrimaryButton(
+                    title: showsWatermarkForExport
+                        ? AppText.localized("Render Branded Poster", "生成带标识图片")
+                        : AppText.localized("Render No-Watermark Poster", "生成无水印图片"),
+                    icon: "square.and.arrow.down"
+                ) {
                     exportPoster()
                 }
                 .accessibilityIdentifier("vf.poster.renderButton")
@@ -94,31 +111,38 @@ struct PosterEditorView: View {
                 if let exportedImageURL {
                     VFGlassCard {
                         VStack(spacing: 12) {
-                        ShareLink(item: exportedImageURL) {
-                            Label(AppText.localized("Share PNG", "分享 PNG 图片"), systemImage: "square.and.arrow.up")
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(VFStyle.primaryRed)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(.white.opacity(0.62), in: Capsule())
-                        }
-                        .buttonStyle(.plain)
+                            exportResultHeader
 
-                        Button {
-                            saveToPhotoLibrary()
-                        } label: {
-                            Label(
-                                isSavingToPhotos ? AppText.localized("Saving...", "保存中...") : AppText.localized("Save to Photos", "保存到相册"),
-                                systemImage: "photo.badge.arrow.down"
-                            )
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(VFStyle.ink)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(.white.opacity(0.62), in: Capsule())
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(isSavingToPhotos || exportedUIImage == nil)
+                            ShareLink(item: exportedImageURL) {
+                                exportActionLabel(AppText.localized("Share PNG", "分享 PNG 图片"), icon: "square.and.arrow.up", tint: VFStyle.primaryRed)
+                            }
+                            .buttonStyle(.plain)
+
+                            Button {
+                                saveToPhotoLibrary()
+                            } label: {
+                                exportActionLabel(
+                                    isSavingToPhotos ? AppText.localized("Saving...", "保存中...") : AppText.localized("Save to Photos", "保存到相册"),
+                                    icon: "photo.badge.arrow.down",
+                                    tint: VFStyle.ink
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isSavingToPhotos || exportedUIImage == nil)
+
+                            Button {
+                                requestCleanExport()
+                            } label: {
+                                exportActionLabel(
+                                    appModel.quota.isPro
+                                        ? AppText.localized("Render No-Watermark Copy", "重新生成无水印版")
+                                        : AppText.localized("Unlock No-Watermark Export", "解锁无水印导出"),
+                                    icon: appModel.quota.isPro ? "checkmark.seal.fill" : "crown.fill",
+                                    tint: appModel.quota.isPro ? VFStyle.teal : VFStyle.sunset
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("vf.poster.noWatermarkButton")
                         }
                     }
                 }
@@ -133,19 +157,19 @@ struct PosterEditorView: View {
 
                 if let exportedUIImage {
                     VFGlassCard {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(AppText.localized("Export Preview", "导出预览"))
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(VFStyle.ink)
-                        Image(uiImage: exportedUIImage)
-                            .resizable()
-                            .scaledToFit()
-                            .clipShape(RoundedRectangle(cornerRadius: 18))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 18)
-                                    .stroke(.white.opacity(0.8), lineWidth: 1)
-                            }
-                    }
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(AppText.localized("Export Preview", "导出预览"))
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(VFStyle.ink)
+                            Image(uiImage: exportedUIImage)
+                                .resizable()
+                                .scaledToFit()
+                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .stroke(.white.opacity(0.8), lineWidth: 1)
+                                }
+                        }
                     }
                 }
             }
@@ -159,35 +183,135 @@ struct PosterEditorView: View {
                 Label(AppText.localized("Content", "文案"), systemImage: "doc.text")
             }
         }
+        .onAppear {
+            if appModel.quota.isPro {
+                exportMode = .clean
+            }
+        }
     }
 
     private var controls: some View {
         VFGlassCard(level: .thick) {
-        VStack(alignment: .leading, spacing: 14) {
-            VFSectionHeader(
-                title: AppText.localized("Poster Controls", "海报控制台"),
-                subtitle: AppText.localized("Choose size, visual style, and poster copy", "选择尺寸、视觉风格与海报文案")
+            VStack(alignment: .leading, spacing: 14) {
+                VFSectionHeader(
+                    title: AppText.localized("Poster Controls", "海报控制台"),
+                    subtitle: AppText.localized("Choose size, visual style, and poster copy", "选择尺寸、视觉风格与海报文案")
+                )
+
+                Picker(AppText.localized("Template", "模板"), selection: $poster.style) {
+                    ForEach(PosterStyle.allCases) { style in
+                        Text(style.displayName).tag(style)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Picker(AppText.localized("Size", "尺寸"), selection: $selectedTarget) {
+                    ForEach(PosterCanvasTarget.allCases) { target in
+                        Text(target.displayName).tag(target)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                posterField(AppText.localized("Headline", "主标题"), text: $poster.headline, icon: "textformat.size", tint: VFStyle.primaryRed, lines: 2)
+                posterField(AppText.localized("Subtitle", "副标题"), text: $poster.subtitle, icon: "text.alignleft", tint: VFStyle.electricCyan)
+                posterField(AppText.localized("CTA", "行动按钮"), text: $poster.cta, icon: "hand.tap.fill", tint: VFStyle.sunset)
+            }
+        }
+    }
+
+    private var exportOptions: some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 13) {
+                VFSectionHeader(
+                    title: AppText.localized("Export Quality", "导出品质"),
+                    subtitle: AppText.localized("Free exports include a small ViralForge mark; Pro removes it.", "免费导出带 ViralForge 小标识；会员可无水印。")
+                )
+
+                HStack(spacing: 10) {
+                    exportModeButton(
+                        title: AppText.localized("Branded", "带标识"),
+                        subtitle: AppText.localized("Free", "免费"),
+                        icon: "sparkles",
+                        tint: VFStyle.electricCyan,
+                        isSelected: showsWatermarkForExport
+                    ) {
+                        exportMode = .watermarked
+                    }
+
+                    exportModeButton(
+                        title: AppText.localized("No Watermark", "无水印"),
+                        subtitle: appModel.quota.isPro ? "Pro" : AppText.localized("Pro only", "会员专享"),
+                        icon: appModel.quota.isPro ? "checkmark.seal.fill" : "lock.fill",
+                        tint: appModel.quota.isPro ? VFStyle.teal : VFStyle.sunset,
+                        isSelected: !showsWatermarkForExport
+                    ) {
+                        if appModel.quota.isPro {
+                            exportMode = .clean
+                        } else {
+                            requestCleanExport()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var exportResultHeader: some View {
+        HStack(alignment: .top, spacing: 10) {
+            VFGradientIcon(
+                icon: showsWatermarkForExport ? "sparkles" : "checkmark.seal.fill",
+                tint: showsWatermarkForExport ? VFStyle.electricCyan : VFStyle.teal,
+                size: 34
             )
-
-            Picker(AppText.localized("Template", "模板"), selection: $poster.style) {
-                ForEach(PosterStyle.allCases) { style in
-                    Text(style.displayName).tag(style)
-                }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(showsWatermarkForExport ? AppText.localized("Branded export ready", "带标识图片已生成") : AppText.localized("No-watermark export ready", "无水印图片已生成"))
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(VFStyle.ink)
+                Text(showsWatermarkForExport ? AppText.localized("Upgrade to Pro anytime to remove the ViralForge mark.", "可随时升级 Pro 移除 ViralForge 标识。") : AppText.localized("Ready for direct publishing and client delivery.", "可直接发布或交付客户。"))
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(VFStyle.secondaryText)
             }
-            .pickerStyle(.segmented)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 
-            Picker(AppText.localized("Size", "尺寸"), selection: $selectedTarget) {
-                ForEach(PosterCanvasTarget.allCases) { target in
-                    Text(target.displayName).tag(target)
+    private func exportModeButton(title: String, subtitle: String, icon: String, tint: Color, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                VFGradientIcon(icon: icon, tint: tint, size: 34)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline.weight(.black))
+                        .foregroundStyle(VFStyle.ink)
+                    Text(subtitle)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(isSelected ? tint : VFStyle.secondaryText)
                 }
+                Spacer(minLength: 0)
             }
-            .pickerStyle(.segmented)
+            .padding(12)
+            .frame(maxWidth: .infinity)
+            .background(isSelected ? tint.opacity(0.10) : .white.opacity(0.58), in: RoundedRectangle(cornerRadius: 18))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(isSelected ? tint.opacity(0.34) : .white.opacity(0.78), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+    }
 
-            posterField(AppText.localized("Headline", "主标题"), text: $poster.headline, icon: "textformat.size", tint: VFStyle.primaryRed, lines: 2)
-            posterField(AppText.localized("Subtitle", "副标题"), text: $poster.subtitle, icon: "text.alignleft", tint: VFStyle.electricCyan)
-            posterField(AppText.localized("CTA", "行动按钮"), text: $poster.cta, icon: "hand.tap.fill", tint: VFStyle.sunset)
-        }
-        }
+    private func exportActionLabel(_ title: String, icon: String, tint: Color) -> some View {
+        Label(title, systemImage: icon)
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(tint)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(.white.opacity(0.62), in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(.white.opacity(0.78), lineWidth: 1)
+            }
     }
 
     private func posterField(_ placeholder: String, text: Binding<String>, icon: String, tint: Color, lines: Int = 1) -> some View {
@@ -205,10 +329,40 @@ struct PosterEditorView: View {
         }
     }
 
+    private var showsWatermarkForExport: Bool {
+        !appModel.quota.isPro || exportMode == .watermarked
+    }
+
+    private func requestCleanExport() {
+        guard appModel.quota.isPro else {
+            appModel.openPaywall(reason: AppText.localized(
+                "No-watermark poster export is included in ViralForge Pro.",
+                "无水印海报导出是 ViralForge Pro 会员权益。"
+            ))
+            return
+        }
+
+        exportMode = .clean
+        exportPoster()
+    }
+
     @MainActor
     private func exportPoster() {
+        if exportMode == .clean && !appModel.quota.isPro {
+            requestCleanExport()
+            return
+        }
+
         let exportSize = selectedTarget.exportSize
-        let renderer = ImageRenderer(content: PosterPreview(poster: poster, platform: project.draft.platform, target: selectedTarget).frame(width: exportSize.width, height: exportSize.height))
+        let renderer = ImageRenderer(
+            content: PosterPreview(
+                poster: poster,
+                platform: project.draft.platform,
+                target: selectedTarget,
+                showsWatermark: showsWatermarkForExport
+            )
+            .frame(width: exportSize.width, height: exportSize.height)
+        )
         renderer.scale = 1
         guard let uiImage = renderer.uiImage else {
             exportStatusMessage = AppText.localized("Poster export failed.", "海报导出失败。")
@@ -217,7 +371,9 @@ struct PosterEditorView: View {
 
         exportedUIImage = uiImage
         exportedImageURL = writePNGToTemporaryFile(uiImage)
-        exportStatusMessage = AppText.localized("Poster rendered. It is now available in Assets.", "海报已生成，可在素材库查看。")
+        exportStatusMessage = showsWatermarkForExport
+            ? AppText.localized("Poster rendered with ViralForge mark. It is now available in Assets.", "带 ViralForge 标识的海报已生成，可在素材库查看。")
+            : AppText.localized("No-watermark poster rendered. It is now available in Assets.", "无水印海报已生成，可在素材库查看。")
 
         Task {
             await appModel.savePosterDraft(for: project, poster: poster, markExported: true)
@@ -268,11 +424,13 @@ struct PosterPreview: View {
     let poster: PosterDraft
     let platform: SocialPlatform
     let target: PosterCanvasTarget
+    let showsWatermark: Bool
 
-    init(poster: PosterDraft, platform: SocialPlatform, target: PosterCanvasTarget = .xiaohongshuCover) {
+    init(poster: PosterDraft, platform: SocialPlatform, target: PosterCanvasTarget = .xiaohongshuCover, showsWatermark: Bool = false) {
         self.poster = poster
         self.platform = platform
         self.target = target
+        self.showsWatermark = showsWatermark
     }
 
     var body: some View {
@@ -310,6 +468,9 @@ struct PosterPreview: View {
                 endPoint: .bottom
             )
             posterContentOverlay(palette: palette)
+            if showsWatermark {
+                posterWatermark(palette: palette)
+            }
         }
         .aspectRatio(target.aspectRatio, contentMode: .fit)
         .shadow(color: .black.opacity(0.08), radius: 18, y: 8)
@@ -424,6 +585,35 @@ struct PosterPreview: View {
             .padding(.vertical, 10)
             .foregroundStyle(palette.background)
             .background(palette.accent, in: RoundedRectangle(cornerRadius: cornerRadius))
+    }
+
+    private func posterWatermark(palette: PosterPalette) -> some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let markHeight = max(34, width * 0.07)
+
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    HStack(spacing: max(5, width * 0.008)) {
+                        Image(systemName: "sparkles")
+                        Text("ViralForge")
+                    }
+                    .font(.system(size: max(14, width * 0.028), weight: .black, design: .rounded))
+                    .foregroundStyle(palette.primary.opacity(0.72))
+                    .padding(.horizontal, max(12, width * 0.022))
+                    .frame(height: markHeight)
+                    .background(.white.opacity(0.66), in: Capsule())
+                    .overlay {
+                        Capsule()
+                            .stroke(.white.opacity(0.72), lineWidth: max(1, width * 0.0012))
+                    }
+                    .shadow(color: .black.opacity(0.08), radius: max(8, width * 0.014), x: 0, y: max(4, width * 0.008))
+                    .padding(max(18, width * 0.035))
+                }
+            }
+        }
     }
 }
 
