@@ -1,8 +1,11 @@
 name: ViralForge
 options:
   bundleIdPrefix: com.phil
+  schemePathPrefix: "../../../"
   deploymentTarget:
     iOS: "17.0"
+fileGroups:
+  - ViralForge.storekit
 settings:
   base:
     MARKETING_VERSION: "0.1.0"
@@ -28,8 +31,7 @@ targets:
     scheme:
       testTargets:
         - ViralForgeUITests
-      run:
-        storeKitConfiguration: ViralForge.storekit
+      storeKitConfiguration: ViralForge.storekit
     attributes:
       SystemCapabilities:
         com.apple.InAppPurchase:
