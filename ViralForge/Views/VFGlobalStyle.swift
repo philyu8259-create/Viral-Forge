@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum VFStyle {
     static let primaryRed = Color(red: 1.0, green: 0.23, blue: 0.19)
@@ -132,12 +133,24 @@ struct VFPage<Content: View>: View {
                 .padding(.top, 12)
                 .padding(.bottom, 110)
             }
+            .scrollDismissesKeyboard(.interactively)
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    UIApplication.shared.vfDismissKeyboard()
+                }
+            )
         }
         .background {
             VFBackground()
         }
         .toolbarBackground(.hidden, for: .navigationBar)
         .preferredColorScheme(.light)
+    }
+}
+
+private extension UIApplication {
+    func vfDismissKeyboard() {
+        sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

@@ -13,7 +13,6 @@ struct PaywallView: View {
             planPicker
             purchaseCard
             appSettingsCard
-            backendSettingsCard
         }
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("vf.paywall.screen")
@@ -102,7 +101,7 @@ struct PaywallView: View {
         VStack(alignment: .leading, spacing: 14) {
             VFSectionHeader(
                 title: AppText.localized("Choose Plan", "选择方案"),
-                subtitle: AppText.localized("StoreKit products are configured for local testing", "本地 StoreKit 已按中国区价格配置")
+                subtitle: AppText.localized("Choose monthly or yearly access to Pro creation tools", "选择月度或年度会员，解锁专业创作能力")
             )
 
             VStack(spacing: 12) {
@@ -187,39 +186,14 @@ struct PaywallView: View {
                 }
 
                 Text(AppText.localized(
-                    "Purchases use StoreKit. Local testing uses the bundled StoreKit configuration; production products must also be created in App Store Connect.",
-                    "购买已接入 StoreKit。本地测试使用内置 StoreKit 配置；正式上架还需要在 App Store Connect 创建同 ID 商品。"
+                    "Payments are processed securely by Apple. You can restore purchases anytime from Settings.",
+                    "付款由 Apple 安全处理。你可以随时在设置中恢复购买。"
                 ))
                 .font(.caption2.weight(.medium))
                 .foregroundStyle(VFStyle.secondaryText)
                 .multilineTextAlignment(.center)
             }
         }
-    }
-
-    private var backendSettingsCard: some View {
-        NavigationLink {
-            BackendSettingsView()
-        } label: {
-            VFGlassCard {
-                HStack(spacing: 13) {
-                    VFGradientIcon(icon: "server.rack", tint: VFStyle.electricCyan, size: 38)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(AppText.localized("Backend Settings", "后端设置"))
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(VFStyle.ink)
-                        Text(AppText.localized("Switch mock/backend modes and endpoints", "切换 Mock/后端模式与接口地址"))
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(VFStyle.secondaryText)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(VFStyle.secondaryText.opacity(0.55))
-                }
-            }
-        }
-        .buttonStyle(.plain)
     }
 
     private var appSettingsCard: some View {

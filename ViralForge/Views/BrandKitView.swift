@@ -179,27 +179,6 @@ struct BrandKitView: View {
                         .foregroundStyle(VFStyle.secondaryText)
                         .multilineTextAlignment(.center)
                 }
-
-                if appModel.backendSettings.mode == .backend {
-                    Button {
-                        Task {
-                            await appModel.syncFromBackend()
-                            profile = appModel.brandProfile
-                            appModel.brandStatusMessage = AppText.localized("Brand memory synced from backend.", "已从后端同步品牌记忆。")
-                        }
-                    } label: {
-                        Label(AppText.localized("Sync From Backend", "从后端同步"), systemImage: "arrow.triangle.2.circlepath")
-                            .font(.subheadline.weight(.bold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(.white.opacity(0.58), in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-
-                    Text(appModel.backendStatusMessage)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(VFStyle.secondaryText)
-                }
             }
         }
     }

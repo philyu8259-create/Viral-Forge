@@ -172,7 +172,10 @@ final class AppModel {
             return nil
         }
         guard backendSettings.mode == .backend, let apiClient = makeAPIClient() else {
-            posterGenerationError = "Backend mode is required for AI image generation."
+            posterGenerationError = AppText.localized(
+                "AI image generation is not available right now. Please try again later.",
+                "AI 图片生成暂时不可用，请稍后再试。"
+            )
             return nil
         }
 
@@ -544,14 +547,14 @@ final class AppModel {
             }
             if subscriptionProducts.isEmpty {
                 purchaseStatusMessage = AppText.localized(
-                    "No StoreKit products were returned. Check the StoreKit configuration or App Store Connect products.",
-                    "没有加载到 StoreKit 商品。请检查本地 StoreKit 配置或 App Store Connect 商品。"
+                    "Subscription plans are temporarily unavailable. Please try again later.",
+                    "订阅方案暂时无法加载，请稍后再试。"
                 )
             }
         } catch {
             purchaseStatusMessage = AppText.localized(
-                "StoreKit products failed to load: \(error.localizedDescription)",
-                "StoreKit 商品加载失败：\(error.localizedDescription)"
+                "Subscription plans failed to load. Please check your connection and try again.",
+                "订阅方案加载失败，请检查网络后重试。"
             )
         }
     }
@@ -639,7 +642,7 @@ final class AppModel {
             brandStatusMessage = AppText.localized("Brand memory saved and synced.", "品牌记忆已保存并同步。")
             backendStatusMessage = "Brand Kit saved to backend."
         } catch {
-            brandStatusMessage = AppText.localized("Saved locally. Backend sync failed.", "已保存到本机，后端同步失败。")
+            brandStatusMessage = AppText.localized("Saved on this device. Sync did not complete this time.", "已保存到本机，本次同步暂未完成。")
             backendStatusMessage = "Brand save failed: \(error.localizedDescription)"
         }
     }
@@ -1100,7 +1103,7 @@ private enum StoreKitVerificationError: LocalizedError {
     case failed
 
     var errorDescription: String? {
-        AppText.localized("StoreKit transaction could not be verified.", "StoreKit 交易无法通过验证。")
+        AppText.localized("Purchase could not be verified. Please try restoring purchases.", "购买无法验证，请尝试恢复购买。")
     }
 }
 

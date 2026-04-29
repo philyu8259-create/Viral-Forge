@@ -246,6 +246,9 @@ final class CreationFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["¥398/年"].exists)
         XCTAssertTrue(app.buttons["vf.paywall.purchaseButton"].waitForExistence(timeout: 4))
         XCTAssertTrue(app.buttons["vf.paywall.restoreButton"].waitForExistence(timeout: 4))
+        XCTAssertFalse(app.staticTexts["本地 StoreKit 已按中国区价格配置"].exists)
+        XCTAssertFalse(app.staticTexts["后端设置"].exists)
+        XCTAssertFalse(app.staticTexts["购买已接入 StoreKit。本地测试使用内置 StoreKit 配置；正式上架还需要在 App Store Connect 创建同 ID 商品。"].exists)
     }
 
     @MainActor

@@ -51,8 +51,8 @@ struct SettingsView: View {
             }
         } message: {
             Text(AppText.localized(
-                "This removes local projects, poster assets, snippets, and brand memory from this device. Subscriptions are not affected. Backend-synced data still requires an email deletion request.",
-                "这会从本机移除项目、海报素材、文案片段和品牌记忆，不影响订阅。后端同步数据仍需通过邮件申请删除。"
+                "This removes local projects, poster assets, snippets, and brand memory from this device. Subscriptions are not affected.",
+                "这会从本机移除项目、海报素材、文案片段和品牌记忆，不影响订阅。"
             ))
         }
     }
@@ -108,7 +108,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 VFSectionHeader(
                     title: AppText.localized("Legal & Support", "协议与支持"),
-                    subtitle: AppText.localized("Public pages required for App Store submission", "App Store 提交所需公开页面")
+                    subtitle: AppText.localized("Privacy, terms, and ways to contact us", "隐私、协议与联系支持")
                 )
 
                 settingsLink(
@@ -155,7 +155,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 VFSectionHeader(
                     title: AppText.localized("Data & Deletion", "数据与删除"),
-                    subtitle: AppText.localized("Local drafts stay on this device unless backend sync is enabled", "本地草稿默认保存在本机，开启后端时才会同步")
+                    subtitle: AppText.localized("Manage saved drafts and request data deletion", "管理本机草稿并申请数据删除")
                 )
 
                 HStack(alignment: .top, spacing: 12) {
@@ -165,8 +165,8 @@ struct SettingsView: View {
                             .font(.subheadline.weight(.black))
                             .foregroundStyle(VFStyle.ink)
                         Text(AppText.localized(
-                            "Send us the in-app User ID if backend sync is enabled. Local-only drafts can be removed by deleting the app from the device.",
-                            "如已开启后端同步，请在邮件中附上 App 内用户 ID。仅保存在本机的草稿，可通过卸载 App 从设备删除。"
+                            "Send us an email if you want help deleting app data associated with your use of ViralForge.",
+                            "如需协助删除与你使用 ViralForge 相关的数据，请通过邮件联系我们。"
                         ))
                         .font(.caption.weight(.medium))
                         .foregroundStyle(VFStyle.secondaryText)
@@ -227,12 +227,10 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 VFSectionHeader(
                     title: AppText.localized("App Info", "应用信息"),
-                    subtitle: AppText.localized("Version and backend mode", "版本与后端模式")
+                    subtitle: AppText.localized("Current installed version", "当前安装版本")
                 )
 
                 infoRow(AppText.localized("Version", "版本"), value: appVersionText, icon: "number", tint: VFStyle.accent)
-                infoRow(AppText.localized("Data mode", "数据模式"), value: appModel.backendSettings.mode.displayName, icon: "server.rack", tint: VFStyle.electricCyan)
-                infoRow(AppText.localized("User ID", "用户 ID"), value: appModel.backendSettings.userId, icon: "person.crop.circle.fill", tint: VFStyle.purpleFlow)
             }
         }
     }
