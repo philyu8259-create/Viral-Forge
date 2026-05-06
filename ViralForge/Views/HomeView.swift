@@ -26,7 +26,7 @@ struct HomeView: View {
     @FocusState private var isTopicEditorFocused: Bool
 
     private var canGenerate: Bool {
-        !appModel.isGenerating && draft.isReadyToGenerate
+        !appModel.isGenerating
     }
 
     private var visibleTopicValidationMessage: String? {
@@ -50,16 +50,15 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         studioHeader
                         mainCreationCard
+                        if let generationError = appModel.generationError {
+                            errorCard(generationError)
+                        }
                         if shouldShowContentPipeline {
                             contentPipelineSection
                         }
                         templatePreviewSection
                         brandKitShortcut
                         workflowShortcuts
-
-                        if let generationError = appModel.generationError {
-                            errorCard(generationError)
-                        }
                     }
                     .frame(width: contentWidth, alignment: .leading)
                     .padding(.horizontal, 20)
@@ -715,7 +714,7 @@ struct HomeView: View {
             .opacity(canGenerate ? 1 : 0.86)
         }
         .buttonStyle(.plain)
-        .disabled(!canGenerate)
+        .disabled(appModel.isGenerating)
         .accessibilityIdentifier("vf.home.generateButton")
     }
 

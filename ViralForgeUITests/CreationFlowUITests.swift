@@ -45,6 +45,19 @@ final class CreationFlowUITests: XCTestCase {
         waitForExpectations(timeout: 4)
     }
 
+    func testEmptyTopicGenerateShowsValidationMessage() throws {
+        let app = XCUIApplication()
+        launch(app)
+
+        let generateButton = app.buttons["vf.home.generateButton"]
+        XCTAssertTrue(generateButton.waitForExistence(timeout: 8))
+        XCTAssertTrue(generateButton.isEnabled)
+        generateButton.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["vf.home.generationError"].waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["请先输入主题或产品。"].waitForExistence(timeout: 4), app.debugDescription)
+    }
+
     func testHomePipelineProjectCardOpensResult() throws {
         let app = XCUIApplication()
         launch(app)
@@ -501,6 +514,25 @@ final class CreationFlowUITests: XCTestCase {
         let posterCard = app.buttons["vf.assets.posterCard"].firstMatch
         XCTAssertTrue(posterCard.waitForExistence(timeout: 15))
         saveScreenshot(named: "e2e-live-china-assets-poster.png")
+    }
+
+    func testLiveBackendGenerateButtonNavigatesToResult() throws {
+        guard shouldRunLiveBackendUITests else {
+            throw XCTSkip("Set VF_RUN_LIVE_UI_TESTS=1 or create /tmp/viralforge-run-live-ui-tests to run the live backend UI flow.")
+        }
+
+        let app = XCUIApplication()
+        launchLiveBackend(app)
+
+        createContentPack(
+            in: app,
+            topic: "便携榨汁杯，适合上班族办公室快速早餐，主打便携、好清洗、低噪音、颜值高。",
+            resultTimeout: 75,
+            attempts: 2
+        )
+
+        XCTAssertTrue(app.scrollViews["vf.result.screen"].waitForExistence(timeout: 8), app.debugDescription)
+        saveScreenshot(named: "e2e-live-backend-generate-button-result.png")
     }
 
     func testEnglishLocaleUsesGlobalPlatforms() throws {
