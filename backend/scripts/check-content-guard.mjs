@@ -38,10 +38,28 @@ const joined = [
 assert(joined.includes("便携榨汁杯"), "normalized content should include the requested product");
 assert(normalized.poster.subtitle.includes("便携榨汁杯"), "poster subtitle should be anchored to the requested product");
 
+const reasons = [
+  ...normalized.titles.map((line) => line.reason),
+  ...normalized.hooks.map((line) => line.reason)
+];
+assert(reasons.every(hasChinese), "Chinese generation reasons should be localized to Chinese");
+assert(reasons.every((reason) => !looksMostlyEnglish(reason)), "Chinese generation reasons should not be mostly English");
+
 console.log("Content guard check passed.");
 
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
   }
+}
+
+function hasChinese(value) {
+  return /[\u4e00-\u9fff]/.test(String(value ?? ""));
+}
+
+function looksMostlyEnglish(value) {
+  const text = String(value ?? "");
+  const latin = (text.match(/[A-Za-z]/g) ?? []).length;
+  const chinese = (text.match(/[\u4e00-\u9fff]/g) ?? []).length;
+  return latin >= 12 && latin > chinese * 2;
 }

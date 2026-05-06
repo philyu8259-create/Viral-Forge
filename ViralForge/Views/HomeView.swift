@@ -283,11 +283,11 @@ struct HomeView: View {
                         StrategyMiniChip(
                             icon: "paintpalette.fill",
                             title: AppText.localized("Poster style", "海报风格"),
-                            value: AppText.localized("Minimal white", "极简白系"),
+                            value: draft.templateStyle.displayName,
                             tint: brandAccentColor
                         ) {
                             Haptics.selection()
-                            activeEditor = .brand
+                            activeEditor = .style
                         }
                     }
                 }
@@ -1644,6 +1644,7 @@ private enum StrategyEditor: String, Identifiable {
     case goal
     case audience
     case tone
+    case style
     case brand
 
     var id: String { rawValue }
@@ -1684,6 +1685,28 @@ private struct StrategyEditorSheet: View {
                         TextField(AppText.localized("Example: authentic, persuasive, not exaggerated", "例如：真实、种草、不夸张"), text: $draft.tone, axis: .vertical)
                             .lineLimit(3, reservesSpace: true)
                     }
+                case .style:
+                    Section(AppText.localized("Poster style", "海报风格")) {
+                        ForEach(PosterStyle.allCases) { style in
+                            Button {
+                                draft.templateStyle = style
+                                dismiss()
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: posterStyleIcon(for: style))
+                                        .foregroundStyle(style.palette.accent)
+                                        .frame(width: 26)
+                                    Text(style.displayName)
+                                    Spacer()
+                                    if draft.templateStyle == style {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(.tint)
+                                    }
+                                }
+                            }
+                            .accessibilityIdentifier("vf.home.posterStyle.\(style.rawValue)")
+                        }
+                    }
                 case .brand:
                     Section {
                         Text(AppText.localized(
@@ -1710,7 +1733,17 @@ private struct StrategyEditorSheet: View {
         case .goal: AppText.localized("Goal", "目标")
         case .audience: AppText.localized("Audience", "目标人群")
         case .tone: AppText.localized("Tone", "语气风格")
+        case .style: AppText.localized("Poster style", "海报风格")
         case .brand: AppText.localized("Brand memory", "品牌记忆")
+        }
+    }
+
+    private func posterStyleIcon(for style: PosterStyle) -> String {
+        switch style {
+        case .cleanProduct: "sparkle.magnifyingglass"
+        case .boldLaunch: "bolt.fill"
+        case .softLifestyle: "cup.and.saucer.fill"
+        case .editorial: "text.rectangle.fill"
         }
     }
 }

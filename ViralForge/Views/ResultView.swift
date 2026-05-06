@@ -170,7 +170,7 @@ struct ResultView: View {
                                 .padding(.vertical, 5)
                                 .background(tint, in: Capsule())
                         }
-                        Text(line.reason)
+                        Text(displayReason(line.reason))
                             .font(.caption.weight(.medium))
                             .foregroundStyle(VFStyle.secondaryText)
                         copyButton(line.text, tint: tint, feedback: AppText.localized("Line copied.", "已复制该条文案。"))
@@ -178,6 +178,28 @@ struct ResultView: View {
                 }
             }
         }
+    }
+
+    private func displayReason(_ reason: String) -> String {
+        let trimmedReason = reason.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard currentProject.draft.language == .chinese else {
+            return trimmedReason.isEmpty ? "Clear angle with practical social-platform fit." : trimmedReason
+        }
+
+        if trimmedReason.isEmpty || looksMostlyEnglish(trimmedReason) {
+            return "结合产品名、使用场景和可验证卖点进行优化。"
+        }
+        return trimmedReason
+    }
+
+    private func looksMostlyEnglish(_ value: String) -> Bool {
+        let latinCount = value.unicodeScalars.filter { scalar in
+            (65...90).contains(Int(scalar.value)) || (97...122).contains(Int(scalar.value))
+        }.count
+        let chineseCount = value.unicodeScalars.filter { scalar in
+            (0x4E00...0x9FFF).contains(Int(scalar.value))
+        }.count
+        return latinCount >= 12 && latinCount > chineseCount * 2
     }
 
     private var captionSection: some View {
