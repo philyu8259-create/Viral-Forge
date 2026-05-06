@@ -40,7 +40,7 @@ try {
   assert(templates.templates.some((template) => ["tiktok", "instagram", "youtube_shorts"].includes(template.platform)), "templates include English launch platforms");
   assert(templates.templates.some((template) => template.name.includes("小红书")), "templates include Chinese launch copy");
   assert(templates.templates.some((template) => template.name.includes("TikTok")), "templates include English launch copy");
-  await expectJSON("/api/quota", (body) => body.remainingTextGenerations === 3, {
+  await expectJSON("/api/quota", (body) => body.remainingTextGenerations === 3 && body.remainingPosterExports === 3, {
     "x-user-id": "smoke-user"
   });
   const savedBrand = await postJSON("/api/brand", {
@@ -89,10 +89,11 @@ try {
     { "x-user-id": "safety-user" }
   );
   assert(unsafeResult.error?.code === "medical_claim", "unsafe medical claim is blocked before generation");
-  const safetyQuota = await expectJSON("/api/quota", (body) => body.remainingTextGenerations === 3, {
+  const safetyQuota = await expectJSON("/api/quota", (body) => body.remainingTextGenerations === 3 && body.remainingPosterExports === 3, {
     "x-user-id": "safety-user"
   });
   assert(safetyQuota.remainingTextGenerations === 3, "blocked content does not consume quota");
+  assert(safetyQuota.remainingPosterExports === 3, "blocked content does not consume poster quota");
 
   await postJSON(
     "/api/content/generate",

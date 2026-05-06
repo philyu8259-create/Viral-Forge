@@ -17,10 +17,10 @@ struct ModelRoute: Hashable, Codable {
             )
         case .english:
             ModelRoute(
-                textProvider: "openai",
-                textModel: "gpt-5.4",
-                imageProvider: "openai",
-                imageModel: "gpt-image-1.5"
+                textProvider: "qwen",
+                textModel: "qwen-plus",
+                imageProvider: "seedream",
+                imageModel: "doubao-seedream-4-5-251128"
             )
         }
     }

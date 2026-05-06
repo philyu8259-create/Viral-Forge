@@ -1,1 +1,4 @@
 "NSPhotoLibraryAddUsageDescription" = "ViralForge 需要保存生成的海报图片到你的相册。";
+"NSPhotoLibraryUsageDescription" = "ViralForge 需要让你选择真实产品图，并添加到生成的海报里。";
+"NSMicrophoneUsageDescription" = "ViralForge 需要使用麦克风，把你说出的产品简报转成文字。";
+"NSSpeechRecognitionUsageDescription" = "ViralForge 需要使用语音识别来转写你的产品简报。";

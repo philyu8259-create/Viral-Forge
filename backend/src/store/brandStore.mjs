@@ -1,4 +1,4 @@
-import { db, nowISO, parseJSON } from "../db/database.mjs";
+import { backend } from "./storageBackend.mjs";
 
 const defaultBrandProfile = {
   brandName: "",
@@ -10,12 +10,9 @@ const defaultBrandProfile = {
   primaryColorName: "Emerald"
 };
 
-export function getBrandProfile(userId) {
-  const row = db.prepare(`
-    SELECT profile_json
-    FROM brand_profiles
-    WHERE user_id = ?
-  `).get(userId);
+export async function getBrandProfile(userId) {
+  const store = await backend();
+  const row = await store.getBrandRecord(userId);
 
   if (!row) {
     return { ...defaultBrandProfile };
@@ -23,26 +20,18 @@ export function getBrandProfile(userId) {
 
   return {
     ...defaultBrandProfile,
-    ...parseJSON(row.profile_json, {})
+    ...store.parseJSON(row.profile_json, {})
   };
 }
 
-export function saveBrandProfile(userId, profile) {
+export async function saveBrandProfile(userId, profile) {
   const normalizedProfile = {
     ...defaultBrandProfile,
     ...profile
   };
 
-  db.prepare(`
-    INSERT INTO brand_profiles (
-      user_id,
-      profile_json,
-      updated_at
-    ) VALUES (?, ?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET
-      profile_json = excluded.profile_json,
-      updated_at = excluded.updated_at
-  `).run(userId, JSON.stringify(normalizedProfile), nowISO());
+  const store = await backend();
+  await store.putBrandRecord(userId, normalizedProfile);
 
   return normalizedProfile;
 }

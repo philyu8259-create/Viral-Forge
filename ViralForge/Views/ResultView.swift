@@ -1,10 +1,17 @@
 import SwiftUI
 import UIKit
 
+private struct PosterEditorRoute: Identifiable, Hashable {
+    let project: ContentProject
+
+    var id: UUID { project.id }
+}
+
 struct ResultView: View {
     @Environment(AppModel.self) private var appModel
     let project: ContentProject
     @State private var regeneratedProject: ContentProject?
+    @State private var posterEditorRoute: PosterEditorRoute?
     @State private var copyStatusMessage: String?
     @State private var isShowingEditor = false
 
@@ -42,6 +49,9 @@ struct ResultView: View {
         }
         .navigationDestination(item: $regeneratedProject) { project in
             ResultView(project: project)
+        }
+        .navigationDestination(item: $posterEditorRoute) { route in
+            PosterEditorView(project: route.project)
         }
         .sheet(isPresented: $isShowingEditor) {
             ResultEditorSheet(project: currentProject) { result in
@@ -89,8 +99,8 @@ struct ResultView: View {
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("vf.result.editCopyButton")
 
-                    NavigationLink {
-                        PosterEditorView(project: currentProject)
+                    Button {
+                        posterEditorRoute = PosterEditorRoute(project: currentProject)
                     } label: {
                         actionPill(AppText.localized("Edit Poster", "编辑海报"), icon: "photo.on.rectangle.angled", tint: VFStyle.sunset)
                     }
@@ -206,13 +216,9 @@ struct ResultView: View {
                 .frame(height: 420)
                 .clipShape(RoundedRectangle(cornerRadius: 28))
                 .shadow(color: VFStyle.platformTint(currentProject.draft.platform).opacity(0.14), radius: 20, x: 0, y: 12)
-            NavigationLink {
-                PosterEditorView(project: currentProject)
-            } label: {
-                VFPrimaryButton(title: AppText.localized("Edit Poster", "编辑海报"), icon: "photo.on.rectangle.angled") {}
-                    .allowsHitTesting(false)
+            VFPrimaryButton(title: AppText.localized("Edit Poster", "编辑海报"), icon: "photo.on.rectangle.angled") {
+                posterEditorRoute = PosterEditorRoute(project: currentProject)
             }
-            .buttonStyle(.plain)
             .accessibilityIdentifier("vf.result.editPosterButton.bottom")
         }
     }

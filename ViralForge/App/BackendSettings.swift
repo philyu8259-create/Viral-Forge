@@ -26,6 +26,7 @@ struct BackendSettings: Codable, Equatable {
 
 enum BackendSettingsStore {
     private static let storageKey = "viralforge.backend.settings"
+    private static let anonymousUserIdKey = "viralforge.backend.anonymousUserId"
 
     static func load(configuration: AppConfiguration = .current) -> BackendSettings {
         if let data = UserDefaults.standard.data(forKey: storageKey),
@@ -34,7 +35,7 @@ enum BackendSettingsStore {
         }
 
         if let configuredURL = configuration.backendBaseURL {
-            return BackendSettings(mode: .backend, baseURLString: configuredURL.absoluteString, userId: "demo-user")
+            return BackendSettings(mode: .backend, baseURLString: configuredURL.absoluteString, userId: anonymousUserId())
         }
 
         return BackendSettings()
@@ -43,5 +44,16 @@ enum BackendSettingsStore {
     static func save(_ settings: BackendSettings) {
         guard let data = try? JSONEncoder().encode(settings) else { return }
         UserDefaults.standard.set(data, forKey: storageKey)
+    }
+
+    private static func anonymousUserId() -> String {
+        if let stored = UserDefaults.standard.string(forKey: anonymousUserIdKey),
+           !stored.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return stored
+        }
+
+        let userId = "vf-\(UUID().uuidString.lowercased())"
+        UserDefaults.standard.set(userId, forKey: anonymousUserIdKey)
+        return userId
     }
 }

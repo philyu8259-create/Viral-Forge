@@ -2,8 +2,9 @@
 
 ## Runtime
 
-- Node.js 22 or later
-- Persistent disk if using SQLite
+- Alibaba Cloud Function Compute custom container
+- Node.js 22 container runtime from `backend/Dockerfile`
+- Tablestore for persistent data
 - Public HTTPS URL for App Store Server Notifications V2
 
 The server listens on `PORT` and exposes:
@@ -20,22 +21,25 @@ Start with these values:
 
 ```env
 PORT=8787
-SQLITE_PATH=/data/viralforge.sqlite
 AI_PROVIDER_MODE=china_live
 QWEN_API_KEY=
 SEEDREAM_API_KEY=
 ARK_API_KEY=
+DATA_STORE=tablestore
+TABLESTORE_ENDPOINT=https://YOUR_INSTANCE.cn-hangzhou.ots.aliyuncs.com
+TABLESTORE_INSTANCE=YOUR_INSTANCE
+TABLESTORE_TABLE_NAME=viralforge_records
 IAP_VERIFICATION_MODE=app_store_server
 APP_STORE_SERVER_ENVIRONMENT=sandbox
 APP_STORE_SERVER_ISSUER_ID=
 APP_STORE_SERVER_KEY_ID=
 APP_STORE_SERVER_BUNDLE_ID=com.phil.viralforge
-APP_STORE_SERVER_PRIVATE_KEY_PATH=/run/secrets/AuthKey_XXXXXXXXXX.p8
+APP_STORE_SERVER_PRIVATE_KEY=
 ```
 
-Keep `.env`, `.p8` files, and SQLite data out of source control.
+Keep `.env`, private keys, and provider credentials out of source control.
 
-Use `AI_PROVIDER_MODE=china_live` for the first China release. This mode only requires Qwen and Seedream/Ark provider keys. `OPENAI_API_KEY` is only needed when the international release is enabled later with `AI_PROVIDER_MODE=live`.
+Use `AI_PROVIDER_MODE=china_live` for the first China release. Current live routing only requires Qwen and Seedream/Ark provider keys; OpenAI credentials are not required.
 
 ## Docker
 
@@ -65,19 +69,23 @@ curl http://localhost:8787/api/app-store/status
 
 ## Platform Checklist
 
-1. Create a Node 22 service or deploy the Docker image.
-2. Attach persistent storage and set `SQLITE_PATH` to that mounted disk.
-3. Add provider API keys as encrypted environment variables.
-4. Add App Store Server API credentials as encrypted environment variables or mounted secret files.
-5. Expose the service behind HTTPS.
+1. Create an Alibaba Cloud Container Registry repository.
+2. Build and push the backend Docker image from `backend/Dockerfile`.
+3. Create an Alibaba Cloud Function Compute custom-container function.
+4. Set the custom-container listening port to `8787`.
+5. Create the Tablestore table from `backend/deploy/fc/README.md`.
+6. Add provider, Tablestore, and App Store Server API credentials as FC environment variables.
+7. Expose the function through an HTTP trigger or custom HTTPS domain.
 6. Set App Store Server Notifications V2 in App Store Connect:
 
 ```text
 https://YOUR_BACKEND_DOMAIN/api/app-store/notifications/v2
 ```
 
-7. Test Apple notifications from App Store Connect.
-8. Update the iOS app backend URL to the public HTTPS backend URL before TestFlight.
+8. Test Apple notifications from App Store Connect.
+9. Update the iOS app backend URL to the public HTTPS backend URL before TestFlight.
+
+Follow `backend/deploy/fc/README.md` for the FC + Tablestore runbook.
 
 ## iOS Backend URL
 
@@ -91,6 +99,6 @@ Release builds intentionally do not default to localhost. Before TestFlight or A
 
 ## Production Notes
 
-SQLite is acceptable for early TestFlight and low-volume MVP usage if the platform provides reliable persistent storage and backups. Before scaling, move quota, projects, subscriptions, and notifications to a managed database.
+SQLite remains local-development only. TestFlight and production should use `DATA_STORE=tablestore` on FC.
 
 Use `APP_STORE_SERVER_ENVIRONMENT=sandbox` for TestFlight. Switch to `production` for the production app release after sandbox verification passes.

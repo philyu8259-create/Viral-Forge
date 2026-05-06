@@ -1,5 +1,4 @@
 import Foundation
-import CryptoKit
 import Observation
 import StoreKit
 
@@ -27,7 +26,7 @@ final class AppModel {
     var templates: [CreativeTemplate] = SampleData.templates
     var posterAssets: [PosterAsset] = []
     var brandProfile = BrandProfile()
-    var quota = QuotaState(remainingTextGenerations: 3, remainingPosterExports: 1, isPro: false)
+    var quota = QuotaState(remainingTextGenerations: 3, remainingPosterExports: 3, isPro: false)
     var backendSettings: BackendSettings
     var backendStatusMessage = "Mock mode is active."
     var isSyncingBackend = false
@@ -72,6 +71,8 @@ final class AppModel {
             quota = QuotaState(remainingTextGenerations: 10, remainingPosterExports: 10, isPro: false)
             if ProcessInfo.processInfo.arguments.contains("VF_UI_TEST_NO_QUOTA") {
                 quota = QuotaState(remainingTextGenerations: 0, remainingPosterExports: 0, isPro: false)
+            } else if ProcessInfo.processInfo.arguments.contains("VF_UI_TEST_LOW_POSTER_QUOTA") {
+                quota = QuotaState(remainingTextGenerations: 10, remainingPosterExports: 2, isPro: false)
             }
         }
         if isLiveBackendTesting {
@@ -162,7 +163,7 @@ final class AppModel {
         await persistProjectIfNeeded(updatedProject)
     }
 
-    func generatePosterBackground(for project: ContentProject, poster: PosterDraft, aspectRatio: String = "9:16") async -> URL? {
+    func generatePosterBackground(for project: ContentProject, poster: PosterDraft, aspectRatio: String = "9:16") async -> PosterDraft? {
         guard quota.remainingPosterExports > 0 || quota.isPro else {
             posterGenerationError = AppText.localized(
                 "Free AI background exports are used up for today. Upgrade to Pro to keep generating visuals.",
@@ -170,6 +171,9 @@ final class AppModel {
             )
             openPaywall(reason: posterGenerationError)
             return nil
+        }
+        if ProcessInfo.processInfo.arguments.contains("VF_UI_TEST_POSTER_BACKGROUND_GENERATION") {
+            return await generateUITestPosterBackground(for: project, poster: poster)
         }
         guard backendSettings.mode == .backend, let apiClient = makeAPIClient() else {
             posterGenerationError = AppText.localized(
@@ -190,18 +194,69 @@ final class AppModel {
                 style: poster.style.rawValue,
                 aspectRatio: aspectRatio,
                 prompt: posterBackgroundPrompt(for: project, poster: poster),
-                modelRoute: ModelRoute.route(for: project.draft.language)
+                modelRoute: ModelRoute.route(for: project.draft.language),
+                productImageDataUrl: productImageDataURL(from: poster.productImageData)
             )
             let response: PosterBackgroundResponse = try await apiClient.post("/api/poster/background", body: request)
-            var updatedPoster = poster
-            updatedPoster.backgroundImageURL = response.imageUrl
+            let updatedPoster = poster.recordingBackgroundVersion(
+                imageURL: response.imageUrl,
+                usedProductReference: response.usedProductReference ?? false
+            )
             await savePosterDraft(for: project, poster: updatedPoster)
             await refreshQuota()
-            return response.imageUrl
+            return updatedPoster
         } catch {
             posterGenerationError = userFacingPosterError(for: error)
             return nil
         }
+    }
+
+    private func generateUITestPosterBackground(for project: ContentProject, poster: PosterDraft) async -> PosterDraft? {
+        isGeneratingPosterBackground = true
+        posterGenerationError = nil
+        defer { isGeneratingPosterBackground = false }
+
+        try? await Task.sleep(for: .milliseconds(350))
+        let accent: String
+        switch poster.backgroundDirection {
+        case .clean:
+            accent = "#24c6a5"
+        case .lifestyle:
+            accent = "#ffb23f"
+        case .premiumCommerce:
+            accent = "#ff4c4c"
+        case .negativeSpace:
+            accent = "#5ba7ff"
+        }
+        let marker = UUID().uuidString.prefix(8)
+        let svg = """
+        <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+          <defs>
+            <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#f7fff9"/>
+              <stop offset="0.58" stop-color="#e6fbf2"/>
+              <stop offset="1" stop-color="#ffffff"/>
+            </linearGradient>
+          </defs>
+          <rect width="1080" height="1440" fill="url(#bg)"/>
+          <circle cx="260" cy="250" r="220" fill="\(accent)" opacity="0.22"/>
+          <rect x="610" y="260" width="220" height="520" rx="72" fill="\(accent)" opacity="0.58" transform="rotate(8 720 520)"/>
+          <rect x="190" y="320" width="480" height="620" rx="92" fill="#ffffff" opacity="0.44" transform="rotate(-7 430 630)"/>
+          <circle cx="850" cy="910" r="76" fill="#ffffff" opacity="0.52"/>
+          <text x="68" y="1352" fill="#1a7a66" opacity="0.26" font-size="34" font-family="Helvetica">ui-test-\(marker)</text>
+        </svg>
+        """
+        var dataURLAllowedCharacters = CharacterSet.alphanumerics
+        dataURLAllowedCharacters.insert(charactersIn: "-._~")
+        guard let encodedSVG = svg.addingPercentEncoding(withAllowedCharacters: dataURLAllowedCharacters),
+              let imageURL = URL(string: "data:image/svg+xml,\(encodedSVG)") else {
+            posterGenerationError = AppText.localized("AI background test image could not be generated.", "测试背景图生成失败。")
+            return nil
+        }
+
+        let updatedPoster = poster.recordingBackgroundVersion(imageURL: imageURL, usedProductReference: false)
+        await savePosterDraft(for: project, poster: updatedPoster)
+        return updatedPoster
     }
 
     func toggleFavorite(_ project: ContentProject) {
@@ -234,6 +289,8 @@ final class AppModel {
         if let index = projects.firstIndex(where: { $0.id == poster.projectId }) {
             projects[index].hasPosterExport = false
             projects[index].poster.backgroundImageURL = nil
+            projects[index].poster.productImageIntegratedInBackground = nil
+            projects[index].poster.backgroundHistory = []
             let updatedProject = projects[index]
             persistProjectsLocally()
             Task {
@@ -495,7 +552,7 @@ final class AppModel {
     func refreshQuota() async {
         guard backendSettings.mode == .backend, let dataService = makeBackendDataService() else { return }
         if let remoteQuota = try? await dataService.quota() {
-            quota = remoteQuota
+            quota = quotaKeepingActiveStoreSubscription(remoteQuota)
         }
     }
 
@@ -526,7 +583,7 @@ final class AppModel {
         didConfigureStoreKit = true
 
         await loadSubscriptionProducts()
-        await refreshStoreEntitlements(syncBackend: false)
+        await refreshStoreEntitlements(syncBackend: true)
     }
 
     func product(for plan: SubscriptionPlan) -> Product? {
@@ -678,33 +735,48 @@ final class AppModel {
 
     private func posterBackgroundPrompt(for project: ContentProject, poster: PosterDraft) -> String {
         let scene = posterVisualScene(for: project, poster: poster)
+        let channelLabel = poster.resolvedChannelLabel(for: project.draft.platform)
+        let hasProductReference = poster.productImageData != nil
+        let backgroundDirection = poster.backgroundDirection.promptInstruction(for: project.draft.language)
+        let productIntegration = poster.productImageIntegrationMode.promptInstruction(for: project.draft.language)
         if project.draft.language == .english {
             return [
                 "Generate a pure commercial photography background layer, not a finished poster design.",
-                "It will be used inside \(project.draft.platform.displayName), but the image itself must not contain platform UI.",
+                "It will be used as a \(channelLabel) background, but the image itself must not contain platform UI.",
+                hasProductReference ? "Use the supplied product reference image only for the hero product identity. Preserve the product's real shape, proportions, color, material, texture, transparent windows, visible internal parts, and packaging details. Do not add liquid, fruit, props, labels, or decorative content inside transparent product areas unless they already exist in the reference product. Ignore and do not reproduce the reference image background, watermark, non-product text, or non-product logos. Do not replace it with a similar product or redesign it. Build a natural commercial scene around that exact product with coherent lighting, perspective, contact shadows, and reflections." : nil,
+                hasProductReference ? "Product reference integration mode: \(productIntegration)." : nil,
                 "Product or topic: \(project.draft.topic).",
                 "Audience: \(project.draft.audience.isEmpty ? brandProfile.audience : project.draft.audience).",
                 "Scene direction: \(scene).",
+                "Background direction: \(backgroundDirection).",
                 "The app will overlay this headline later: \(poster.headline).",
                 "Style: \(poster.style.displayName).",
-                "Strictly no text, letters, numbers, logos, brand marks, watermarks, QR codes, labels, stickers, buttons, captions, or interface elements anywhere in the image.",
+                hasProductReference ? "Do not add or copy any non-product text, letters, numbers, logos, brand marks, watermarks, QR codes, labels, stickers, buttons, captions, or interface elements. Only preserve marks that are physically printed on the supplied product itself." : "Strictly no text, letters, numbers, logos, brand marks, watermarks, QR codes, labels, stickers, buttons, captions, or interface elements anywhere in the image.",
                 "Leave clean negative space in the upper or middle area for app-rendered title and CTA text.",
                 "Realistic high-end product photography, clean lighting, strong commercial quality."
-            ].joined(separator: " ")
+            ].compactMap { $0 }.joined(separator: " ")
         }
 
         return [
             "生成一张纯商业摄影背景底图，不要生成成品海报设计。",
-            "用途是\(project.draft.platform.displayName)内容封面，但画面里不能出现平台界面。",
+            "用途是\(channelLabel)背景，但画面里不能出现平台界面。",
+            hasProductReference ? "上传的参考图只用于识别主商品本体。保留产品真实的外形、比例、颜色、材质、纹理、透明窗口、可见内部结构和包装细节；不要在产品透明区域里新增液体、水果、道具、标签或装饰内容，除非参考图产品本身已有。忽略并不要复刻参考图里的背景、水印、非产品文字或非产品 logo。不要替换成相似产品，也不要重新设计产品。围绕这个真实产品生成自然商业摄影场景，让光线、透视、接触阴影和环境反射一致。" : nil,
+            hasProductReference ? "产品参考图融合模式：\(productIntegration)" : nil,
             "产品或主题：\(project.draft.topic)。",
             "目标人群：\(project.draft.audience.isEmpty ? brandProfile.audience : project.draft.audience)。",
             "场景方向：\(scene)。",
+            "背景方向：\(backgroundDirection)。",
             "App 后续会叠加这个标题：\(poster.headline)。",
             "风格：\(poster.style.displayName)。",
-            "画面里严禁出现任何文字、汉字、英文字母、数字、logo、品牌标识、水印、二维码、标签、贴纸、按钮、字幕或 UI 元素。",
+            hasProductReference ? "不要新增或复制任何非产品文字、汉字、英文字母、数字、logo、品牌标识、水印、二维码、标签、贴纸、按钮、字幕或 UI 元素；只允许保留真实产品本体上物理印刷的可见标识。" : "画面里严禁出现任何文字、汉字、英文字母、数字、logo、品牌标识、水印、二维码、标签、贴纸、按钮、字幕或 UI 元素。",
             "画面中上部或中部保留干净留白，方便 App 叠加标题和按钮。",
             "真实高级商品摄影质感，光线干净，适合电商种草。"
-        ].joined(separator: " ")
+        ].compactMap { $0 }.joined(separator: " ")
+    }
+
+    private func productImageDataURL(from data: Data?) -> String? {
+        guard let data else { return nil }
+        return "data:image/jpeg;base64,\(data.base64EncodedString())"
     }
 
     private func posterVisualScene(for project: ContentProject, poster: PosterDraft) -> String {
@@ -803,8 +875,18 @@ final class AppModel {
         do {
             if let savedProject = try await dataService.saveProject(project),
                let index = projects.firstIndex(where: { $0.id == savedProject.id }) {
-                projects[index] = savedProject
-                upsertPosterAsset(for: savedProject)
+                var mergedProject = savedProject
+                if mergedProject.poster.productImageData == nil {
+                    mergedProject.poster.productImageData = project.poster.productImageData
+                }
+                if mergedProject.poster.channelLabel == nil {
+                    mergedProject.poster.channelLabel = project.poster.channelLabel
+                }
+                if mergedProject.poster.backgroundHistory.isEmpty {
+                    mergedProject.poster.backgroundHistory = project.poster.backgroundHistory
+                }
+                projects[index] = mergedProject
+                upsertPosterAsset(for: mergedProject)
                 persistProjectsLocally()
             }
         } catch {
@@ -940,7 +1022,19 @@ final class AppModel {
         } catch {
             backendStatusMessage = "Subscription sync failed: \(error.localizedDescription)"
             quota.isPro = true
+            if let fallbackQuota = try? await dataService.updateProStatus(isPro: true) {
+                quota = quotaKeepingActiveStoreSubscription(fallbackQuota)
+                backendStatusMessage = "Subscription sync failed; Pro status was enabled on backend."
+            }
         }
+    }
+
+    private func quotaKeepingActiveStoreSubscription(_ remoteQuota: QuotaState) -> QuotaState {
+        guard hasActiveStoreSubscription else { return remoteQuota }
+
+        var mergedQuota = remoteQuota
+        mergedQuota.isPro = true
+        return mergedQuota
     }
 
     private func verified<T>(_ result: VerificationResult<T>) throws -> T {
@@ -1111,8 +1205,7 @@ private enum BackendAccountToken {
     static func uuid(for userId: String) -> UUID {
         let normalizedUserId = userId.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let stableInput = "com.phil.viralforge.appAccountToken:\(normalizedUserId.isEmpty ? "demo-user" : normalizedUserId)"
-        let digest = SHA256.hash(data: Data(stableInput.utf8))
-        var bytes = Array(digest.prefix(16))
+        var bytes = stableTokenBytes(from: stableInput)
         bytes[6] = (bytes[6] & 0x0F) | 0x50
         bytes[8] = (bytes[8] & 0x3F) | 0x80
 
@@ -1123,5 +1216,19 @@ private enum BackendAccountToken {
             bytes[8], bytes[9],
             bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
         ))
+    }
+
+    private static func stableTokenBytes(from input: String) -> [UInt8] {
+        var high: UInt64 = 0xcbf29ce484222325
+        var low: UInt64 = 0x84222325cbf29ce4
+
+        for byte in input.utf8 {
+            high ^= UInt64(byte)
+            high &*= 0x100000001b3
+            low ^= UInt64(byte).byteSwapped
+            low &*= 0x100000001b3
+        }
+
+        return withUnsafeBytes(of: high.bigEndian, Array.init) + withUnsafeBytes(of: low.bigEndian, Array.init)
     }
 }

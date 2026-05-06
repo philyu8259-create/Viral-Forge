@@ -1,5 +1,9 @@
 import SwiftUI
 import UIKit
+import PhotosUI
+import Speech
+import AVFoundation
+import Vision
 
 struct HomeView: View {
     @Environment(AppModel.self) private var appModel
@@ -7,7 +11,19 @@ struct HomeView: View {
     @State private var generatedProject: ContentProject?
     @State private var activeEditor: StrategyEditor?
     @State private var pasteStatusMessage: String?
+    @State private var inputToolStatusMessage: String?
+    @State private var selectedProductPhotoItem: PhotosPickerItem?
+    @State private var productImageData: Data?
+    @State private var productImageWasSubjectOptimized = false
+    @State private var isLoadingProductImage = false
+    @State private var isRecordingVoice = false
+    @State private var audioEngine = AVAudioEngine()
+    @State private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    @State private var recognitionTask: SFSpeechRecognitionTask?
+    @State private var voiceTranscriptBaseline = ""
+    @State private var inputToolStatusDismissTask: Task<Void, Never>?
     @State private var appliedWorkflow: AppliedTemplateWorkflow?
+    @FocusState private var isTopicEditorFocused: Bool
 
     private var canGenerate: Bool {
         !appModel.isGenerating && draft.isReadyToGenerate
@@ -50,6 +66,7 @@ struct HomeView: View {
                     .padding(.top, 12)
                     .padding(.bottom, 126)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
         }
         .background {
@@ -57,6 +74,16 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(AppText.localized("Done", "完成")) {
+                    dismissKeyboard()
+                }
+                .font(.subheadline.weight(.bold))
+                .accessibilityIdentifier("vf.home.keyboardDoneButton")
+            }
+        }
         .preferredColorScheme(.light)
         .navigationDestination(item: $generatedProject) { project in
             ResultView(project: project)
@@ -68,6 +95,7 @@ struct HomeView: View {
         }
         .task {
             await appModel.refreshQuota()
+            applyUITestProductImageIfNeeded()
             applyPendingTemplateWorkflow()
         }
         .onChange(of: draft) { _, _ in
@@ -75,6 +103,14 @@ struct HomeView: View {
         }
         .onChange(of: appModel.pendingTemplateWorkflow) { _, _ in
             applyPendingTemplateWorkflow()
+        }
+        .onChange(of: selectedProductPhotoItem) { _, newItem in
+            Task {
+                await loadProductImage(from: newItem)
+            }
+        }
+        .onDisappear {
+            stopVoiceInput()
         }
     }
 
@@ -154,6 +190,7 @@ struct HomeView: View {
                         .padding(.bottom, 46)
                         .scrollContentBackground(.hidden)
                         .background(Color.clear)
+                        .focused($isTopicEditorFocused)
                         .accessibilityIdentifier("vf.home.topicEditor")
 
                     if draft.topic.isEmpty {
@@ -178,27 +215,27 @@ struct HomeView: View {
                     .padding(12)
 
                     HStack {
-                        if let pasteStatusMessage {
-                            Text(pasteStatusMessage)
+                        if let inputStatusMessage {
+                            Text(inputStatusMessage)
                                 .font(.caption2.weight(.semibold))
                                 .foregroundStyle(VFStudioDesign.secondaryText)
                                 .transition(.opacity.combined(with: .move(edge: .bottom)))
+                                .accessibilityIdentifier("vf.home.inputToolStatus")
                         }
 
                         Spacer()
 
-                        HStack(spacing: 14) {
-                            Image(systemName: "mic.fill")
-                            Image(systemName: "photo.on.rectangle")
-                        }
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(VFStudioDesign.secondaryText.opacity(0.44))
+                        inputToolButtons
                     }
                     .padding(.horizontal, 18)
                     .padding(.bottom, 15)
                     .frame(maxHeight: .infinity, alignment: .bottom)
                 }
                 .frame(minHeight: 154)
+
+                if productImageData != nil {
+                    productImageAttachmentCard
+                }
 
                 if let message = visibleTopicValidationMessage {
                     Label(message, systemImage: "exclamationmark.circle.fill")
@@ -260,6 +297,142 @@ struct HomeView: View {
                     .padding(.top, 2)
             }
         }
+    }
+
+    private var inputStatusMessage: String? {
+        pasteStatusMessage ?? inputToolStatusMessage
+    }
+
+    private var inputToolButtons: some View {
+        HStack(spacing: 8) {
+            Button {
+                toggleVoiceInput()
+            } label: {
+                inputToolButtonContent(
+                    icon: isRecordingVoice ? "stop.fill" : "mic.fill",
+                    tint: isRecordingVoice ? .white : VFStudioDesign.primaryRed,
+                    background: isRecordingVoice ? VFStudioDesign.primaryRed : VFStudioDesign.primaryRed.opacity(0.12),
+                    stroke: VFStudioDesign.primaryRed.opacity(isRecordingVoice ? 0.44 : 0.26)
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isRecordingVoice ? AppText.localized("Stop voice input", "停止语音输入") : AppText.localized("Start voice input", "开始语音输入"))
+            .accessibilityIdentifier("vf.home.voiceInputButton")
+
+            PhotosPicker(selection: $selectedProductPhotoItem, matching: .images, photoLibrary: .shared()) {
+                productImagePickerLabel
+            }
+            .buttonStyle(.plain)
+            .disabled(isLoadingProductImage)
+            .accessibilityLabel(AppText.localized("Add product image", "添加产品图"))
+            .accessibilityIdentifier("vf.home.productImageButton")
+        }
+    }
+
+    @ViewBuilder
+    private var productImagePickerLabel: some View {
+        if let productUIImage {
+            Image(uiImage: productUIImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(.white.opacity(0.96), lineWidth: 1)
+                }
+                .shadow(color: VFStudioDesign.electricCyan.opacity(0.22), radius: 12, x: 0, y: 6)
+                .accessibilityIdentifier("vf.home.productImageThumbnail")
+        } else if isLoadingProductImage {
+            ProgressView()
+                .controlSize(.regular)
+                .frame(width: 44, height: 44)
+                .background(.white.opacity(0.90), in: Circle())
+        } else {
+            inputToolButtonContent(
+                icon: "photo.on.rectangle",
+                tint: VFStudioDesign.electricCyan,
+                background: VFStudioDesign.electricCyan.opacity(0.12),
+                stroke: VFStudioDesign.electricCyan.opacity(0.28)
+            )
+        }
+    }
+
+    private var productImageAttachmentCard: some View {
+        HStack(spacing: 10) {
+            if let productUIImage {
+                Image(uiImage: productUIImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 42, height: 42)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(.white.opacity(0.90), lineWidth: 1)
+                    }
+                    .accessibilityHidden(true)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(AppText.localized("Product image attached", "已添加真实产品图"))
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(VFStudioDesign.ink)
+                Text(productImageWasSubjectOptimized ? AppText.localized("Subject reference optimized", "主体参考图已优化") : AppText.localized("Product reference ready", "产品参考图已准备"))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(VFStudioDesign.secondaryText)
+                    .accessibilityIdentifier("vf.home.productImageSubjectStatus")
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                Haptics.selection()
+                productImageData = nil
+                productImageWasSubjectOptimized = false
+                selectedProductPhotoItem = nil
+                showInputToolStatus(AppText.localized("Product image removed", "已移除产品图"))
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(VFStudioDesign.secondaryText)
+                    .frame(width: 30, height: 30)
+                    .background(.white.opacity(0.70), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(AppText.localized("Remove product image", "移除产品图"))
+            .accessibilityIdentifier("vf.home.removeProductImageButton")
+        }
+        .padding(10)
+        .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(VFStudioDesign.sunset.opacity(0.20), lineWidth: 1)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("vf.home.productImageAttachment")
+    }
+
+    private var productUIImage: UIImage? {
+        productImageData.flatMap(UIImage.init(data:))
+    }
+
+    private func inputToolButtonContent(
+        icon: String,
+        tint: Color,
+        background: Color,
+        stroke: Color
+    ) -> some View {
+        Image(systemName: icon)
+            .font(.system(size: 18, weight: .black))
+            .foregroundStyle(tint)
+            .frame(width: 44, height: 44)
+            .background(background, in: Circle())
+            .background(.white.opacity(0.94), in: Circle())
+            .overlay {
+                Circle()
+                    .stroke(stroke, lineWidth: 1.4)
+            }
+            .shadow(color: stroke.opacity(0.42), radius: 10, x: 0, y: 5)
     }
 
     private var magicPasteButton: some View {
@@ -392,12 +565,20 @@ struct HomeView: View {
                     }
 
                     ForEach(Array(appModel.projects.prefix(3))) { project in
-                        PipelineItem(
-                            title: pipelineTitle(for: project),
-                            status: project.hasPosterExport ? AppText.localized("Poster exported", "海报已导出") : AppText.localized("Copy pack ready", "内容包已就绪"),
-                            progress: project.hasPosterExport ? 1.0 : 0.76,
-                            tint: project.hasPosterExport ? VFStudioDesign.teal : VFStudioDesign.sky
-                        )
+                        NavigationLink {
+                            ResultView(project: project)
+                        } label: {
+                            PipelineItem(
+                                title: pipelineTitle(for: project),
+                                status: project.hasPosterExport ? AppText.localized("Poster exported", "海报已导出") : AppText.localized("Copy pack ready", "内容包已就绪"),
+                                progress: project.hasPosterExport ? 1.0 : 0.76,
+                                tint: project.hasPosterExport ? VFStudioDesign.teal : VFStudioDesign.sky,
+                                showsDisclosure: true
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(AppText.localized("Open content project", "打开内容项目"))
+                        .accessibilityIdentifier("vf.home.pipeline.projectCard")
                     }
                 }
                 .padding(.vertical, 2)
@@ -647,8 +828,14 @@ struct HomeView: View {
     }
 
     private func generate() {
+        dismissKeyboard()
         Task {
-            generatedProject = await appModel.generateProject(from: draft)
+            guard var project = await appModel.generateProject(from: draft) else { return }
+            if let productImageData {
+                project.poster.productImageData = productImageData
+                await appModel.savePosterDraft(for: project, poster: project.poster)
+            }
+            generatedProject = project
         }
     }
 
@@ -662,8 +849,45 @@ struct HomeView: View {
         showPasteStatus(AppText.localized("Template preset loaded", "模板参数已载入"))
     }
 
+    private func applyUITestProductImageIfNeeded() {
+        guard ProcessInfo.processInfo.arguments.contains("VF_UI_TEST_ATTACHED_PRODUCT_IMAGE"),
+              productImageData == nil,
+              let imageData = uiTestProductImageData() else {
+            return
+        }
+
+        productImageData = imageData
+        productImageWasSubjectOptimized = true
+    }
+
+    private func uiTestProductImageData() -> Data? {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 360, height: 520))
+        let image = renderer.image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 360, height: 520))
+            UIColor(red: 0.86, green: 0.88, blue: 0.82, alpha: 1).setFill()
+            UIBezierPath(roundedRect: CGRect(x: 118, y: 52, width: 124, height: 54), cornerRadius: 18).fill()
+            UIColor(red: 0.96, green: 0.95, blue: 0.88, alpha: 1).setFill()
+            UIBezierPath(roundedRect: CGRect(x: 106, y: 92, width: 148, height: 360), cornerRadius: 22).fill()
+            UIColor(red: 0.78, green: 0.80, blue: 0.82, alpha: 1).setStroke()
+            let windowPath = UIBezierPath(roundedRect: CGRect(x: 148, y: 180, width: 64, height: 178), cornerRadius: 24)
+            windowPath.lineWidth = 5
+            windowPath.stroke()
+            UIColor(red: 0.45, green: 0.46, blue: 0.48, alpha: 1).setStroke()
+            let bladePath = UIBezierPath()
+            bladePath.move(to: CGPoint(x: 180, y: 296))
+            bladePath.addLine(to: CGPoint(x: 151, y: 326))
+            bladePath.move(to: CGPoint(x: 180, y: 296))
+            bladePath.addLine(to: CGPoint(x: 210, y: 324))
+            bladePath.lineWidth = 5
+            bladePath.stroke()
+        }
+        return image.jpegData(compressionQuality: 0.84)
+    }
+
     private func magicPaste() {
         Haptics.selection()
+        dismissKeyboard()
         let pasted = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
         guard !pasted.isEmpty else {
@@ -680,6 +904,258 @@ struct HomeView: View {
         showPasteStatus(AppText.localized("Brief imported from clipboard", "已从剪贴板导入简报"))
     }
 
+    @MainActor
+    private func loadProductImage(from item: PhotosPickerItem?) async {
+        guard let item else { return }
+        isLoadingProductImage = true
+        defer { isLoadingProductImage = false }
+
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self),
+                  let processedImage = processedProductReferenceImage(from: data) else {
+                showInputToolStatus(AppText.localized("Image could not be imported", "图片无法导入"))
+                return
+            }
+
+            productImageData = processedImage.data
+            productImageWasSubjectOptimized = processedImage.wasSubjectOptimized
+            Haptics.success()
+            showInputToolStatus(processedImage.wasSubjectOptimized ? AppText.localized("Product subject optimized", "产品主体已优化") : AppText.localized("Product image added to poster", "产品图已添加到海报"))
+        } catch {
+            showInputToolStatus(AppText.localized("Image import failed", "图片导入失败"))
+        }
+    }
+
+    private struct ProductReferenceImage {
+        var data: Data
+        var wasSubjectOptimized: Bool
+    }
+
+    private func processedProductReferenceImage(from data: Data) -> ProductReferenceImage? {
+        guard let image = UIImage(data: data) else { return nil }
+        let normalizedImage = normalizedOrientationImage(from: image)
+        let subjectImage = subjectFocusedImage(from: normalizedImage)
+        guard let referenceData = resizedJPEGData(from: subjectImage.image) else { return nil }
+        return ProductReferenceImage(data: referenceData, wasSubjectOptimized: subjectImage.wasSubjectOptimized)
+    }
+
+    private func normalizedOrientationImage(from image: UIImage) -> UIImage {
+        guard image.imageOrientation != .up else { return image }
+
+        let renderer = UIGraphicsImageRenderer(size: image.size)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: image.size))
+        }
+    }
+
+    private func subjectFocusedImage(from image: UIImage) -> (image: UIImage, wasSubjectOptimized: Bool) {
+        guard let cgImage = image.cgImage,
+              let subjectRect = detectedSubjectRect(in: cgImage) else {
+            return (image, false)
+        }
+
+        let imageRect = CGRect(origin: .zero, size: CGSize(width: cgImage.width, height: cgImage.height))
+        let expandedRect = expandedSubjectRect(subjectRect, in: imageRect)
+        let cropRect = expandedRect.integral.intersection(imageRect)
+        guard cropRect.width >= imageRect.width * 0.18,
+              cropRect.height >= imageRect.height * 0.18,
+              cropRect.width * cropRect.height < imageRect.width * imageRect.height * 0.88,
+              let croppedCGImage = cgImage.cropping(to: cropRect) else {
+            return (image, false)
+        }
+
+        return (UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: .up), true)
+    }
+
+    private func detectedSubjectRect(in cgImage: CGImage) -> CGRect? {
+        let request = VNGenerateObjectnessBasedSaliencyImageRequest()
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        do {
+            try handler.perform([request])
+        } catch {
+            return nil
+        }
+
+        guard let observations = request.results?.first?.salientObjects,
+              !observations.isEmpty else {
+            return nil
+        }
+
+        let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
+        let unionRect = observations
+            .map { pixelRect(from: $0.boundingBox, imageSize: imageSize) }
+            .reduce(CGRect.null) { $0.union($1) }
+        return unionRect.isNull ? nil : unionRect
+    }
+
+    private func pixelRect(from normalizedRect: CGRect, imageSize: CGSize) -> CGRect {
+        CGRect(
+            x: normalizedRect.minX * imageSize.width,
+            y: (1 - normalizedRect.maxY) * imageSize.height,
+            width: normalizedRect.width * imageSize.width,
+            height: normalizedRect.height * imageSize.height
+        )
+    }
+
+    private func expandedSubjectRect(_ rect: CGRect, in imageRect: CGRect) -> CGRect {
+        let horizontalPadding = max(rect.width * 0.22, imageRect.width * 0.04)
+        let topPadding = max(rect.height * 0.16, imageRect.height * 0.035)
+        let bottomPadding = max(rect.height * 0.12, imageRect.height * 0.03)
+
+        return CGRect(
+            x: max(imageRect.minX, rect.minX - horizontalPadding),
+            y: max(imageRect.minY, rect.minY - topPadding),
+            width: min(imageRect.maxX, rect.maxX + horizontalPadding) - max(imageRect.minX, rect.minX - horizontalPadding),
+            height: min(imageRect.maxY, rect.maxY + bottomPadding) - max(imageRect.minY, rect.minY - topPadding)
+        )
+    }
+
+    private func resizedJPEGData(from image: UIImage) -> Data? {
+        let maxSide: CGFloat = 1400
+        let largestSide = max(image.size.width, image.size.height)
+        let scale = largestSide > maxSide ? maxSide / largestSide : 1
+        let targetSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+
+        let renderer = UIGraphicsImageRenderer(size: targetSize)
+        let renderedImage = renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
+        return renderedImage.jpegData(compressionQuality: 0.84)
+    }
+
+    private func toggleVoiceInput() {
+        Haptics.selection()
+        dismissKeyboard()
+        if isRecordingVoice {
+            stopVoiceInput(finalMessage: AppText.localized("Voice input stopped", "语音输入已停止"))
+        } else {
+            Task {
+                await startVoiceInput()
+            }
+        }
+    }
+
+    @MainActor
+    private func startVoiceInput() async {
+        showInputToolStatus(AppText.localized("Preparing voice input...", "正在准备语音输入..."), autoDismissAfter: nil)
+
+        guard await requestSpeechRecognitionPermission() else {
+            showInputToolStatus(AppText.localized("Speech recognition permission is required", "需要开启语音识别权限"))
+            return
+        }
+
+        guard await requestMicrophonePermission() else {
+            showInputToolStatus(AppText.localized("Microphone permission is required", "需要开启麦克风权限"))
+            return
+        }
+
+        do {
+            try beginVoiceRecognition()
+            showInputToolStatus(AppText.localized("Listening...", "正在听..."), autoDismissAfter: nil)
+        } catch VoiceInputError.microphoneUnavailable {
+            stopVoiceInput()
+            showInputToolStatus(AppText.localized("No available microphone input on this device", "当前设备没有可用麦克风输入"))
+        } catch VoiceInputError.speechRecognizerUnavailable {
+            stopVoiceInput()
+            showInputToolStatus(AppText.localized("Speech recognition is unavailable on this device", "当前设备无法使用语音识别"))
+        } catch {
+            stopVoiceInput()
+            showInputToolStatus(AppText.localized("Voice input could not start", "语音输入无法启动"))
+        }
+    }
+
+    private func requestSpeechRecognitionPermission() async -> Bool {
+        await withCheckedContinuation { continuation in
+            SFSpeechRecognizer.requestAuthorization { status in
+                continuation.resume(returning: status == .authorized)
+            }
+        }
+    }
+
+    private func requestMicrophonePermission() async -> Bool {
+        await withCheckedContinuation { continuation in
+            AVAudioSession.sharedInstance().requestRecordPermission { isGranted in
+                continuation.resume(returning: isGranted)
+            }
+        }
+    }
+
+    private func beginVoiceRecognition() throws {
+        let localeIdentifier = AppText.isChinese ? "zh_CN" : "en_US"
+        guard let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: localeIdentifier)),
+              speechRecognizer.isAvailable else {
+            throw VoiceInputError.speechRecognizerUnavailable
+        }
+
+        stopVoiceInput()
+
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        recognitionRequest = request
+        voiceTranscriptBaseline = draft.topic
+
+        let audioSession = AVAudioSession.sharedInstance()
+        try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
+        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+
+        let inputNode = audioEngine.inputNode
+        let recordingFormat = inputNode.outputFormat(forBus: 0)
+        guard recordingFormat.sampleRate > 0, recordingFormat.channelCount > 0 else {
+            throw VoiceInputError.microphoneUnavailable
+        }
+        inputNode.removeTap(onBus: 0)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
+            request.append(buffer)
+        }
+
+        audioEngine.prepare()
+        try audioEngine.start()
+        isRecordingVoice = true
+
+        recognitionTask = speechRecognizer.recognitionTask(with: request) { result, error in
+            Task { @MainActor in
+                if let transcript = result?.bestTranscription.formattedString {
+                    applyVoiceTranscript(transcript)
+                }
+
+                if result?.isFinal == true {
+                    stopVoiceInput(finalMessage: AppText.localized("Voice added to brief", "语音已写入简报"))
+                } else if error != nil, isRecordingVoice {
+                    stopVoiceInput(finalMessage: AppText.localized("Voice input ended", "语音输入已结束"))
+                }
+            }
+        }
+    }
+
+    private func applyVoiceTranscript(_ transcript: String) {
+        let trimmedTranscript = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTranscript.isEmpty else { return }
+
+        let baseline = voiceTranscriptBaseline.trimmingCharacters(in: .whitespacesAndNewlines)
+        draft.topic = baseline.isEmpty ? trimmedTranscript : "\(baseline) \(trimmedTranscript)"
+    }
+
+    private func stopVoiceInput(finalMessage: String? = nil) {
+        if audioEngine.isRunning {
+            audioEngine.stop()
+        }
+        audioEngine.inputNode.removeTap(onBus: 0)
+        recognitionRequest?.endAudio()
+        recognitionTask?.cancel()
+        recognitionRequest = nil
+        recognitionTask = nil
+        isRecordingVoice = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+
+        if let finalMessage {
+            showInputToolStatus(finalMessage)
+        } else {
+            inputToolStatusDismissTask?.cancel()
+            inputToolStatusDismissTask = nil
+            inputToolStatusMessage = nil
+        }
+    }
+
     private func showPasteStatus(_ message: String) {
         withAnimation(.easeOut(duration: 0.18)) {
             pasteStatusMessage = message
@@ -692,6 +1168,34 @@ struct HomeView: View {
             }
         }
     }
+
+    private func showInputToolStatus(_ message: String, autoDismissAfter: Duration? = .seconds(2.8)) {
+        inputToolStatusDismissTask?.cancel()
+        withAnimation(.easeOut(duration: 0.18)) {
+            inputToolStatusMessage = message
+        }
+
+        guard let autoDismissAfter else { return }
+
+        inputToolStatusDismissTask = Task { @MainActor in
+            try? await Task.sleep(for: autoDismissAfter)
+            guard !Task.isCancelled, inputToolStatusMessage == message else { return }
+            withAnimation(.easeOut(duration: 0.18)) {
+                inputToolStatusMessage = nil
+            }
+            inputToolStatusDismissTask = nil
+        }
+    }
+
+    private func dismissKeyboard() {
+        isTopicEditorFocused = false
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
+private enum VoiceInputError: Error {
+    case speechRecognizerUnavailable
+    case microphoneUnavailable
 }
 
 private enum VFStudioDesign {
@@ -739,69 +1243,61 @@ private enum Haptics {
 private struct StudioDashboardBackground: View {
     var body: some View {
         GeometryReader { proxy in
-            TimelineView(.animation) { timeline in
-                let seconds = timeline.date.timeIntervalSinceReferenceDate
-                let rotation = Angle.degrees(seconds.truncatingRemainder(dividingBy: 18) * 20)
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 1.0, green: 0.985, blue: 0.975),
+                        Color(red: 0.965, green: 0.978, blue: 1.0),
+                        Color(red: 0.995, green: 0.998, blue: 1.0)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
 
-                ZStack {
-                    LinearGradient(
-                        colors: [
-                            Color(red: 1.0, green: 0.985, blue: 0.975),
-                            Color(red: 0.965, green: 0.978, blue: 1.0),
-                            Color(red: 0.995, green: 0.998, blue: 1.0)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [VFStudioDesign.primaryRed.opacity(0.14), VFStudioDesign.auroraPink.opacity(0.05), .clear],
+                            center: .center,
+                            startRadius: 12,
+                            endRadius: 280
+                        )
                     )
+                    .frame(width: 560, height: 560)
+                    .blur(radius: 54)
+                    .offset(x: -220, y: -300)
 
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [VFStudioDesign.primaryRed.opacity(0.14), VFStudioDesign.auroraPink.opacity(0.05), .clear],
-                                center: .center,
-                                startRadius: 12,
-                                endRadius: 280
-                            )
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [VFStudioDesign.sunset.opacity(0.16), VFStudioDesign.primaryRed.opacity(0.05), .clear],
+                            center: .center,
+                            startRadius: 8,
+                            endRadius: 230
                         )
-                        .frame(width: 560, height: 560)
-                        .blur(radius: 54)
-                        .offset(x: -220, y: -300)
-                        .rotationEffect(rotation)
+                    )
+                    .frame(width: 430, height: 430)
+                    .blur(radius: 60)
+                    .offset(x: 210, y: -110)
 
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [VFStudioDesign.sunset.opacity(0.16), VFStudioDesign.primaryRed.opacity(0.05), .clear],
-                                center: .center,
-                                startRadius: 8,
-                                endRadius: 230
-                            )
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [VFStudioDesign.electricCyan.opacity(0.13), VFStudioDesign.purpleFlow.opacity(0.06), .clear],
+                            center: .center,
+                            startRadius: 10,
+                            endRadius: 250
                         )
-                        .frame(width: 430, height: 430)
-                        .blur(radius: 60)
-                        .offset(x: 210, y: -110)
-                        .rotationEffect(-rotation)
+                    )
+                    .frame(width: 500, height: 500)
+                    .blur(radius: 72)
+                    .offset(x: 170, y: 455)
 
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [VFStudioDesign.electricCyan.opacity(0.13), VFStudioDesign.purpleFlow.opacity(0.06), .clear],
-                                center: .center,
-                                startRadius: 10,
-                                endRadius: 250
-                            )
-                        )
-                        .frame(width: 500, height: 500)
-                        .blur(radius: 72)
-                        .offset(x: 170, y: 455)
-                        .rotationEffect(Angle.degrees(rotation.degrees * 0.6))
-
-                    StudioNoiseOverlay()
-                        .opacity(0.30)
-                }
-                .frame(width: proxy.size.width, height: proxy.size.height)
-                .clipped()
+                StudioNoiseOverlay()
+                    .opacity(0.30)
             }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipped()
         }
         .ignoresSafeArea()
     }
@@ -993,6 +1489,7 @@ private struct PipelineItem: View {
     let status: String
     let progress: Double
     let tint: Color
+    var showsDisclosure = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -1012,10 +1509,22 @@ private struct PipelineItem: View {
 
                 Spacer()
 
-                Circle()
-                    .fill(tint)
-                    .frame(width: 8, height: 8)
-                    .shadow(color: tint.opacity(0.38), radius: 7, x: 0, y: 3)
+                if showsDisclosure {
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(tint)
+                        .frame(width: 24, height: 24)
+                        .background(tint.opacity(0.12), in: Circle())
+                        .overlay {
+                            Circle()
+                                .stroke(tint.opacity(0.20), lineWidth: 1)
+                        }
+                } else {
+                    Circle()
+                        .fill(tint)
+                        .frame(width: 8, height: 8)
+                        .shadow(color: tint.opacity(0.38), radius: 7, x: 0, y: 3)
+                }
             }
 
             ProgressView(value: progress)

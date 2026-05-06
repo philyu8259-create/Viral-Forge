@@ -17,6 +17,371 @@ final class CreationFlowUITests: XCTestCase {
         saveScreenshot(named: "e2e-03-result.png")
     }
 
+    func testHomeInputToolsExposeVoiceAndProductImageActions() throws {
+        let app = XCUIApplication()
+        launch(app)
+
+        XCTAssertTrue(app.textViews["vf.home.topicEditor"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["vf.home.voiceInputButton"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.buttons["vf.home.productImageButton"].waitForExistence(timeout: 4))
+    }
+
+    func testHomeTopicKeyboardCanDismissFromDoneButton() throws {
+        let app = XCUIApplication()
+        launch(app)
+
+        let topicEditor = app.textViews["vf.home.topicEditor"]
+        XCTAssertTrue(topicEditor.waitForExistence(timeout: 8))
+        topicEditor.tap()
+        topicEditor.typeText("键盘收起测试")
+
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 4), app.debugDescription)
+        let doneButton = app.buttons["vf.home.keyboardDoneButton"]
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 4), app.debugDescription)
+        doneButton.tap()
+
+        let keyboardHidden = NSPredicate(format: "exists == false")
+        expectation(for: keyboardHidden, evaluatedWith: app.keyboards.firstMatch)
+        waitForExpectations(timeout: 4)
+    }
+
+    func testHomePipelineProjectCardOpensResult() throws {
+        let app = XCUIApplication()
+        launch(app)
+        createContentPack(in: app)
+        XCTAssertTrue(app.scrollViews["vf.result.screen"].waitForExistence(timeout: 4), app.debugDescription)
+
+        app.navigationBars.buttons.firstMatch.tap()
+
+        let pipelineCard = app.buttons["vf.home.pipeline.projectCard"].firstMatch
+        XCTAssertTrue(pipelineCard.waitForExistence(timeout: 8), app.debugDescription)
+        pipelineCard.tap()
+
+        XCTAssertTrue(app.scrollViews["vf.result.screen"].waitForExistence(timeout: 4), app.debugDescription)
+    }
+
+    func testBottomEditPosterButtonOpensPosterEditor() throws {
+        let app = XCUIApplication()
+        launch(app)
+        createContentPack(in: app)
+
+        let resultScreen = app.scrollViews["vf.result.screen"]
+        XCTAssertTrue(resultScreen.waitForExistence(timeout: 8), app.debugDescription)
+
+        let bottomEditButton = app.buttons["vf.result.editPosterButton.bottom"]
+        for _ in 0..<8 where !bottomEditButton.isHittable {
+            resultScreen.swipeUp()
+        }
+        XCTAssertTrue(bottomEditButton.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertTrue(bottomEditButton.isHittable, app.debugDescription)
+        bottomEditButton.tap()
+
+        XCTAssertTrue(app.scrollViews["vf.poster.screen"].waitForExistence(timeout: 8), app.debugDescription)
+    }
+
+    func testProductImagePickerAttachesPhotoToHomeBrief() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_ATTACHED_PRODUCT_IMAGE"])
+
+        let attachment = app.descendants(matching: .any)["vf.home.productImageAttachment"]
+        XCTAssertTrue(attachment.waitForExistence(timeout: 8), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["vf.home.productImageSubjectStatus"].waitForExistence(timeout: 4), app.debugDescription)
+    }
+
+    func testAttachedProductImageCarriesIntoPosterEditor() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_ATTACHED_PRODUCT_IMAGE"])
+
+        let attachment = app.descendants(matching: .any)["vf.home.productImageAttachment"]
+        XCTAssertTrue(attachment.waitForExistence(timeout: 8), app.debugDescription)
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let productIntegrationStatus = app.staticTexts["vf.poster.productIntegrationStatus"]
+        for _ in 0..<4 where !productIntegrationStatus.exists {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(productIntegrationStatus.waitForExistence(timeout: 4), app.debugDescription)
+    }
+
+    func testPosterChannelLabelCanBeEdited() throws {
+        let app = XCUIApplication()
+        launch(app)
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let labelField = app.textFields["vf.poster.channelLabelField"]
+        for _ in 0..<4 where !labelField.isHittable {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(labelField.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertTrue(labelField.isHittable, app.debugDescription)
+
+        labelField.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+        labelField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20))
+        labelField.typeText("OFFICE PICK")
+
+        if app.keyboards.buttons["Done"].exists {
+            app.keyboards.buttons["Done"].tap()
+        } else {
+            posterScreen.tap()
+        }
+
+        let labelBadge = app.staticTexts["vf.poster.channelLabelBadge"]
+        for _ in 0..<3 where !labelBadge.exists {
+            posterScreen.swipeDown()
+        }
+        XCTAssertTrue(labelBadge.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertEqual(labelBadge.label, "OFFICE PICK")
+        saveScreenshot(named: "poster-channel-label-edited.png")
+    }
+
+    func testRegenerateBackgroundOnlyPreservesPosterCopy() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_POSTER_BACKGROUND_GENERATION"])
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let generateButton = app.buttons["vf.poster.generateBackgroundButton"]
+        for _ in 0..<4 where !generateButton.isHittable {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(generateButton.waitForExistence(timeout: 4), app.debugDescription)
+        generateButton.tap()
+        XCTAssertTrue(app.staticTexts["vf.poster.backgroundStatus"].waitForExistence(timeout: 8), app.debugDescription)
+
+        let headlineField = app.textFields["vf.poster.headlineField"]
+        for _ in 0..<4 where !headlineField.isHittable {
+            posterScreen.swipeDown()
+        }
+        XCTAssertTrue(headlineField.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertTrue(headlineField.isHittable, app.debugDescription)
+
+        headlineField.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+        headlineField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30))
+        headlineField.typeText("KEEP THIS COPY")
+
+        if app.keyboards.buttons["Done"].exists {
+            app.keyboards.buttons["Done"].tap()
+        } else {
+            posterScreen.tap()
+        }
+
+        let regenerateButton = app.buttons["vf.poster.regenerateBackgroundOnlyButton"]
+        for _ in 0..<4 where !regenerateButton.isHittable {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(regenerateButton.waitForExistence(timeout: 4), app.debugDescription)
+        regenerateButton.tap()
+
+        XCTAssertTrue(app.staticTexts["vf.poster.backgroundStatus"].waitForExistence(timeout: 8), app.debugDescription)
+        XCTAssertEqual(headlineField.value as? String, "KEEP THIS COPY")
+    }
+
+    func testPosterBackgroundHistoryKeepsPreviousVersionsSelectable() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_POSTER_BACKGROUND_GENERATION"])
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let generateButton = app.buttons["vf.poster.generateBackgroundButton"]
+        for _ in 0..<4 where !generateButton.isHittable {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(generateButton.waitForExistence(timeout: 4), app.debugDescription)
+        generateButton.tap()
+        XCTAssertTrue(app.staticTexts["vf.poster.backgroundStatus"].waitForExistence(timeout: 8), app.debugDescription)
+
+        let regenerateButton = app.buttons["vf.poster.regenerateBackgroundOnlyButton"]
+        for _ in 0..<4 where !regenerateButton.isHittable {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(regenerateButton.waitForExistence(timeout: 4), app.debugDescription)
+        regenerateButton.tap()
+        XCTAssertTrue(app.staticTexts["vf.poster.backgroundStatus"].waitForExistence(timeout: 8), app.debugDescription)
+
+        let history = app.descendants(matching: .any)["vf.poster.backgroundHistory"]
+        XCTAssertTrue(history.waitForExistence(timeout: 8), app.debugDescription)
+
+        let versionButtons = app.buttons.matching(identifier: "vf.poster.backgroundVersion")
+        XCTAssertGreaterThanOrEqual(versionButtons.count, 2, app.debugDescription)
+        versionButtons.element(boundBy: 1).tap()
+
+        XCTAssertTrue(app.staticTexts["vf.poster.backgroundStatus"].waitForExistence(timeout: 4), app.debugDescription)
+    }
+
+    func testPosterBackgroundDirectionCanBeSelectedBeforeGeneration() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_POSTER_BACKGROUND_GENERATION"])
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let negativeSpaceButton = app.buttons["vf.poster.backgroundDirection.negativeSpace"]
+        for _ in 0..<4 where !negativeSpaceButton.isHittable {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(negativeSpaceButton.waitForExistence(timeout: 4), app.debugDescription)
+        negativeSpaceButton.tap()
+
+        let directionStatus = app.staticTexts["vf.poster.backgroundDirectionStatus"]
+        XCTAssertTrue(directionStatus.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertEqual(directionStatus.label, "更强留白")
+
+        let generateButton = app.buttons["vf.poster.generateBackgroundButton"]
+        for _ in 0..<4 where !generateButton.isHittable {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(generateButton.waitForExistence(timeout: 4), app.debugDescription)
+        generateButton.tap()
+
+        XCTAssertTrue(app.staticTexts["vf.poster.backgroundStatus"].waitForExistence(timeout: 8), app.debugDescription)
+    }
+
+    func testPosterBackgroundDirectionPreviewsCanBeGeneratedAndSelected() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_POSTER_BACKGROUND_GENERATION"])
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let previewButton = app.buttons["vf.poster.generateDirectionPreviewsButton"]
+        for _ in 0..<4 where !previewButton.isHittable {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(previewButton.waitForExistence(timeout: 4), app.debugDescription)
+        previewButton.tap()
+
+        let previewGrid = app.descendants(matching: .any)["vf.poster.directionPreviewGrid"]
+        XCTAssertTrue(previewGrid.waitForExistence(timeout: 12), app.debugDescription)
+
+        let previewButtons = app.buttons.matching(identifier: "vf.poster.directionPreview")
+        XCTAssertEqual(previewButtons.count, 4, app.debugDescription)
+        previewButtons.element(boundBy: 1).tap()
+
+        let status = app.staticTexts["vf.poster.backgroundStatus"]
+        XCTAssertTrue(status.waitForExistence(timeout: 4), app.debugDescription)
+    }
+
+    func testPosterBackgroundDirectionPreviewsShowQuotaCostAndLimit() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_POSTER_BACKGROUND_GENERATION", "VF_UI_TEST_LOW_POSTER_QUOTA"])
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let quotaHint = app.staticTexts["vf.poster.directionPreviewQuotaHint"]
+        for _ in 0..<4 where !quotaHint.exists {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(quotaHint.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertEqual(quotaHint.label, "预计消耗 2 次 AI 背景额度")
+
+        let previewButton = app.buttons["vf.poster.generateDirectionPreviewsButton"]
+        XCTAssertTrue(previewButton.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertTrue(previewButton.label.contains("生成 2 张方向预览"), previewButton.label)
+    }
+
+    func testProductImageIntegrationModeCanBeSelectedInPosterEditor() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_ATTACHED_PRODUCT_IMAGE"])
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let preserveButton = app.buttons["vf.poster.productIntegration.preserve"]
+        for _ in 0..<4 where !preserveButton.isHittable {
+            posterScreen.swipeUp()
+        }
+        let status = app.staticTexts["vf.poster.productIntegrationStatus"]
+        XCTAssertTrue(status.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertTrue(preserveButton.waitForExistence(timeout: 4), app.debugDescription)
+        preserveButton.tap()
+        XCTAssertEqual(status.label, "严格保留外观")
+
+        let naturalButton = app.buttons["vf.poster.productIntegration.natural"]
+        XCTAssertTrue(naturalButton.waitForExistence(timeout: 4), app.debugDescription)
+        naturalButton.tap()
+        XCTAssertEqual(status.label, "更自然融入")
+    }
+
+    func testProductImageIntegrationDefaultsToNaturalInPosterEditor() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_ATTACHED_PRODUCT_IMAGE"])
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let status = app.staticTexts["vf.poster.productIntegrationStatus"]
+        for _ in 0..<4 where !status.exists {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(status.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertEqual(status.label, "更自然融入")
+    }
+
+    func testVoiceInputButtonProvidesRecordingFeedback() throws {
+        let app = XCUIApplication()
+        addPermissionMonitor(to: app)
+        launch(app)
+
+        let voiceButton = app.buttons["vf.home.voiceInputButton"]
+        XCTAssertTrue(voiceButton.waitForExistence(timeout: 8))
+        voiceButton.tap()
+
+        let status = app.staticTexts["vf.home.inputToolStatus"]
+        XCTAssertTrue(status.waitForExistence(timeout: 8), app.debugDescription)
+    }
+
     func testPosterExportAppearsInAssets() throws {
         let app = XCUIApplication()
         launch(app)
@@ -80,7 +445,9 @@ final class CreationFlowUITests: XCTestCase {
         }
 
         let app = XCUIApplication()
-        launchLiveBackend(app)
+        launchLiveBackend(app, extraArguments: ["VF_UI_TEST_ATTACHED_PRODUCT_IMAGE"])
+        XCTAssertTrue(app.descendants(matching: .any)["vf.home.productImageAttachment"].waitForExistence(timeout: 8), app.debugDescription)
+
         createContentPack(
             in: app,
             topic: "便携榨汁杯，适合上班族办公室快速早餐，主打便携、好清洗、低噪音、颜值高。",
@@ -95,7 +462,24 @@ final class CreationFlowUITests: XCTestCase {
         let posterScreen = app.scrollViews["vf.poster.screen"]
         XCTAssertTrue(posterScreen.waitForExistence(timeout: 20))
 
+        let productIntegrationStatus = app.staticTexts["vf.poster.productIntegrationStatus"]
+        for _ in 0..<4 where !productIntegrationStatus.exists {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(productIntegrationStatus.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertEqual(productIntegrationStatus.label, "更自然融入")
+
+        let channelLabelBadge = app.staticTexts["vf.poster.channelLabelBadge"]
+        for _ in 0..<4 where !channelLabelBadge.exists {
+            posterScreen.swipeDown()
+        }
+        XCTAssertTrue(channelLabelBadge.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertFalse(["小红书", "抖音", "微信"].contains(channelLabelBadge.label), channelLabelBadge.label)
+
         let backgroundButton = app.buttons["vf.poster.generateBackgroundButton"]
+        for _ in 0..<4 where !backgroundButton.isHittable {
+            posterScreen.swipeUp()
+        }
         XCTAssertTrue(backgroundButton.waitForExistence(timeout: 10))
         backgroundButton.tap()
         waitForEnabled(backgroundButton, timeout: 120)
@@ -327,10 +711,24 @@ final class CreationFlowUITests: XCTestCase {
         app.launch()
     }
 
+    private func addPermissionMonitor(to app: XCUIApplication) {
+        addUIInterruptionMonitor(withDescription: "System permission prompts") { alert in
+            for label in ["允许", "好", "继续", "Allow", "OK", "Continue"] {
+                let button = alert.buttons[label]
+                if button.exists {
+                    button.tap()
+                    return true
+                }
+            }
+            return false
+        }
+    }
+
     private func launchLiveBackend(
         _ app: XCUIApplication,
         appleLanguages: String = "(zh-Hans)",
-        appleLocale: String = "zh_CN"
+        appleLocale: String = "zh_CN",
+        extraArguments: [String] = []
     ) {
         app.launchEnvironment["VF_LIVE_BACKEND_URL"] = liveBackendURL
         app.launchEnvironment["VF_LIVE_BACKEND_USER_ID"] = liveBackendUserID
@@ -338,7 +736,7 @@ final class CreationFlowUITests: XCTestCase {
             "VF_LIVE_BACKEND_TESTING",
             "-AppleLanguages", appleLanguages,
             "-AppleLocale", appleLocale
-        ]
+        ] + extraArguments
         app.launch()
     }
 
@@ -411,6 +809,16 @@ final class CreationFlowUITests: XCTestCase {
         XCTFail("Result screen did not appear after \(attempts) generation attempt(s).")
     }
 
+    private func attachFirstProductPhoto(in app: XCUIApplication) {
+        let productImageButton = app.buttons["vf.home.productImageButton"]
+        XCTAssertTrue(productImageButton.waitForExistence(timeout: 8))
+        productImageButton.tap()
+
+        let photosGridImage = app.images.matching(identifier: "PXGGridLayout-Info").firstMatch
+        XCTAssertTrue(photosGridImage.waitForExistence(timeout: 8), app.debugDescription)
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.16, dy: 0.39)).tap()
+    }
+
     private func openSettings(in app: XCUIApplication) {
         app.tabBars.buttons["品牌"].tap()
         XCTAssertTrue(app.buttons["vf.brand.settingsLink"].waitForExistence(timeout: 8))
@@ -472,20 +880,32 @@ final class CreationFlowUITests: XCTestCase {
     }
 
     private func localStoreKitSession() throws -> SKTestSession {
-        let testFileURL = URL(fileURLWithPath: #filePath)
-        let projectRoot = testFileURL
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-        let storeKitURL = projectRoot.appendingPathComponent("ViralForge.storekit")
+        let storeKitURL = projectRootURL().appendingPathComponent("ViralForge.storekit")
         return try SKTestSession(contentsOf: storeKitURL)
     }
 
-    private func saveScreenshot(named fileName: String) {
-        guard let screenshotDir = ProcessInfo.processInfo.environment["VF_E2E_SCREENSHOT_DIR"] else { return }
+    private func projectRootURL() -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+    }
 
-        let directoryURL = URL(fileURLWithPath: screenshotDir, isDirectory: true)
+    private func saveScreenshot(named fileName: String) {
+        let fallbackScreenshotDir = try? String(contentsOfFile: "/tmp/viralforge-e2e-screenshot-dir", encoding: .utf8)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let screenshotDir = ProcessInfo.processInfo.environment["VF_E2E_SCREENSHOT_DIR"] ?? fallbackScreenshotDir,
+              !screenshotDir.isEmpty
+        else { return }
+
+        let directoryURL: URL
+        if screenshotDir.hasPrefix("/") {
+            directoryURL = URL(fileURLWithPath: screenshotDir, isDirectory: true)
+        } else {
+            directoryURL = projectRootURL().appendingPathComponent(screenshotDir, isDirectory: true)
+        }
         try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         let fileURL = directoryURL.appendingPathComponent(fileName)
         try? XCUIScreen.main.screenshot().pngRepresentation.write(to: fileURL)
     }
+
 }

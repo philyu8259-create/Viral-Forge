@@ -70,12 +70,12 @@ The current SQLite layer persists:
 - Chinese poster background generation to Seedream.
 - Any accidental English request is still routed to Qwen/Seedream so the China release does not depend on OpenAI.
 
-`AI_PROVIDER_MODE=live` is reserved for the later international release:
+`AI_PROVIDER_MODE=live` currently keeps the same provider family:
 
 - Chinese content generation to Qwen.
-- English content generation to OpenAI.
+- English content generation to Qwen.
 - Chinese poster background generation to Seedream.
-- English poster background generation to OpenAI.
+- English poster background generation to Seedream.
 
 Use this endpoint to check whether the backend can see the required keys without making a paid model call:
 
@@ -101,14 +101,7 @@ QWEN_TEXT_MODEL=qwen-plus
 SEEDREAM_IMAGE_MODEL=doubao-seedream-4-5-251128
 ```
 
-International settings can be added later:
-
-```text
-AI_PROVIDER_MODE=live
-OPENAI_API_KEY=...
-OPENAI_TEXT_MODEL=gpt-5.4
-OPENAI_IMAGE_MODEL=gpt-image-1.5
-```
+International settings can be revisited later if the app needs a separate overseas provider stack.
 
 Seedream generation uses the Volcengine Ark image generations endpoint by default:
 
@@ -116,12 +109,12 @@ Seedream generation uses the Volcengine Ark image generations endpoint by defaul
 https://ark.cn-beijing.volces.com/api/v3/images/generations
 ```
 
-The provider router is already shaped for both phases:
+The provider router is currently shaped for the Qwen + Seedream stack:
 
 - Chinese text: Qwen
 - Chinese image/poster background: Seedream
-- English text: OpenAI
-- English image/poster background: OpenAI
+- English text: Qwen
+- English image/poster background: Seedream
 
 The iOS app sends routing hints, but the backend should make the final provider decision.
 

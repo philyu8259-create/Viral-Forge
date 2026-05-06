@@ -1,0 +1,47 @@
+edition: 3.0.0
+name: viralforge-backend
+
+vars:
+  region: cn-hangzhou
+  image: registry.cn-hangzhou.aliyuncs.com/YOUR_NAMESPACE/viralforge-backend:latest
+
+resources:
+  backend:
+    component: fc3
+    props:
+      region: ${vars.region}
+      functionName: viralforge-backend
+      runtime: custom-container
+      description: ViralForge API backend
+      timeout: 120
+      memorySize: 1024
+      cpu: 1
+      diskSize: 512
+      instanceConcurrency: 10
+      customContainerConfig:
+        image: ${vars.image}
+        port: 8787
+      environmentVariables:
+        NODE_ENV: production
+        PORT: "8787"
+        DATA_STORE: tablestore
+        AI_PROVIDER_MODE: china_live
+        QWEN_TEXT_MODEL: qwen-plus
+        SEEDREAM_IMAGE_MODEL: doubao-seedream-4-5-251128
+        SEEDREAM_IMAGES_URL: https://ark.cn-beijing.volces.com/api/v3/images/generations
+        SEEDREAM_SIZE_PORTRAIT: 1440x2560
+        TABLESTORE_TABLE_NAME: viralforge_records
+        APP_STORE_SERVER_ENVIRONMENT: sandbox
+        APP_STORE_SERVER_BUNDLE_ID: com.phil.viralforge
+      triggers:
+        - triggerName: http-trigger
+          triggerType: http
+          qualifier: LATEST
+          triggerConfig:
+            authType: anonymous
+            disableURLInternet: false
+            methods:
+              - GET
+              - POST
+              - DELETE
+              - OPTIONS

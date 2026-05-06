@@ -32,17 +32,17 @@ export async function routeRequest(request, response) {
   }
 
   if (request.method === "GET" && url.pathname === "/api/quota") {
-    return sendJSON(response, 200, getQuota(userIdFrom(request)));
+    return sendJSON(response, 200, await getQuota(userIdFrom(request)));
   }
 
   if (request.method === "POST" && url.pathname === "/api/quota/pro") {
     const userId = userIdFrom(request);
     const body = await readJSON(request);
-    return sendJSON(response, 200, setProStatus(userId, body.isPro === true));
+    return sendJSON(response, 200, await setProStatus(userId, body.isPro === true));
   }
 
   if (request.method === "GET" && url.pathname === "/api/subscription") {
-    return sendJSON(response, 200, currentSubscription(userIdFrom(request)));
+    return sendJSON(response, 200, await currentSubscription(userIdFrom(request)));
   }
 
   if (request.method === "POST" && url.pathname === "/api/subscription/sync") {
@@ -57,12 +57,12 @@ export async function routeRequest(request, response) {
 
   if (request.method === "POST" && url.pathname === "/api/app-store/notifications/v2") {
     const body = await readJSON(request);
-    return sendJSON(response, 200, processServerNotification(body));
+    return sendJSON(response, 200, await processServerNotification(body));
   }
 
   if (request.method === "GET" && url.pathname === "/api/projects") {
     return sendJSON(response, 200, {
-      projects: listProjects(userIdFrom(request))
+      projects: await listProjects(userIdFrom(request))
     });
   }
 
@@ -77,13 +77,13 @@ export async function routeRequest(request, response) {
       });
     }
     return sendJSON(response, 200, {
-      deleted: deleteProject(userIdFrom(request), projectId)
+      deleted: await deleteProject(userIdFrom(request), projectId)
     });
   }
 
   if (request.method === "GET" && url.pathname === "/api/templates") {
     return sendJSON(response, 200, {
-      templates: listTemplates()
+      templates: await listTemplates()
     });
   }
 
@@ -93,7 +93,7 @@ export async function routeRequest(request, response) {
 
   if (request.method === "GET" && url.pathname === "/api/brand") {
     return sendJSON(response, 200, {
-      profile: getBrandProfile(userIdFrom(request))
+      profile: await getBrandProfile(userIdFrom(request))
     });
   }
 
@@ -101,25 +101,25 @@ export async function routeRequest(request, response) {
     const userId = userIdFrom(request);
     const body = await readJSON(request);
     return sendJSON(response, 200, {
-      profile: saveBrandProfile(userId, body.profile ?? body)
+      profile: await saveBrandProfile(userId, body.profile ?? body)
     });
   }
 
   if (request.method === "POST" && url.pathname === "/api/content/generate") {
     const userId = userIdFrom(request);
     const body = await readJSON(request);
-    const brandProfile = getBrandProfile(userId);
+    const brandProfile = await getBrandProfile(userId);
     const enrichedBody = applyBrandProfile(body, brandProfile);
     assertSafeContentRequest(enrichedBody);
-    ensureTextGenerationAvailable(userId);
+    await ensureTextGenerationAvailable(userId);
     assertRateLimit(userId, "content");
     const generated = await generateContent(enrichedBody);
-    consumeTextGeneration(userId);
+    await consumeTextGeneration(userId);
     const result = {
       ...generated,
       projectId: generated.projectId || randomUUID()
     };
-    saveProject(userId, {
+    await saveProject(userId, {
       projectId: result.projectId,
       createdAt: new Date().toISOString(),
       input: enrichedBody,
@@ -132,17 +132,17 @@ export async function routeRequest(request, response) {
     const userId = userIdFrom(request);
     const body = await readJSON(request);
     assertSafePosterRequest(body);
-    ensurePosterExportAvailable(userId);
+    await ensurePosterExportAvailable(userId);
     assertRateLimit(userId, "poster");
     const result = await generatePosterBackground(body);
-    consumePosterExport(userId);
+    await consumePosterExport(userId);
     return sendJSON(response, 200, result);
   }
 
   if (request.method === "POST" && url.pathname === "/api/project/save") {
     const userId = userIdFrom(request);
     const body = await readJSON(request);
-    const saved = saveProject(userId, {
+    const saved = await saveProject(userId, {
       ...body,
       updatedAt: new Date().toISOString()
     });

@@ -72,7 +72,7 @@ struct QuotaStatusView: View {
 
 #Preview {
     VStack {
-        QuotaStatusView(quota: QuotaState(remainingTextGenerations: 3, remainingPosterExports: 1, isPro: false))
+        QuotaStatusView(quota: QuotaState(remainingTextGenerations: 3, remainingPosterExports: 3, isPro: false))
         QuotaStatusView(quota: QuotaState(remainingTextGenerations: 0, remainingPosterExports: 0, isPro: true))
     }
     .padding()

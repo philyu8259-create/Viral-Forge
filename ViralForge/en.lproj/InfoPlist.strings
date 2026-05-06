@@ -1,1 +1,4 @@
 "NSPhotoLibraryAddUsageDescription" = "ViralForge saves generated posters to your photo library.";
+"NSPhotoLibraryUsageDescription" = "ViralForge lets you choose real product photos and add them to generated posters.";
+"NSMicrophoneUsageDescription" = "ViralForge uses the microphone to turn your spoken product brief into text.";
+"NSSpeechRecognitionUsageDescription" = "ViralForge uses speech recognition to transcribe your product brief.";

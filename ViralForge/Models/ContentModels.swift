@@ -105,6 +105,17 @@ enum SocialPlatform: String, CaseIterable, Identifiable, Codable {
         case .youtubeShorts: "YouTube Shorts"
         }
     }
+
+    var posterSafeLabel: String {
+        switch self {
+        case .xiaohongshu: AppText.localized("Seeding Note", "种草笔记")
+        case .douyin: AppText.localized("Short Video Cover", "短视频封面")
+        case .weChat: AppText.localized("Private Share Poster", "私域海报")
+        case .tikTok: AppText.localized("Short Video Cover", "短视频封面")
+        case .instagram: AppText.localized("Lifestyle Post", "生活方式分享")
+        case .youtubeShorts: AppText.localized("Vertical Video Cover", "竖版视频封面")
+        }
+    }
 }
 
 enum ContentGoal: String, CaseIterable, Identifiable, Codable {
@@ -326,12 +337,275 @@ struct ScoredLine: Identifiable, Hashable, Codable {
     }
 }
 
+struct PosterBackgroundVersion: Identifiable, Hashable, Codable {
+    var id: UUID
+    var imageURL: URL
+    var createdAt: Date
+    var backgroundDirection: PosterBackgroundDirection?
+    var productImageIntegratedInBackground: Bool?
+
+    init(
+        id: UUID = UUID(),
+        imageURL: URL,
+        createdAt: Date = .now,
+        backgroundDirection: PosterBackgroundDirection? = nil,
+        productImageIntegratedInBackground: Bool? = nil
+    ) {
+        self.id = id
+        self.imageURL = imageURL
+        self.createdAt = createdAt
+        self.backgroundDirection = backgroundDirection
+        self.productImageIntegratedInBackground = productImageIntegratedInBackground
+    }
+}
+
+enum PosterBackgroundDirection: String, CaseIterable, Identifiable, Hashable, Codable {
+    case clean = "Clean"
+    case lifestyle = "Lifestyle"
+    case premiumCommerce = "Premium Commerce"
+    case negativeSpace = "Negative Space"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .clean: AppText.localized("Cleaner", "更干净")
+        case .lifestyle: AppText.localized("More Lifestyle", "更生活化")
+        case .premiumCommerce: AppText.localized("Premium Commerce", "更高端电商")
+        case .negativeSpace: AppText.localized("More Negative Space", "更强留白")
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .clean: "sparkle.magnifyingglass"
+        case .lifestyle: "cup.and.saucer.fill"
+        case .premiumCommerce: "bag.fill"
+        case .negativeSpace: "rectangle.dashed"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .clean: VFStyle.teal
+        case .lifestyle: VFStyle.sunset
+        case .premiumCommerce: VFStyle.primaryRed
+        case .negativeSpace: VFStyle.electricCyan
+        }
+    }
+
+    var accessibilitySuffix: String {
+        switch self {
+        case .clean: "clean"
+        case .lifestyle: "lifestyle"
+        case .premiumCommerce: "premiumCommerce"
+        case .negativeSpace: "negativeSpace"
+        }
+    }
+
+    func promptInstruction(for language: ContentLanguage) -> String {
+        switch language {
+        case .english:
+            switch self {
+            case .clean:
+                return "clean minimal product photography, uncluttered surface, restrained props, fresh bright lighting"
+            case .lifestyle:
+                return "natural daily-use lifestyle scene, believable home or office context, warm human-scale atmosphere, no people required"
+            case .premiumCommerce:
+                return "premium ecommerce hero shot, refined studio lighting, elevated materials, polished reflections, luxury retail quality"
+            case .negativeSpace:
+                return "strong negative space for app-rendered headline and CTA, simple composition, product kept visually clear without crowding"
+            }
+        case .chinese:
+            switch self {
+            case .clean:
+                return "更干净的极简商品摄影，桌面不杂乱，道具克制，光线清爽明亮"
+            case .lifestyle:
+                return "更生活化的真实使用场景，像家里或办公室自然摆放，有日常氛围但不需要出现人物"
+            case .premiumCommerce:
+                return "更高端电商主图质感，精致棚拍光线，高级材质，反光干净，适合商业投放"
+            case .negativeSpace:
+                return "更强留白，方便 App 后续叠加标题和 CTA，构图简单，产品主体清楚且不拥挤"
+            }
+        }
+    }
+}
+
+enum ProductImageIntegrationMode: String, CaseIterable, Identifiable, Hashable, Codable {
+    case preserve = "Preserve"
+    case natural = "Natural"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .preserve: AppText.localized("Preserve Product", "严格保留外观")
+        case .natural: AppText.localized("Natural Blend", "更自然融入")
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .preserve:
+            AppText.localized("Prioritize exact shape and details", "优先保留真实形状和细节")
+        case .natural:
+            AppText.localized("Blend with scene lighting and perspective", "强化场景光线和透视融合")
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .preserve: "scope"
+        case .natural: "camera.macro"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .preserve: VFStyle.electricCyan
+        case .natural: VFStyle.teal
+        }
+    }
+
+    var accessibilitySuffix: String {
+        switch self {
+        case .preserve: "preserve"
+        case .natural: "natural"
+        }
+    }
+
+    func promptInstruction(for language: ContentLanguage) -> String {
+        switch language {
+        case .english:
+            switch self {
+            case .preserve:
+                return "Prioritize exact product fidelity above scene styling. Keep the product's real silhouette, proportions, color, material, transparent parts, seams, buttons, blade/window details, and physically printed marks as unchanged as possible."
+            case .natural:
+                return "Prioritize a believable integrated commercial scene while preserving product identity. Natural blending must not change the product identity, silhouette, proportions, key materials, transparent window, or recognizable details. Match the product to the new scene with coherent perspective, contact shadows, reflections, rim light, and surface interaction; do not make it look pasted on."
+            }
+        case .chinese:
+            switch self {
+            case .preserve:
+                return "优先严格保留真实产品外观，高于场景风格。尽量不改变产品轮廓、比例、颜色、材质、透明结构、接缝、按钮、刀头/窗口细节和产品本体上的物理印刷标识。"
+            case .natural:
+                return "优先让真实产品自然融入商业摄影场景，同时保留产品身份。自然融入也不能改变产品身份、轮廓、比例、关键材质、透明窗口和可识别细节。让产品与新场景的透视、接触阴影、反光、轮廓光和桌面关系一致，不能像简单贴图。"
+            }
+        }
+    }
+}
+
 struct PosterDraft: Hashable, Codable {
     var headline: String
     var subtitle: String
     var cta: String
+    var channelLabel: String? = nil
     var style: PosterStyle
+    var backgroundDirection: PosterBackgroundDirection = .clean
+    var productImageIntegrationMode: ProductImageIntegrationMode = .natural
     var backgroundImageURL: URL? = nil
+    var productImageData: Data? = nil
+    var productImageIntegratedInBackground: Bool? = nil
+    var backgroundHistory: [PosterBackgroundVersion] = []
+
+    init(
+        headline: String,
+        subtitle: String,
+        cta: String,
+        channelLabel: String? = nil,
+        style: PosterStyle,
+        backgroundDirection: PosterBackgroundDirection = .clean,
+        productImageIntegrationMode: ProductImageIntegrationMode = .natural,
+        backgroundImageURL: URL? = nil,
+        productImageData: Data? = nil,
+        productImageIntegratedInBackground: Bool? = nil,
+        backgroundHistory: [PosterBackgroundVersion] = []
+    ) {
+        self.headline = headline
+        self.subtitle = subtitle
+        self.cta = cta
+        self.channelLabel = channelLabel
+        self.style = style
+        self.backgroundDirection = backgroundDirection
+        self.productImageIntegrationMode = productImageIntegrationMode
+        self.backgroundImageURL = backgroundImageURL
+        self.productImageData = productImageData
+        self.productImageIntegratedInBackground = productImageIntegratedInBackground
+        self.backgroundHistory = backgroundHistory
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case headline
+        case subtitle
+        case cta
+        case channelLabel
+        case style
+        case backgroundDirection
+        case productImageIntegrationMode
+        case backgroundImageURL
+        case productImageData
+        case productImageIntegratedInBackground
+        case backgroundHistory
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        headline = try container.decode(String.self, forKey: .headline)
+        subtitle = try container.decode(String.self, forKey: .subtitle)
+        cta = try container.decode(String.self, forKey: .cta)
+        channelLabel = try container.decodeIfPresent(String.self, forKey: .channelLabel)
+        style = try container.decode(PosterStyle.self, forKey: .style)
+        backgroundDirection = try container.decodeIfPresent(PosterBackgroundDirection.self, forKey: .backgroundDirection) ?? .clean
+        productImageIntegrationMode = try container.decodeIfPresent(ProductImageIntegrationMode.self, forKey: .productImageIntegrationMode) ?? .natural
+        backgroundImageURL = try container.decodeIfPresent(URL.self, forKey: .backgroundImageURL)
+        productImageData = try container.decodeIfPresent(Data.self, forKey: .productImageData)
+        productImageIntegratedInBackground = try container.decodeIfPresent(Bool.self, forKey: .productImageIntegratedInBackground)
+        backgroundHistory = try container.decodeIfPresent([PosterBackgroundVersion].self, forKey: .backgroundHistory) ?? []
+    }
+
+    func resolvedChannelLabel(for platform: SocialPlatform) -> String {
+        let trimmedLabel = channelLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmedLabel.isEmpty ? platform.posterSafeLabel : trimmedLabel
+    }
+
+    var shouldOverlayProductImage: Bool {
+        productImageData != nil && productImageIntegratedInBackground != true
+    }
+
+    func recordingBackgroundVersion(imageURL: URL, usedProductReference: Bool?) -> PosterDraft {
+        var updatedPoster = self
+        var versions = backgroundHistory
+
+        if let backgroundImageURL,
+           !versions.contains(where: { $0.imageURL == backgroundImageURL }) {
+            versions.insert(PosterBackgroundVersion(
+                imageURL: backgroundImageURL,
+                backgroundDirection: backgroundDirection,
+                productImageIntegratedInBackground: productImageIntegratedInBackground
+            ), at: 0)
+        }
+
+        versions.removeAll { $0.imageURL == imageURL }
+        versions.insert(PosterBackgroundVersion(
+            imageURL: imageURL,
+            backgroundDirection: backgroundDirection,
+            productImageIntegratedInBackground: usedProductReference
+        ), at: 0)
+
+        updatedPoster.backgroundImageURL = imageURL
+        updatedPoster.productImageIntegratedInBackground = usedProductReference
+        updatedPoster.backgroundHistory = Array(versions.prefix(6))
+        return updatedPoster
+    }
+
+    func selectingBackgroundVersion(_ version: PosterBackgroundVersion) -> PosterDraft {
+        var updatedPoster = self
+        updatedPoster.backgroundImageURL = version.imageURL
+        if let backgroundDirection = version.backgroundDirection {
+            updatedPoster.backgroundDirection = backgroundDirection
+        }
+        updatedPoster.productImageIntegratedInBackground = version.productImageIntegratedInBackground
+        return updatedPoster
+    }
 }
 
 enum PosterStyle: String, CaseIterable, Identifiable, Hashable, Codable {

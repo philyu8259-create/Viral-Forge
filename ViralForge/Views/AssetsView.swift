@@ -471,16 +471,7 @@ private struct PosterAssetCard: View {
         VFGlassCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 14) {
-                    PosterPreview(
-                        poster: PosterDraft(
-                            headline: poster.headline,
-                            subtitle: poster.projectTopic,
-                            cta: poster.platform.displayName,
-                            style: poster.style,
-                            backgroundImageURL: poster.backgroundImageURL
-                        ),
-                        platform: poster.platform
-                    )
+                    PosterPreview(poster: previewPoster, platform: poster.platform)
                     .frame(width: 78, height: 106)
                     .clipShape(RoundedRectangle(cornerRadius: 17))
                     .shadow(color: VFStyle.platformTint(poster.platform).opacity(0.14), radius: 12, x: 0, y: 7)
@@ -532,6 +523,17 @@ private struct PosterAssetCard: View {
                 }
             }
         }
+    }
+
+    private var previewPoster: PosterDraft {
+        project?.poster ?? PosterDraft(
+            headline: poster.headline,
+            subtitle: poster.projectTopic,
+            cta: poster.platform.posterSafeLabel,
+            channelLabel: poster.platform.posterSafeLabel,
+            style: poster.style,
+            backgroundImageURL: poster.backgroundImageURL
+        )
     }
 
     private func posterAction(_ text: String, icon: String, tint: Color) -> some View {

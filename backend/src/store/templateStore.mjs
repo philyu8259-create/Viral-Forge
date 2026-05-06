@@ -1,5 +1,3 @@
-import { db, nowISO } from "../db/database.mjs";
-
 const defaultTemplates = [
   { templateId: "xhs-product-seeding-note", name: "小红书真实种草笔记", category: "Product Seeding", platform: "xiaohongshu", style: "Clean", promptHint: "按痛点、场景、体验、购买理由组织小红书种草笔记", lockedToPro: false },
   { templateId: "douyin-product-hook", name: "抖音 3 秒产品钩子", category: "Product Seeding", platform: "douyin", style: "Bold", promptHint: "用短视频前三秒冲突和产品结果抓住注意力", lockedToPro: false },
@@ -106,70 +104,8 @@ const retiredTemplateIds = [
   "tiktok-product-trial"
 ];
 
-seedTemplates();
-
 export function listTemplates() {
-  return db.prepare(`
-    SELECT
-      template_id,
-      name,
-      category,
-      platform,
-      style,
-      prompt_hint,
-      locked_to_pro
-    FROM templates
-    ORDER BY locked_to_pro ASC, name ASC
-  `)
-    .all()
-    .map((row) => ({
-      templateId: row.template_id,
-      name: row.name,
-      category: row.category,
-      platform: row.platform,
-      style: row.style,
-      promptHint: row.prompt_hint,
-      lockedToPro: Boolean(row.locked_to_pro)
-    }));
-}
-
-function seedTemplates() {
-  const insert = db.prepare(`
-    INSERT INTO templates (
-      template_id,
-      name,
-      category,
-      platform,
-      style,
-      prompt_hint,
-      locked_to_pro,
-      updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(template_id) DO UPDATE SET
-      name = excluded.name,
-      category = excluded.category,
-      platform = excluded.platform,
-      style = excluded.style,
-      prompt_hint = excluded.prompt_hint,
-      locked_to_pro = excluded.locked_to_pro,
-      updated_at = excluded.updated_at
-  `);
-
-  for (const template of defaultTemplates) {
-    insert.run(
-      template.templateId,
-      template.name,
-      template.category,
-      template.platform,
-      template.style,
-      template.promptHint,
-      template.lockedToPro ? 1 : 0,
-      nowISO()
-    );
-  }
-
-  const remove = db.prepare("DELETE FROM templates WHERE template_id = ?");
-  for (const templateId of retiredTemplateIds) {
-    remove.run(templateId);
-  }
+  return defaultTemplates
+    .filter((template) => !retiredTemplateIds.includes(template.templateId))
+    .sort((a, b) => Number(a.lockedToPro) - Number(b.lockedToPro) || a.name.localeCompare(b.name));
 }

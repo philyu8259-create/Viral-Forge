@@ -1,5 +1,6 @@
 import SwiftUI
 import Photos
+import UIKit
 
 private enum PosterExportMode: Hashable {
     case watermarked
@@ -14,7 +15,9 @@ struct PosterEditorView: View {
     @State private var exportedUIImage: UIImage?
     @State private var exportedImageURL: URL?
     @State private var exportStatusMessage: String?
+    @State private var backgroundStatusMessage: String?
     @State private var isSavingToPhotos = false
+    @State private var isGeneratingDirectionPreviews = false
     @State private var selectedTarget: PosterCanvasTarget
     @State private var exportMode: PosterExportMode = .watermarked
 
@@ -45,6 +48,10 @@ struct PosterEditorView: View {
                     .shadow(color: VFStyle.platformTint(project.draft.platform).opacity(0.16), radius: 22, x: 0, y: 12)
 
                 controls
+                if poster.productImageData != nil {
+                    productIntegrationControls
+                }
+                backgroundDirectionControls
                 exportOptions
 
                 QuotaStatusView(quota: appModel.quota, compact: true)
@@ -55,13 +62,50 @@ struct PosterEditorView: View {
                     isLoading: appModel.isGeneratingPosterBackground,
                     isEnabled: !appModel.isGeneratingPosterBackground
                 ) {
-                    Task {
-                        if let imageURL = await appModel.generatePosterBackground(for: project, poster: poster, aspectRatio: selectedTarget.apiAspectRatio) {
-                            poster.backgroundImageURL = imageURL
-                        }
-                    }
+                    generateBackgroundOnly()
                 }
                 .accessibilityIdentifier("vf.poster.generateBackgroundButton")
+
+                if poster.backgroundImageURL != nil {
+                    Button {
+                        generateBackgroundOnly()
+                    } label: {
+                        Label(
+                            appModel.isGeneratingPosterBackground
+                                ? AppText.localized("Refreshing Background...", "正在更换背景...")
+                                : AppText.localized("Regenerate Background Only", "只换背景图"),
+                            systemImage: "arrow.triangle.2.circlepath"
+                        )
+                        .font(.subheadline.weight(.black))
+                        .foregroundStyle(VFStyle.primaryRed)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(VFStyle.primaryRed.opacity(0.10), in: Capsule())
+                        .overlay {
+                            Capsule()
+                                .stroke(VFStyle.primaryRed.opacity(0.24), lineWidth: 1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(appModel.isGeneratingPosterBackground)
+                    .accessibilityIdentifier("vf.poster.regenerateBackgroundOnlyButton")
+                }
+
+                if poster.backgroundHistory.count > 1 {
+                    backgroundHistoryView
+                }
+
+                if directionPreviewVersions.count > 1 {
+                    directionPreviewGrid
+                }
+
+                if let backgroundStatusMessage {
+                    Label(backgroundStatusMessage, systemImage: "checkmark.circle.fill")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(VFStyle.teal)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityIdentifier("vf.poster.backgroundStatus")
+                }
 
                 if let posterGenerationError = appModel.posterGenerationError {
                     VFGlassCard {
@@ -77,11 +121,7 @@ struct PosterEditorView: View {
                             .foregroundStyle(VFStyle.secondaryText)
 
                             Button {
-                                Task {
-                                    if let imageURL = await appModel.generatePosterBackground(for: project, poster: poster, aspectRatio: selectedTarget.apiAspectRatio) {
-                                        poster.backgroundImageURL = imageURL
-                                    }
-                                }
+                                generateBackgroundOnly()
                             } label: {
                                 Label(AppText.localized("Retry AI Background", "重试 AI 背景"), systemImage: "arrow.clockwise")
                                     .font(.caption.weight(.black))
@@ -212,11 +252,215 @@ struct PosterEditorView: View {
                 }
                 .pickerStyle(.segmented)
 
-                posterField(AppText.localized("Headline", "主标题"), text: $poster.headline, icon: "textformat.size", tint: VFStyle.primaryRed, lines: 2)
-                posterField(AppText.localized("Subtitle", "副标题"), text: $poster.subtitle, icon: "text.alignleft", tint: VFStyle.electricCyan)
-                posterField(AppText.localized("CTA", "行动按钮"), text: $poster.cta, icon: "hand.tap.fill", tint: VFStyle.sunset)
+                posterField(
+                    AppText.localized("Headline", "主标题"),
+                    text: $poster.headline,
+                    icon: "textformat.size",
+                    tint: VFStyle.primaryRed,
+                    lines: 2,
+                    accessibilityIdentifier: "vf.poster.headlineField"
+                )
+                posterField(
+                    AppText.localized("Subtitle", "副标题"),
+                    text: $poster.subtitle,
+                    icon: "text.alignleft",
+                    tint: VFStyle.electricCyan,
+                    accessibilityIdentifier: "vf.poster.subtitleField"
+                )
+                posterField(
+                    AppText.localized("CTA", "行动按钮"),
+                    text: $poster.cta,
+                    icon: "hand.tap.fill",
+                    tint: VFStyle.sunset,
+                    accessibilityIdentifier: "vf.poster.ctaField"
+                )
+                posterField(
+                    AppText.localized("Poster label", "海报标签"),
+                    text: posterChannelLabelBinding,
+                    icon: "tag.fill",
+                    tint: VFStyle.teal,
+                    accessibilityIdentifier: "vf.poster.channelLabelField"
+                )
             }
         }
+    }
+
+    private var productIntegrationControls: some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 13) {
+                VFSectionHeader(
+                    title: AppText.localized("Product Blend", "产品融合"),
+                    subtitle: AppText.localized("Balance real product fidelity with scene integration", "控制真实产品外观与场景融合")
+                )
+
+                HStack(spacing: 8) {
+                    Text(AppText.localized("Mode", "模式"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+                    Text(poster.productImageIntegrationMode.displayName)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(poster.productImageIntegrationMode.tint)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(poster.productImageIntegrationMode.tint.opacity(0.12), in: Capsule())
+                        .accessibilityIdentifier("vf.poster.productIntegrationStatus")
+                }
+
+                HStack(spacing: 10) {
+                    ForEach(ProductImageIntegrationMode.allCases) { mode in
+                        productIntegrationButton(mode)
+                    }
+                }
+            }
+        }
+    }
+
+    private func productIntegrationButton(_ mode: ProductImageIntegrationMode) -> some View {
+        let isSelected = poster.productImageIntegrationMode == mode
+
+        return Button {
+            selectProductIntegrationMode(mode)
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                VFGradientIcon(icon: mode.icon, tint: mode.tint, size: 34)
+                Text(mode.displayName)
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(VFStyle.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.76)
+                Text(mode.subtitle)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(isSelected ? mode.tint : VFStyle.secondaryText)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.74)
+            }
+            .frame(maxWidth: .infinity, minHeight: 108, alignment: .leading)
+            .padding(12)
+            .background(isSelected ? mode.tint.opacity(0.12) : .white.opacity(0.58), in: RoundedRectangle(cornerRadius: 16))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? mode.tint.opacity(0.38) : .white.opacity(0.78), lineWidth: isSelected ? 1.4 : 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("vf.poster.productIntegration.\(mode.accessibilitySuffix)")
+    }
+
+    private var backgroundDirectionControls: some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 13) {
+                VFSectionHeader(
+                    title: AppText.localized("Background Direction", "背景方向"),
+                    subtitle: AppText.localized("Choose the visual bias before generating", "生成前选择画面倾向")
+                )
+
+                HStack(spacing: 8) {
+                    Text(AppText.localized("Selected", "已选择"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+                    Text(poster.backgroundDirection.displayName)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(poster.backgroundDirection.tint)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(poster.backgroundDirection.tint.opacity(0.12), in: Capsule())
+                        .accessibilityIdentifier("vf.poster.backgroundDirectionStatus")
+                }
+
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                    ForEach(PosterBackgroundDirection.allCases) { direction in
+                        backgroundDirectionButton(direction)
+                    }
+                }
+
+                Label(directionPreviewQuotaHintText, systemImage: directionPreviewGenerationLimit > 0 ? "bolt.fill" : "exclamationmark.triangle.fill")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(directionPreviewGenerationLimit > 0 ? VFStyle.secondaryText : VFStyle.warning)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("vf.poster.directionPreviewQuotaHint")
+
+                Button {
+                    generateDirectionPreviews()
+                } label: {
+                    Label(
+                        isGeneratingDirectionPreviews
+                            ? AppText.localized("Generating Previews...", "正在生成预览...")
+                            : directionPreviewButtonTitle,
+                        systemImage: "rectangle.grid.2x2.fill"
+                    )
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(VFStyle.ink, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .disabled(isGeneratingDirectionPreviews || appModel.isGeneratingPosterBackground || directionPreviewGenerationLimit == 0)
+                .accessibilityIdentifier("vf.poster.generateDirectionPreviewsButton")
+            }
+        }
+    }
+
+    private func backgroundDirectionButton(_ direction: PosterBackgroundDirection) -> some View {
+        let isSelected = poster.backgroundDirection == direction
+
+        return Button {
+            selectBackgroundDirection(direction)
+        } label: {
+            HStack(spacing: 10) {
+                VFGradientIcon(icon: direction.icon, tint: direction.tint, size: 34)
+                Text(direction.displayName)
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(VFStyle.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.78)
+                Spacer(minLength: 0)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, minHeight: 60)
+            .background(isSelected ? direction.tint.opacity(0.12) : .white.opacity(0.58), in: RoundedRectangle(cornerRadius: 16))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? direction.tint.opacity(0.38) : .white.opacity(0.78), lineWidth: isSelected ? 1.4 : 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("vf.poster.backgroundDirection.\(direction.accessibilitySuffix)")
+    }
+
+    private var directionPreviewGenerationLimit: Int {
+        let totalDirections = PosterBackgroundDirection.allCases.count
+        guard !appModel.quota.isPro else { return totalDirections }
+        return min(totalDirections, max(0, appModel.quota.remainingPosterExports))
+    }
+
+    private var directionPreviewButtonTitle: String {
+        guard directionPreviewGenerationLimit > 0 else {
+            return AppText.localized("Upgrade for Direction Previews", "升级生成方向预览")
+        }
+        return AppText.localized(
+            "Generate \(directionPreviewGenerationLimit) Direction Previews",
+            "生成 \(directionPreviewGenerationLimit) 张方向预览"
+        )
+    }
+
+    private var directionPreviewQuotaHintText: String {
+        if appModel.quota.isPro {
+            return AppText.localized(
+                "Pro can generate 4 direction previews.",
+                "会员可生成 4 张方向预览"
+            )
+        }
+        if directionPreviewGenerationLimit == 0 {
+            return AppText.localized(
+                "No AI background quota left today.",
+                "今日 AI 背景额度已用完"
+            )
+        }
+        return AppText.localized(
+            "Estimated cost: \(directionPreviewGenerationLimit) AI background credits",
+            "预计消耗 \(directionPreviewGenerationLimit) 次 AI 背景额度"
+        )
     }
 
     private var exportOptions: some View {
@@ -254,6 +498,153 @@ struct PosterEditorView: View {
                 }
             }
         }
+    }
+
+    private var backgroundHistoryView: some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                VFSectionHeader(
+                    title: AppText.localized("Background Versions", "背景版本"),
+                    subtitle: AppText.localized("Compare recent AI backgrounds without changing poster copy", "切换近期 AI 背景，海报文案不变")
+                )
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(Array(poster.backgroundHistory.enumerated()), id: \.element.id) { index, version in
+                            backgroundVersionButton(version, index: index)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("vf.poster.backgroundHistory")
+        }
+    }
+
+    private var directionPreviewVersions: [PosterBackgroundVersion] {
+        PosterBackgroundDirection.allCases.compactMap { direction in
+            poster.backgroundHistory.first { $0.backgroundDirection == direction }
+        }
+    }
+
+    private var directionPreviewGrid: some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                VFSectionHeader(
+                    title: AppText.localized("Direction Preview", "方向预览"),
+                    subtitle: AppText.localized("Pick the background that fits the real product best", "选择最适合真实产品的一张背景")
+                )
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(directionPreviewVersions) { version in
+                            directionPreviewButton(version)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("vf.poster.directionPreviewGrid")
+        }
+    }
+
+    private func directionPreviewButton(_ version: PosterBackgroundVersion) -> some View {
+        let direction = version.backgroundDirection ?? .clean
+        let isSelected = poster.backgroundImageURL == version.imageURL
+
+        return Button {
+            selectBackgroundVersion(version)
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                AsyncImage(url: version.imageURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        versionFallbackThumbnail(isSelected: isSelected)
+                    case .empty:
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    @unknown default:
+                        versionFallbackThumbnail(isSelected: isSelected)
+                    }
+                }
+                .frame(width: 118, height: 156)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(isSelected ? direction.tint.opacity(0.72) : .white.opacity(0.86), lineWidth: isSelected ? 2.4 : 1)
+                }
+
+                Label(direction.displayName, systemImage: direction.icon)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(isSelected ? direction.tint : VFStyle.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.74)
+            }
+            .frame(width: 118)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(direction.displayName)
+        .accessibilityIdentifier("vf.poster.directionPreview")
+    }
+
+    private func backgroundVersionButton(_ version: PosterBackgroundVersion, index: Int) -> some View {
+        let isSelected = poster.backgroundImageURL == version.imageURL
+
+        return Button {
+            selectBackgroundVersion(version)
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                AsyncImage(url: version.imageURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        versionFallbackThumbnail(isSelected: isSelected)
+                    case .empty:
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    @unknown default:
+                        versionFallbackThumbnail(isSelected: isSelected)
+                    }
+                }
+                .frame(width: 84, height: 112)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(isSelected ? VFStyle.primaryRed : .white.opacity(0.86), lineWidth: isSelected ? 2.4 : 1)
+                }
+
+                Text(index == 0 ? AppText.localized("Now", "当前") : "\(index + 1)")
+                    .font(.caption2.weight(.black))
+                    .foregroundStyle(isSelected ? .white : VFStyle.ink)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(isSelected ? VFStyle.primaryRed : .white.opacity(0.82), in: Capsule())
+                    .padding(6)
+            }
+            .shadow(color: VFStyle.primaryRed.opacity(isSelected ? 0.18 : 0.06), radius: 12, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(index == 0 ? AppText.localized("Current background version", "当前背景版本") : AppText.localized("Background version \(index + 1)", "背景版本 \(index + 1)"))
+        .accessibilityIdentifier("vf.poster.backgroundVersion")
+    }
+
+    private func versionFallbackThumbnail(isSelected: Bool) -> some View {
+        LinearGradient(
+            colors: isSelected
+                ? [VFStyle.primaryRed.opacity(0.16), VFStyle.sunset.opacity(0.20)]
+                : [VFStyle.electricCyan.opacity(0.13), VFStyle.teal.opacity(0.18)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     private var exportResultHeader: some View {
@@ -314,7 +705,14 @@ struct PosterEditorView: View {
             }
     }
 
-    private func posterField(_ placeholder: String, text: Binding<String>, icon: String, tint: Color, lines: Int = 1) -> some View {
+    private func posterField(
+        _ placeholder: String,
+        text: Binding<String>,
+        icon: String,
+        tint: Color,
+        lines: Int = 1,
+        accessibilityIdentifier: String = ""
+    ) -> some View {
         HStack(alignment: lines > 1 ? .top : .center, spacing: 12) {
             VFGradientIcon(icon: icon, tint: tint, size: 34)
             TextField(placeholder, text: text, axis: .vertical)
@@ -326,11 +724,93 @@ struct PosterEditorView: View {
                     RoundedRectangle(cornerRadius: 15)
                         .stroke(.white.opacity(0.82), lineWidth: 1)
                 }
+                .accessibilityIdentifier(accessibilityIdentifier)
         }
     }
 
     private var showsWatermarkForExport: Bool {
         !appModel.quota.isPro || exportMode == .watermarked
+    }
+
+    private var posterChannelLabelBinding: Binding<String> {
+        Binding(
+            get: {
+                poster.resolvedChannelLabel(for: project.draft.platform)
+            },
+            set: { newValue in
+                let trimmedValue = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                poster.channelLabel = trimmedValue.isEmpty ? nil : trimmedValue
+            }
+        )
+    }
+
+    private func selectBackgroundDirection(_ direction: PosterBackgroundDirection) {
+        guard poster.backgroundDirection != direction else { return }
+        poster.backgroundDirection = direction
+        backgroundStatusMessage = nil
+        exportedUIImage = nil
+        exportedImageURL = nil
+
+        Task {
+            await appModel.savePosterDraft(for: project, poster: poster)
+        }
+    }
+
+    private func selectProductIntegrationMode(_ mode: ProductImageIntegrationMode) {
+        guard poster.productImageIntegrationMode != mode else { return }
+        poster.productImageIntegrationMode = mode
+        backgroundStatusMessage = nil
+        exportedUIImage = nil
+        exportedImageURL = nil
+
+        Task {
+            await appModel.savePosterDraft(for: project, poster: poster)
+        }
+    }
+
+    private func generateDirectionPreviews() {
+        guard !isGeneratingDirectionPreviews else { return }
+        let generationLimit = directionPreviewGenerationLimit
+        guard generationLimit > 0 else {
+            let message = AppText.localized(
+                "AI background quota is used up. Upgrade to Pro to generate direction previews.",
+                "AI 背景额度已用完。升级 Pro 后可生成方向预览。"
+            )
+            appModel.posterGenerationError = message
+            appModel.openPaywall(reason: message)
+            return
+        }
+
+        Task {
+            isGeneratingDirectionPreviews = true
+            defer { isGeneratingDirectionPreviews = false }
+
+            var latestPoster = poster
+            var generatedCount = 0
+            for direction in PosterBackgroundDirection.allCases.prefix(generationLimit) {
+                var directionPoster = latestPoster
+                directionPoster.backgroundDirection = direction
+                guard let updatedPoster = await appModel.generatePosterBackground(
+                    for: project,
+                    poster: directionPoster,
+                    aspectRatio: selectedTarget.apiAspectRatio
+                ) else {
+                    break
+                }
+
+                latestPoster = updatedPoster
+                generatedCount += 1
+            }
+
+            guard generatedCount > 0 else { return }
+            poster = latestPoster
+            exportedUIImage = nil
+            exportedImageURL = nil
+            backgroundStatusMessage = AppText.localized(
+                "\(generatedCount) direction previews generated. Pick the background that fits best.",
+                "\(generatedCount) 张方向预览已生成，选择最合适的一张背景。"
+            )
+        }
     }
 
     private func requestCleanExport() {
@@ -344,6 +824,36 @@ struct PosterEditorView: View {
 
         exportMode = .clean
         exportPoster()
+    }
+
+    private func generateBackgroundOnly() {
+        Task {
+            guard let updatedPoster = await appModel.generatePosterBackground(for: project, poster: poster, aspectRatio: selectedTarget.apiAspectRatio) else {
+                return
+            }
+
+            poster = updatedPoster
+            exportedUIImage = nil
+            exportedImageURL = nil
+            backgroundStatusMessage = AppText.localized(
+                "Background refreshed. Poster copy was kept unchanged.",
+                "背景已更换，海报文案保持不变。"
+            )
+        }
+    }
+
+    private func selectBackgroundVersion(_ version: PosterBackgroundVersion) {
+        poster = poster.selectingBackgroundVersion(version)
+        exportedUIImage = nil
+        exportedImageURL = nil
+        backgroundStatusMessage = AppText.localized(
+            "Background version selected. Poster copy was kept unchanged.",
+            "已切换背景版本，海报文案保持不变。"
+        )
+
+        Task {
+            await appModel.savePosterDraft(for: project, poster: poster)
+        }
     }
 
     @MainActor
@@ -467,6 +977,9 @@ struct PosterPreview: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            if poster.shouldOverlayProductImage, let productUIImage {
+                productImageLayer(productUIImage, palette: palette)
+            }
             posterContentOverlay(palette: palette)
             if showsWatermark {
                 posterWatermark(palette: palette)
@@ -474,6 +987,42 @@ struct PosterPreview: View {
         }
         .aspectRatio(target.aspectRatio, contentMode: .fit)
         .shadow(color: .black.opacity(0.08), radius: 18, y: 8)
+    }
+
+    private var productUIImage: UIImage? {
+        poster.productImageData.flatMap(UIImage.init(data:))
+    }
+
+    private func productImageLayer(_ image: UIImage, palette: PosterPalette) -> some View {
+        GeometryReader { proxy in
+            let width = min(proxy.size.width * 0.54, proxy.size.height * 0.36)
+            let height = min(proxy.size.height * 0.30, width * 1.08)
+            let topPadding = max(64, proxy.size.height * 0.12)
+            let sidePadding = max(22, proxy.size.width * 0.07)
+
+            VStack {
+                HStack {
+                    Spacer()
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .padding(max(8, width * 0.055))
+                        .frame(width: width, height: height)
+                        .background(.white.opacity(0.90), in: RoundedRectangle(cornerRadius: 18))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(.white.opacity(0.92), lineWidth: 1)
+                        }
+                        .shadow(color: palette.primary.opacity(0.18), radius: 18, x: 0, y: 10)
+                        .rotationEffect(.degrees(poster.style == .editorial ? -2 : 2))
+                }
+                Spacer()
+            }
+            .padding(.top, topPadding)
+            .padding(.trailing, sidePadding)
+            .allowsHitTesting(false)
+            .accessibilityIdentifier("vf.poster.productImageLayer")
+        }
     }
 
     @ViewBuilder
@@ -556,12 +1105,13 @@ struct PosterPreview: View {
     }
 
     private func platformBadge(palette: PosterPalette) -> some View {
-        Text(platform.displayName.uppercased())
+        Text(poster.resolvedChannelLabel(for: platform).uppercased())
             .font(.caption.weight(.bold))
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .foregroundStyle(palette.background)
             .background(palette.accent, in: Capsule())
+            .accessibilityIdentifier("vf.poster.channelLabelBadge")
     }
 
     private func posterTitle(palette: PosterPalette, size: CGFloat, lineLimit: Int) -> some View {

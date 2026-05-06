@@ -1,8 +1,9 @@
 import { decodeCompactJWS, isActiveTransactionPayload, transactionDatesFromPayload } from "../appStore/jws.mjs";
-import { db, nowISO } from "../db/database.mjs";
+import { backend } from "./storageBackend.mjs";
 import { setProStatus } from "../quota/quotaManager.mjs";
 
-export function processServerNotification(body) {
+export async function processServerNotification(body) {
+  const store = await backend();
   const signedPayload = stringValue(body.signedPayload);
   const notification = decodeCompactJWS(signedPayload).payload;
   const transactionPayload = decodeNestedJWS(notification.data?.signedTransactionInfo);
@@ -13,51 +14,26 @@ export function processServerNotification(body) {
     throwRequestError("Missing App Store notification UUID.");
   }
 
-  db.prepare(`
-    INSERT INTO app_store_notifications (
-      notification_uuid,
-      notification_type,
-      subtype,
-      environment,
-      app_account_token,
-      original_transaction_id,
-      transaction_id,
-      product_id,
-      signed_payload,
-      decoded_payload_json,
-      received_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(notification_uuid) DO UPDATE SET
-      notification_type = excluded.notification_type,
-      subtype = excluded.subtype,
-      environment = excluded.environment,
-      app_account_token = excluded.app_account_token,
-      original_transaction_id = excluded.original_transaction_id,
-      transaction_id = excluded.transaction_id,
-      product_id = excluded.product_id,
-      signed_payload = excluded.signed_payload,
-      decoded_payload_json = excluded.decoded_payload_json,
-      received_at = excluded.received_at
-  `).run(
+  await store.upsertNotificationRecord({
     notificationUUID,
-    stringValue(notification.notificationType),
-    nullableString(notification.subtype),
-    nullableString(notification.data?.environment),
-    nullableString(transactionPayload?.appAccountToken),
-    nullableString(transactionPayload?.originalTransactionId),
-    nullableString(transactionPayload?.transactionId),
-    nullableString(transactionPayload?.productId),
+    notificationType: stringValue(notification.notificationType),
+    subtype: nullableString(notification.subtype),
+    environment: nullableString(notification.data?.environment),
+    appAccountToken: nullableString(transactionPayload?.appAccountToken),
+    originalTransactionId: nullableString(transactionPayload?.originalTransactionId),
+    transactionId: nullableString(transactionPayload?.transactionId),
+    productId: nullableString(transactionPayload?.productId),
     signedPayload,
-    JSON.stringify({
+    decodedPayload: {
       notification,
       transaction: transactionPayload,
       renewal: renewalPayload
-    }),
-    nowISO()
-  );
+    },
+    receivedAt: store.nowISO()
+  });
 
   const updatedSubscriptions = transactionPayload
-    ? applyTransactionNotification(notification, transactionPayload, body)
+    ? await applyTransactionNotification(store, notification, transactionPayload, body)
     : 0;
 
   return {
@@ -67,19 +43,14 @@ export function processServerNotification(body) {
   };
 }
 
-function applyTransactionNotification(notification, transactionPayload, rawBody) {
+async function applyTransactionNotification(store, notification, transactionPayload, rawBody) {
   const originalTransactionId = stringValue(transactionPayload.originalTransactionId);
   const appAccountToken = stringValue(transactionPayload.appAccountToken);
   if (!originalTransactionId && !appAccountToken) {
     return 0;
   }
 
-  const matchingRows = db.prepare(`
-    SELECT user_id
-    FROM subscriptions
-    WHERE original_transaction_id = ?
-       OR (? != '' AND app_account_token = ?)
-  `).all(originalTransactionId, appAccountToken, appAccountToken);
+  const matchingRows = await store.findSubscriptionRecords({ originalTransactionId, appAccountToken });
 
   if (matchingRows.length === 0) {
     return 0;
@@ -87,38 +58,22 @@ function applyTransactionNotification(notification, transactionPayload, rawBody)
 
   const dates = transactionDatesFromPayload(transactionPayload);
   const isActive = isActiveTransactionPayload(transactionPayload, dates.expirationDate);
-  const updatedAt = nowISO();
-
-  db.prepare(`
-    UPDATE subscriptions
-    SET product_id = ?,
-        app_account_token = COALESCE(?, app_account_token),
-        transaction_id = ?,
-        environment = ?,
-        purchase_date = COALESCE(?, purchase_date),
-        expiration_date = ?,
-        verification_status = ?,
-        raw_payload_json = ?,
-        updated_at = ?
-    WHERE original_transaction_id = ?
-       OR (? != '' AND app_account_token = ?)
-  `).run(
-    stringValue(transactionPayload.productId),
-    nullableString(appAccountToken),
-    stringValue(transactionPayload.transactionId),
-    nullableString(notification.data?.environment),
-    dates.purchaseDate,
-    dates.expirationDate,
-    "app_store_server_notification",
-    JSON.stringify(rawBody),
-    updatedAt,
-    originalTransactionId,
-    appAccountToken,
-    appAccountToken
-  );
+  const updatedAt = store.nowISO();
 
   for (const row of matchingRows) {
-    setProStatus(row.user_id, isActive);
+    await store.upsertSubscriptionRecord({
+      ...row,
+      productId: stringValue(transactionPayload.productId),
+      appAccountToken: nullableString(appAccountToken) ?? row.appAccountToken,
+      transactionId: stringValue(transactionPayload.transactionId),
+      environment: nullableString(notification.data?.environment),
+      purchaseDate: dates.purchaseDate ?? row.purchaseDate,
+      expirationDate: dates.expirationDate,
+      verificationStatus: "app_store_server_notification",
+      rawPayload: rawBody,
+      updatedAt
+    });
+    await setProStatus(row.userId, isActive);
   }
 
   return matchingRows.length;

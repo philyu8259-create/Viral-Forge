@@ -1,35 +1,18 @@
-import { db, nowISO } from "../db/database.mjs";
+import { backend } from "../store/storageBackend.mjs";
 
 const defaultQuota = {
   remainingTextGenerations: 3,
-  remainingPosterExports: 1,
+  remainingPosterExports: 3,
   isPro: false
 };
 
-export function getQuota(userId) {
-  const row = db.prepare(`
-    SELECT remaining_text_generations, remaining_poster_exports, is_pro
-    FROM quota
-    WHERE user_id = ?
-  `).get(userId);
+export async function getQuota(userId) {
+  const store = await backend();
+  const row = await store.getQuotaRecord(userId);
 
   if (!row) {
     const quota = { ...defaultQuota };
-    db.prepare(`
-      INSERT INTO quota (
-        user_id,
-        remaining_text_generations,
-        remaining_poster_exports,
-        is_pro,
-        updated_at
-      ) VALUES (?, ?, ?, ?, ?)
-    `).run(
-      userId,
-      quota.remainingTextGenerations,
-      quota.remainingPosterExports,
-      quota.isPro ? 1 : 0,
-      nowISO()
-    );
+    await store.putQuotaRecord(userId, quota);
     return quota;
   }
 
@@ -40,8 +23,8 @@ export function getQuota(userId) {
   };
 }
 
-export function consumeTextGeneration(userId) {
-  const quota = getQuota(userId);
+export async function consumeTextGeneration(userId) {
+  const quota = await getQuota(userId);
   assertTextGenerationAvailable(quota);
   if (quota.isPro) {
     return quota;
@@ -52,8 +35,8 @@ export function consumeTextGeneration(userId) {
   });
 }
 
-export function consumePosterExport(userId) {
-  const quota = getQuota(userId);
+export async function consumePosterExport(userId) {
+  const quota = await getQuota(userId);
   assertPosterExportAvailable(quota);
   if (quota.isPro) {
     return quota;
@@ -64,47 +47,29 @@ export function consumePosterExport(userId) {
   });
 }
 
-export function ensureTextGenerationAvailable(userId) {
-  const quota = getQuota(userId);
+export async function ensureTextGenerationAvailable(userId) {
+  const quota = await getQuota(userId);
   assertTextGenerationAvailable(quota);
   return quota;
 }
 
-export function ensurePosterExportAvailable(userId) {
-  const quota = getQuota(userId);
+export async function ensurePosterExportAvailable(userId) {
+  const quota = await getQuota(userId);
   assertPosterExportAvailable(quota);
   return quota;
 }
 
-export function setProStatus(userId, isPro) {
-  const quota = getQuota(userId);
+export async function setProStatus(userId, isPro) {
+  const quota = await getQuota(userId);
   return updateQuota(userId, {
     ...quota,
     isPro: Boolean(isPro)
   });
 }
 
-export function updateQuota(userId, quota) {
-  db.prepare(`
-    INSERT INTO quota (
-      user_id,
-      remaining_text_generations,
-      remaining_poster_exports,
-      is_pro,
-      updated_at
-    ) VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET
-      remaining_text_generations = excluded.remaining_text_generations,
-      remaining_poster_exports = excluded.remaining_poster_exports,
-      is_pro = excluded.is_pro,
-      updated_at = excluded.updated_at
-  `).run(
-    userId,
-    quota.remainingTextGenerations,
-    quota.remainingPosterExports,
-    quota.isPro ? 1 : 0,
-    nowISO()
-  );
+export async function updateQuota(userId, quota) {
+  const store = await backend();
+  await store.putQuotaRecord(userId, quota);
   return quota;
 }
 

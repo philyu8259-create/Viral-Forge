@@ -42,7 +42,8 @@ try {
     (body) => body.subscription === null && body.isPro === false,
     { "x-user-id": userId }
   );
-  assert(initialSubscription.remainingTextGenerations === 3, "new subscription user starts with free quota");
+  assert(initialSubscription.remainingTextGenerations === 3, "new subscription user starts with free text quota");
+  assert(initialSubscription.remainingPosterExports === 3, "new subscription user starts with free poster quota");
 
   const monthlySync = await postJSON("/api/subscription/sync", {
     productId: "viralforge_pro_monthly",

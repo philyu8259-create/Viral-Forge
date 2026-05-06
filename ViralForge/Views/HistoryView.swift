@@ -77,14 +77,9 @@ struct HistoryView: View {
                     .accessibilityIdentifier("vf.history.emptyState")
                 } else {
                     ForEach(projects) { project in
-                        NavigationLink {
-                            ResultView(project: project)
-                        } label: {
-                            HistoryProjectCard(project: project) {
-                                appModel.deleteProjects([project])
-                            }
+                        HistoryProjectCard(project: project) {
+                            appModel.deleteProjects([project])
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -100,33 +95,14 @@ private struct HistoryProjectCard: View {
     var body: some View {
         VFGlassCard {
             HStack(alignment: .top, spacing: 13) {
-                VFGradientIcon(icon: project.poster.backgroundImageURL != nil || project.hasPosterExport ? "photo.fill" : "doc.text.fill", tint: VFStyle.platformTint(project.draft.platform), size: 38)
-
-                VStack(alignment: .leading, spacing: 7) {
-                    HStack(spacing: 6) {
-                        Text(project.draft.topic)
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(VFStyle.ink)
-                            .lineLimit(2)
-                        if project.isFavorite {
-                            Image(systemName: "heart.fill")
-                                .foregroundStyle(VFStyle.primaryRed)
-                        }
-                    }
-                    Text("\(project.draft.platform.displayName) · \(project.draft.language.displayName)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(VFStyle.secondaryText)
-                    Text(project.createdAt, style: .date)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(VFStyle.secondaryText.opacity(0.72))
-                    if project.poster.backgroundImageURL != nil || project.hasPosterExport {
-                        Label(AppText.localized("Poster ready", "海报已保存"), systemImage: "photo")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(VFStyle.sunset)
-                    }
+                NavigationLink {
+                    ResultView(project: project)
+                } label: {
+                    HistoryProjectSummary(project: project)
                 }
-
-                Spacer()
+                .buttonStyle(.plain)
+                .accessibilityLabel(AppText.localized("Open history project", "打开历史项目"))
+                .accessibilityIdentifier("vf.history.projectCard.openButton")
 
                 Menu {
                     Button(role: .destructive) {
@@ -142,6 +118,42 @@ private struct HistoryProjectCard: View {
                         .background(.white.opacity(0.54), in: Circle())
                 }
             }
+        }
+    }
+}
+
+private struct HistoryProjectSummary: View {
+    let project: ContentProject
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 13) {
+            VFGradientIcon(icon: project.poster.backgroundImageURL != nil || project.hasPosterExport ? "photo.fill" : "doc.text.fill", tint: VFStyle.platformTint(project.draft.platform), size: 38)
+
+            VStack(alignment: .leading, spacing: 7) {
+                HStack(spacing: 6) {
+                    Text(project.draft.topic)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(VFStyle.ink)
+                        .lineLimit(2)
+                    if project.isFavorite {
+                        Image(systemName: "heart.fill")
+                            .foregroundStyle(VFStyle.primaryRed)
+                    }
+                }
+                Text("\(project.draft.platform.displayName) · \(project.draft.language.displayName)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(VFStyle.secondaryText)
+                Text(project.createdAt, style: .date)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(VFStyle.secondaryText.opacity(0.72))
+                if project.poster.backgroundImageURL != nil || project.hasPosterExport {
+                    Label(AppText.localized("Poster ready", "海报已保存"), systemImage: "photo")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(VFStyle.sunset)
+                }
+            }
+
+            Spacer(minLength: 0)
         }
     }
 }

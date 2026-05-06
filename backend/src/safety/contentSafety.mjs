@@ -1,5 +1,6 @@
 const maxTopicLength = 500;
 const maxPromptLength = 1600;
+const maxProductImageDataUrlLength = 8_000_000;
 
 const riskRules = [
   {
@@ -51,6 +52,9 @@ export function assertSafePosterRequest(body) {
   const prompt = cleanText(body.prompt);
   if (prompt.length > maxPromptLength) {
     throwSafetyError("prompt_too_long", `Poster prompt is too long. Keep it under ${maxPromptLength} characters.`, 400);
+  }
+  if (typeof body.productImageDataUrl === "string" && body.productImageDataUrl.length > maxProductImageDataUrlLength) {
+    throwSafetyError("product_image_too_large", "Product image is too large. Please upload a smaller image.", 400);
   }
   assertSafeText([body.prompt, body.style, body.aspectRatio].map(cleanText).join("\n"));
 }

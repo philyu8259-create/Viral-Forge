@@ -32,6 +32,8 @@ backend/data/
 AuthKey_*.p8
 
 # Local exports and generated archives
+build/
+backend/dist/
 *.xcarchive
 *.ipa
 *.dSYM

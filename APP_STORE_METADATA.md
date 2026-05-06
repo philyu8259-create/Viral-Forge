@@ -24,7 +24,7 @@ ViralForge 爆款内容助手
 
 ### Subtitle
 
-小红书抖音微信AI创作工具
+种草短视频AI创作工具
 
 ### Promotional Text
 
@@ -32,13 +32,13 @@ ViralForge 爆款内容助手
 
 ### Description
 
-ViralForge 是为内容创作者、商家、品牌运营和个人 IP 打造的 AI 内容生产工具。它不是普通聊天机器人，而是围绕小红书、抖音、微信等平台，把选题、文案、标题、标签、海报文案、品牌记忆和批量内容规划打包成一套高效工作流。
+ViralForge 是为内容创作者、商家、品牌运营和个人 IP 打造的 AI 内容生产工具。它不是普通聊天机器人，而是围绕种草笔记、短视频、私域内容等发布场景，把选题、文案、标题、标签、海报文案、品牌记忆和批量内容规划打包成一套高效工作流。
 
 你可以输入产品、服务或主题简报，选择平台、目标人群、语气风格和创作目标，快速生成更适合发布的内容资产。ViralForge 会帮助你把零散想法整理成标题、开头钩子、正文、卖点、标签和海报文案，减少从空白页面开始的压力。
 
 核心功能：
 
-- 平台化内容生成：支持小红书、抖音、微信等中文创作场景。
+- 场景化内容生成：支持种草笔记、短视频、私域内容等中文创作场景。
 - 爆款文案结构：生成标题、开头、正文、卖点、标签和发布包。
 - 海报编辑与导出：根据内容生成海报草稿，支持尺寸切换、文案编辑和 PNG 导出。
 - 模板工作流：从种草、探店、个人 IP、直播预热、节日促销、新品发布等模板开始创作。
@@ -49,7 +49,7 @@ ViralForge 是为内容创作者、商家、品牌运营和个人 IP 打造的 A
 
 适合人群：
 
-- 小红书、抖音、微信内容创作者
+- 种草笔记、短视频、私域内容创作者
 - 电商卖家和本地生活商家
 - 品牌运营、新媒体运营、自由职业者
 - 需要持续产出内容的个人 IP 和团队
@@ -58,7 +58,7 @@ ViralForge 是为内容创作者、商家、品牌运营和个人 IP 打造的 A
 
 ### Keywords
 
-AI文案,小红书,抖音,微信,海报,内容创作,新媒体,种草,电商,个人IP,营销
+AI文案,海报,内容创作,新媒体,种草,短视频,私域,电商,个人IP,营销
 
 ### What's New
 
@@ -66,7 +66,7 @@ AI文案,小红书,抖音,微信,海报,内容创作,新媒体,种草,电商,个
 
 ### Review Notes
 
-ViralForge is a single-bundle dual-locale iOS app. Simplified Chinese mode supports Xiaohongshu, Douyin, and WeChat workflows; English mode supports TikTok, Instagram, and YouTube Shorts workflows.
+ViralForge is a single-bundle dual-locale iOS app. Simplified Chinese mode supports discovery-note, short-video, and private-community workflows; English mode supports short-form social, creator, and brand-content workflows.
 
 No login is required for the current version. Subscription purchase and restore use Apple StoreKit. The in-app Settings page includes Privacy Policy, Terms of Use, Support, Email Support, Restore Purchases, app version, backend mode, and User ID.
 
@@ -90,13 +90,13 @@ An AI studio for creators and brands. Turn a product brief into post copy, hooks
 
 ### Description
 
-ViralForge is an AI content production studio for creators, small businesses, brand operators, and personal brands. It is not a generic chatbot. It packages social content creation into structured workflows for TikTok, Instagram, YouTube Shorts, and creator-led marketing.
+ViralForge is an AI content production studio for creators, small businesses, brand operators, and personal brands. It is not a generic chatbot. It packages social content creation into structured workflows for short-form posts, creator-led marketing, and brand campaigns.
 
 Start with a product, service, or topic brief. Choose the platform, audience, tone, and goal, then generate a complete content asset: titles, hooks, captions, selling points, hashtags, and poster copy. ViralForge helps you move from a blank page to a publish-ready draft faster.
 
 Core features:
 
-- Platform-aware generation for TikTok, Instagram, and YouTube Shorts.
+- Scenario-aware generation for short-form social posts, creator-led marketing, and brand campaigns.
 - Structured post packs with titles, hooks, captions, selling points, hashtags, and full publish text.
 - Poster editing and export with size presets, editable copy, and PNG output.
 - Template workflows for product seeding, store traffic, personal brand posts, live launches, seasonal promotions, and new product launches.
@@ -117,7 +117,7 @@ Generated content is creative assistance only. Review factual claims, platform r
 
 ### Keywords
 
-AI writer,content,poster,TikTok,Instagram,Shorts,creator,marketing,copywriting,brand
+AI writer,content,poster,social,short video,creator,marketing,copywriting,brand
 
 ### What's New
 
@@ -125,7 +125,7 @@ Initial release with AI copy generation, workflow templates, brand memory, poste
 
 ### Review Notes
 
-ViralForge is a single-bundle dual-locale iOS app. English mode supports TikTok, Instagram, and YouTube Shorts workflows; Simplified Chinese mode supports Xiaohongshu, Douyin, and WeChat workflows.
+ViralForge is a single-bundle dual-locale iOS app. English mode supports short-form social, creator, and brand-content workflows; Simplified Chinese mode supports discovery-note, short-video, and private-community workflows.
 
 No login is required for the current version. Subscription purchase and restore use Apple StoreKit. The in-app Settings page includes Privacy Policy, Terms of Use, Support, Email Support, Restore Purchases, app version, backend mode, and User ID.
 

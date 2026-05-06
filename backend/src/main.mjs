@@ -1,2 +1,4 @@
 import "./env/loadEnv.mjs";
-import "./server.mjs";
+import { startBackendServer } from "./server.mjs";
+
+startBackendServer();

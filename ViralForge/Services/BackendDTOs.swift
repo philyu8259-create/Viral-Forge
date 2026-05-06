@@ -90,16 +90,24 @@ struct PosterResponse: Decodable {
     var headline: String
     var subtitle: String
     var cta: String
+    var channelLabel: String?
     var style: String?
+    var backgroundDirection: String?
+    var productImageIntegrationMode: String?
     var backgroundImageUrl: URL?
+    var productImageIntegratedInBackground: Bool?
 
     func draft(fallbackStyle: PosterStyle) -> PosterDraft {
         PosterDraft(
             headline: headline,
             subtitle: subtitle,
             cta: cta,
+            channelLabel: channelLabel,
             style: style.flatMap { PosterStyle(rawValue: $0) } ?? fallbackStyle,
-            backgroundImageURL: backgroundImageUrl
+            backgroundDirection: backgroundDirection.flatMap { PosterBackgroundDirection(rawValue: $0) } ?? .clean,
+            productImageIntegrationMode: productImageIntegrationMode.flatMap { ProductImageIntegrationMode(rawValue: $0) } ?? .natural,
+            backgroundImageURL: backgroundImageUrl,
+            productImageIntegratedInBackground: productImageIntegratedInBackground
         )
     }
 }
@@ -111,10 +119,12 @@ struct PosterBackgroundRequest: Encodable {
     var aspectRatio: String
     var prompt: String
     var modelRoute: ModelRoute
+    var productImageDataUrl: String?
 }
 
 struct PosterBackgroundResponse: Decodable {
     var imageUrl: URL
+    var usedProductReference: Bool?
 }
 
 struct TemplateListResponse: Decodable {
@@ -299,15 +309,23 @@ struct PosterPayload: Encodable {
     var headline: String
     var subtitle: String
     var cta: String
+    var channelLabel: String?
     var style: String
+    var backgroundDirection: String
+    var productImageIntegrationMode: String
     var backgroundImageUrl: URL?
+    var productImageIntegratedInBackground: Bool?
 
     init(poster: PosterDraft) {
         self.headline = poster.headline
         self.subtitle = poster.subtitle
         self.cta = poster.cta
+        self.channelLabel = poster.channelLabel
         self.style = poster.style.rawValue
+        self.backgroundDirection = poster.backgroundDirection.rawValue
+        self.productImageIntegrationMode = poster.productImageIntegrationMode.rawValue
         self.backgroundImageUrl = poster.backgroundImageURL
+        self.productImageIntegratedInBackground = poster.productImageIntegratedInBackground
     }
 }
 

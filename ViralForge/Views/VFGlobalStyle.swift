@@ -51,66 +51,58 @@ enum VFStyle {
 struct VFBackground: View {
     var body: some View {
         GeometryReader { proxy in
-            TimelineView(.animation) { timeline in
-                let seconds = timeline.date.timeIntervalSinceReferenceDate
-                let rotation = Angle.degrees(seconds.truncatingRemainder(dividingBy: 18) * 20)
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 1.0, green: 0.985, blue: 0.975),
+                        Color(red: 0.965, green: 0.978, blue: 1.0),
+                        Color(red: 0.995, green: 0.998, blue: 1.0)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
 
-                ZStack {
-                    LinearGradient(
-                        colors: [
-                            Color(red: 1.0, green: 0.985, blue: 0.975),
-                            Color(red: 0.965, green: 0.978, blue: 1.0),
-                            Color(red: 0.995, green: 0.998, blue: 1.0)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [VFStyle.primaryRed.opacity(0.13), VFStyle.auroraPink.opacity(0.05), .clear],
+                            center: .center,
+                            startRadius: 12,
+                            endRadius: 280
+                        )
                     )
+                    .frame(width: 560, height: 560)
+                    .blur(radius: 54)
+                    .offset(x: -220, y: -300)
 
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [VFStyle.primaryRed.opacity(0.13), VFStyle.auroraPink.opacity(0.05), .clear],
-                                center: .center,
-                                startRadius: 12,
-                                endRadius: 280
-                            )
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [VFStyle.sunset.opacity(0.14), VFStyle.primaryRed.opacity(0.05), .clear],
+                            center: .center,
+                            startRadius: 8,
+                            endRadius: 230
                         )
-                        .frame(width: 560, height: 560)
-                        .blur(radius: 54)
-                        .offset(x: -220, y: -300)
-                        .rotationEffect(rotation)
+                    )
+                    .frame(width: 430, height: 430)
+                    .blur(radius: 60)
+                    .offset(x: 210, y: -110)
 
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [VFStyle.sunset.opacity(0.14), VFStyle.primaryRed.opacity(0.05), .clear],
-                                center: .center,
-                                startRadius: 8,
-                                endRadius: 230
-                            )
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [VFStyle.electricCyan.opacity(0.12), VFStyle.purpleFlow.opacity(0.06), .clear],
+                            center: .center,
+                            startRadius: 10,
+                            endRadius: 250
                         )
-                        .frame(width: 430, height: 430)
-                        .blur(radius: 60)
-                        .offset(x: 210, y: -110)
-                        .rotationEffect(-rotation)
-
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [VFStyle.electricCyan.opacity(0.12), VFStyle.purpleFlow.opacity(0.06), .clear],
-                                center: .center,
-                                startRadius: 10,
-                                endRadius: 250
-                            )
-                        )
-                        .frame(width: 500, height: 500)
-                        .blur(radius: 72)
-                        .offset(x: 170, y: 455)
-                        .rotationEffect(Angle.degrees(rotation.degrees * 0.6))
-                }
-                .frame(width: proxy.size.width, height: proxy.size.height)
-                .clipped()
+                    )
+                    .frame(width: 500, height: 500)
+                    .blur(radius: 72)
+                    .offset(x: 170, y: 455)
             }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipped()
         }
         .ignoresSafeArea()
     }

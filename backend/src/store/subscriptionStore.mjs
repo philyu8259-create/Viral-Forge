@@ -1,4 +1,4 @@
-import { db, nowISO } from "../db/database.mjs";
+import { backend } from "./storageBackend.mjs";
 import { decodeCompactJWS, isActiveTransactionPayload, transactionDatesFromPayload, validateTransactionPayload } from "../appStore/jws.mjs";
 import { verifyTransactionWithAppStore } from "../appStore/serverAPI.mjs";
 import { getQuota, setProStatus } from "../quota/quotaManager.mjs";
@@ -66,51 +66,28 @@ export async function syncSubscription(userId, payload) {
     verificationStatus = "app_store_server_verified";
   }
 
-  const updatedAt = nowISO();
+  const store = await backend();
+  const updatedAt = store.nowISO();
   const rawPayload = {
     ...payload,
     appStoreServerSignedTransactionInfo: appStoreServerSignedTransactionInfo || undefined
   };
 
-  db.prepare(`
-    INSERT INTO subscriptions (
-      user_id,
-      product_id,
-      app_account_token,
-      original_transaction_id,
-      transaction_id,
-      environment,
-      purchase_date,
-      expiration_date,
-      verification_status,
-      raw_payload_json,
-      updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(user_id, original_transaction_id) DO UPDATE SET
-      product_id = excluded.product_id,
-      app_account_token = COALESCE(excluded.app_account_token, subscriptions.app_account_token),
-      transaction_id = excluded.transaction_id,
-      environment = excluded.environment,
-      purchase_date = excluded.purchase_date,
-      expiration_date = excluded.expiration_date,
-      verification_status = excluded.verification_status,
-      raw_payload_json = excluded.raw_payload_json,
-      updated_at = excluded.updated_at
-  `).run(
+  await store.upsertSubscriptionRecord({
     userId,
     productId,
     appAccountToken,
     originalTransactionId,
     transactionId,
-    stringValue(payload.environment),
+    environment: stringValue(payload.environment),
     purchaseDate,
     expirationDate,
     verificationStatus,
-    JSON.stringify(rawPayload),
+    rawPayload,
     updatedAt
-  );
+  });
 
-  const quota = setProStatus(userId, isActive);
+  const quota = await setProStatus(userId, isActive);
   return {
     ...quota,
     subscription: {
@@ -124,16 +101,11 @@ export async function syncSubscription(userId, payload) {
   };
 }
 
-export function currentSubscription(userId) {
-  const row = db.prepare(`
-    SELECT product_id, transaction_id, original_transaction_id, app_account_token, expiration_date, verification_status
-    FROM subscriptions
-    WHERE user_id = ?
-    ORDER BY updated_at DESC
-    LIMIT 1
-  `).get(userId);
+export async function currentSubscription(userId) {
+  const store = await backend();
+  const row = await store.latestSubscriptionRecord(userId);
 
-  const quota = getQuota(userId);
+  const quota = await getQuota(userId);
   if (!row) {
     return {
       ...quota,

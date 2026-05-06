@@ -38,10 +38,10 @@ SEEDREAM_IMAGES_URL=https://ark.cn-beijing.volces.com/api/v3/images/generations
 
 ## Backend Deployment
 
-- Deploy backend behind public HTTPS.
+- Deploy backend on Alibaba Cloud Function Compute with a public HTTPS trigger or custom domain.
 - Use `AI_PROVIDER_MODE=china_live`.
 - Store provider keys and App Store Server API keys as encrypted environment variables or secret files.
-- Use persistent storage for SQLite during TestFlight/MVP.
+- Use Tablestore for persistent quota, project, brand, subscription, and notification data.
 - Set the iOS Release `INFOPLIST_KEY_BACKEND_BASE_URL` to the public HTTPS backend URL before TestFlight.
 - Configure App Store Server Notifications V2:
 
@@ -67,15 +67,19 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 ### P0 Before First TestFlight Upload
 
 - [ ] Deploy a public HTTPS backend for the beta build.
-- [ ] Decide production provider mode for English live generation:
-  - `china_live`: Qwen/Seedream handle both Chinese and English prompts.
-  - `live`: English routes require OpenAI text/image keys.
+- [x] Decide production provider mode for English live generation:
+  - Use Qwen for English text and Seedream for English images in the first release.
+  - OpenAI is not required for TestFlight.
 - [ ] Configure backend production/sandbox environment variables without committing secrets:
   - `AI_PROVIDER_MODE=china_live`
   - `QWEN_API_KEY`
   - `SEEDREAM_API_KEY` or `ARK_API_KEY`
+  - `DATA_STORE=tablestore`
+  - `TABLESTORE_ENDPOINT`
+  - `TABLESTORE_INSTANCE`
+  - `TABLESTORE_TABLE_NAME`
   - App Store Server API issuer/key/bundle/subscription configuration
-  - Persistent SQLite database path and backup plan
+  - Tablestore table access role and backup/retention plan
 - [ ] Update the iOS Release `BACKEND_BASE_URL` in `project.yml`, regenerate the Xcode project, and rebuild.
 - [ ] Validate the iOS app against the deployed backend, including quota, generation, poster background, project sync, and deletion.
 - [x] Add in-app Settings entry for privacy policy, terms, support, restore purchases, data deletion, version, and user ID.
@@ -115,6 +119,5 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 
 ## Later International Phase
 
-- Enable `AI_PROVIDER_MODE=live`.
-- Configure `OPENAI_API_KEY`.
+- Revisit whether English generation needs a separate overseas provider stack.
 - Revisit English App Store metadata, screenshots, pricing, and support copy.
