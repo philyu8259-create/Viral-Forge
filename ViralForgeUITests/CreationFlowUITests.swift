@@ -382,6 +382,36 @@ final class CreationFlowUITests: XCTestCase {
         XCTAssertEqual(status.label, "更自然融入")
     }
 
+    func testPosterCopySafetyPlacementCanBeChangedWithProductImage() throws {
+        let app = XCUIApplication()
+        launch(app, extraArguments: ["VF_UI_TEST_ATTACHED_PRODUCT_IMAGE"])
+        createContentPack(in: app)
+
+        let editPosterButton = app.buttons["vf.result.editPosterButton"].firstMatch
+        XCTAssertTrue(editPosterButton.waitForExistence(timeout: 8))
+        editPosterButton.tap()
+
+        let posterScreen = app.scrollViews["vf.poster.screen"]
+        XCTAssertTrue(posterScreen.waitForExistence(timeout: 8))
+
+        let autoButton = app.buttons["vf.poster.textPlacement.automatic"]
+        for _ in 0..<4 where !autoButton.exists {
+            posterScreen.swipeUp()
+        }
+        XCTAssertTrue(autoButton.waitForExistence(timeout: 4), app.debugDescription)
+        XCTAssertTrue(app.buttons["vf.poster.textPlacement.top"].exists)
+        XCTAssertTrue(app.buttons["vf.poster.textPlacement.bottom"].exists)
+
+        let topButton = app.buttons["vf.poster.textPlacement.top"]
+        topButton.tap()
+        XCTAssertTrue(app.staticTexts["文案位置已更新。重新生成背景后，产品避让效果会更好。"].waitForExistence(timeout: 4))
+
+        let bottomButton = app.buttons["vf.poster.textPlacement.bottom"]
+        XCTAssertTrue(bottomButton.waitForExistence(timeout: 4), app.debugDescription)
+        bottomButton.tap()
+        saveScreenshot(named: "poster-copy-safety-placement.png")
+    }
+
     func testVoiceInputButtonProvidesRecordingFeedback() throws {
         let app = XCUIApplication()
         addPermissionMonitor(to: app)
