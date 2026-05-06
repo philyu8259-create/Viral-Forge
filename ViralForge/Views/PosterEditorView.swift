@@ -51,6 +51,7 @@ struct PosterEditorView: View {
                 if poster.productImageData != nil {
                     productIntegrationControls
                 }
+                textPlacementControls
                 backgroundDirectionControls
                 exportOptions
 
@@ -428,6 +429,55 @@ struct PosterEditorView: View {
         .accessibilityIdentifier("vf.poster.backgroundDirection.\(direction.accessibilitySuffix)")
     }
 
+    private var textPlacementControls: some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 13) {
+                VFSectionHeader(
+                    title: AppText.localized("Copy Safety", "文案避让"),
+                    subtitle: AppText.localized("Move poster copy away from the product hero", "让文字避开产品主体，减少遮挡")
+                )
+
+                HStack(spacing: 10) {
+                    ForEach(PosterTextPlacement.allCases) { placement in
+                        textPlacementButton(placement)
+                    }
+                }
+            }
+        }
+    }
+
+    private func textPlacementButton(_ placement: PosterTextPlacement) -> some View {
+        let isSelected = poster.textPlacement == placement
+        let tint = placement == .automatic ? VFStyle.teal : VFStyle.electricCyan
+
+        return Button {
+            selectTextPlacement(placement)
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                VFGradientIcon(icon: placement.icon, tint: tint, size: 32)
+                Text(placement.displayName)
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(VFStyle.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.74)
+                Text(placement.subtitle)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(isSelected ? tint : VFStyle.secondaryText)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.72)
+            }
+            .frame(maxWidth: .infinity, minHeight: 104, alignment: .leading)
+            .padding(12)
+            .background(isSelected ? tint.opacity(0.12) : .white.opacity(0.58), in: RoundedRectangle(cornerRadius: 16))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? tint.opacity(0.38) : .white.opacity(0.78), lineWidth: isSelected ? 1.4 : 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("vf.poster.textPlacement.\(placement.accessibilitySuffix)")
+    }
+
     private var directionPreviewGenerationLimit: Int {
         let totalDirections = PosterBackgroundDirection.allCases.count
         guard !appModel.quota.isPro else { return totalDirections }
@@ -768,6 +818,21 @@ struct PosterEditorView: View {
         }
     }
 
+    private func selectTextPlacement(_ placement: PosterTextPlacement) {
+        guard poster.textPlacement != placement else { return }
+        poster.textPlacement = placement
+        backgroundStatusMessage = AppText.localized(
+            "Copy placement updated. Regenerate the background for better product clearance.",
+            "文案位置已更新。重新生成背景后，产品避让效果会更好。"
+        )
+        exportedUIImage = nil
+        exportedImageURL = nil
+
+        Task {
+            await appModel.savePosterDraft(for: project, poster: poster)
+        }
+    }
+
     private func generateDirectionPreviews() {
         guard !isGeneratingDirectionPreviews else { return }
         let generationLimit = directionPreviewGenerationLimit
@@ -993,32 +1058,51 @@ struct PosterPreview: View {
         poster.productImageData.flatMap(UIImage.init(data:))
     }
 
+    private var resolvedTextPlacement: PosterTextPlacement {
+        poster.textPlacement.resolved(for: poster)
+    }
+
+    private var placesCopyAtTop: Bool {
+        resolvedTextPlacement == .top
+    }
+
     private func productImageLayer(_ image: UIImage, palette: PosterPalette) -> some View {
         GeometryReader { proxy in
             let width = min(proxy.size.width * 0.54, proxy.size.height * 0.36)
             let height = min(proxy.size.height * 0.30, width * 1.08)
             let topPadding = max(64, proxy.size.height * 0.12)
+            let bottomPadding = max(36, proxy.size.height * 0.07)
             let sidePadding = max(22, proxy.size.width * 0.07)
+            let productImage = Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .padding(max(8, width * 0.055))
+                .frame(width: width, height: height)
+                .background(.white.opacity(0.90), in: RoundedRectangle(cornerRadius: 18))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(.white.opacity(0.92), lineWidth: 1)
+                }
+                .shadow(color: palette.primary.opacity(0.18), radius: 18, x: 0, y: 10)
+                .rotationEffect(.degrees(poster.style == .editorial ? -2 : 2))
 
             VStack {
-                HStack {
+                if placesCopyAtTop {
                     Spacer()
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .padding(max(8, width * 0.055))
-                        .frame(width: width, height: height)
-                        .background(.white.opacity(0.90), in: RoundedRectangle(cornerRadius: 18))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 18)
-                                .stroke(.white.opacity(0.92), lineWidth: 1)
-                        }
-                        .shadow(color: palette.primary.opacity(0.18), radius: 18, x: 0, y: 10)
-                        .rotationEffect(.degrees(poster.style == .editorial ? -2 : 2))
+                    HStack {
+                        Spacer()
+                        productImage
+                    }
+                    .padding(.bottom, bottomPadding)
+                } else {
+                    HStack {
+                        Spacer()
+                        productImage
+                    }
+                    .padding(.top, topPadding)
+                    Spacer()
                 }
-                Spacer()
             }
-            .padding(.top, topPadding)
             .padding(.trailing, sidePadding)
             .allowsHitTesting(false)
             .accessibilityIdentifier("vf.poster.productImageLayer")
@@ -1031,10 +1115,13 @@ struct PosterPreview: View {
         case .cleanProduct:
             VStack(alignment: .leading, spacing: 18) {
                 platformBadge(palette: palette)
-                Spacer()
-                posterTitle(palette: palette, size: 44, lineLimit: 3)
-                posterSubtitle(palette: palette)
-                ctaButton(palette: palette, cornerRadius: 8)
+                if placesCopyAtTop {
+                    cleanCopyBlock(palette: palette)
+                    Spacer()
+                } else {
+                    Spacer()
+                    cleanCopyBlock(palette: palette)
+                }
             }
             .padding(28)
         case .boldLaunch:
@@ -1049,58 +1136,96 @@ struct PosterPreview: View {
                         .padding(.vertical, 6)
                         .background(.black.opacity(0.22), in: Capsule())
                 }
-                Spacer()
-                VStack(alignment: .leading, spacing: 12) {
-                    posterTitle(palette: palette, size: 48, lineLimit: 3)
-                    posterSubtitle(palette: palette)
+                if placesCopyAtTop {
+                    boldCopyBlock(palette: palette)
+                    ctaButton(palette: palette, cornerRadius: 18)
+                    Spacer()
+                } else {
+                    Spacer()
+                    boldCopyBlock(palette: palette)
+                    ctaButton(palette: palette, cornerRadius: 18)
                 }
-                .padding(18)
-                .background(.black.opacity(0.20), in: RoundedRectangle(cornerRadius: 18))
-                ctaButton(palette: palette, cornerRadius: 18)
             }
             .padding(26)
         case .softLifestyle:
             VStack(alignment: .leading, spacing: 16) {
                 platformBadge(palette: palette)
-                Spacer()
-                VStack(alignment: .leading, spacing: 12) {
-                    posterTitle(palette: palette, size: 36, lineLimit: 3)
-                    posterSubtitle(palette: palette)
-                    ctaButton(palette: palette, cornerRadius: 14)
-                }
-                .padding(18)
-                .background(.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 22))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 22)
-                        .stroke(.white.opacity(0.72), lineWidth: 1)
+                if placesCopyAtTop {
+                    softCopyCard(palette: palette)
+                    Spacer()
+                } else {
+                    Spacer()
+                    softCopyCard(palette: palette)
                 }
             }
             .padding(24)
         case .editorial:
             VStack(alignment: .leading, spacing: 18) {
                 platformBadge(palette: palette)
-                Spacer()
-                HStack(alignment: .top, spacing: 14) {
-                    Rectangle()
-                        .fill(palette.accent)
-                        .frame(width: 5)
-                        .clipShape(Capsule())
-                    VStack(alignment: .leading, spacing: 12) {
-                        posterTitle(palette: palette, size: 42, lineLimit: 3)
-                        posterSubtitle(palette: palette)
-                    }
+                if placesCopyAtTop {
+                    editorialCopyBlock(palette: palette)
+                    Spacer()
+                } else {
+                    Spacer()
+                    editorialCopyBlock(palette: palette)
                 }
-                Text(poster.cta)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(palette.primary)
-                    .padding(.bottom, 4)
-                    .overlay(alignment: .bottomLeading) {
-                        Rectangle()
-                            .fill(palette.accent)
-                            .frame(height: 3)
-                    }
             }
             .padding(28)
+        }
+    }
+
+    private func cleanCopyBlock(palette: PosterPalette) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            posterTitle(palette: palette, size: 44, lineLimit: 3)
+            posterSubtitle(palette: palette)
+            ctaButton(palette: palette, cornerRadius: 8)
+        }
+    }
+
+    private func boldCopyBlock(palette: PosterPalette) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            posterTitle(palette: palette, size: 48, lineLimit: 3)
+            posterSubtitle(palette: palette)
+        }
+        .padding(18)
+        .background(.black.opacity(0.20), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    private func softCopyCard(palette: PosterPalette) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            posterTitle(palette: palette, size: 36, lineLimit: 3)
+            posterSubtitle(palette: palette)
+            ctaButton(palette: palette, cornerRadius: 14)
+        }
+        .padding(18)
+        .background(.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 22))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(.white.opacity(0.76), lineWidth: 1)
+        }
+    }
+
+    private func editorialCopyBlock(palette: PosterPalette) -> some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top, spacing: 14) {
+                Rectangle()
+                    .fill(palette.accent)
+                    .frame(width: 5)
+                    .clipShape(Capsule())
+                VStack(alignment: .leading, spacing: 12) {
+                    posterTitle(palette: palette, size: 42, lineLimit: 3)
+                    posterSubtitle(palette: palette)
+                }
+            }
+            Text(poster.cta)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(palette.primary)
+                .padding(.bottom, 4)
+                .overlay(alignment: .bottomLeading) {
+                    Rectangle()
+                        .fill(palette.accent)
+                        .frame(height: 3)
+                }
         }
     }
 

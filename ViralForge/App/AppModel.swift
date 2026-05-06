@@ -739,6 +739,7 @@ final class AppModel {
         let hasProductReference = poster.productImageData != nil
         let backgroundDirection = poster.backgroundDirection.promptInstruction(for: project.draft.language)
         let productIntegration = poster.productImageIntegrationMode.promptInstruction(for: project.draft.language)
+        let textPlacement = poster.textPlacement.promptInstruction(for: project.draft.language, poster: poster)
         if project.draft.language == .english {
             return [
                 "Generate a pure commercial photography background layer, not a finished poster design.",
@@ -751,8 +752,8 @@ final class AppModel {
                 "Background direction: \(backgroundDirection).",
                 "The app will overlay this headline later: \(poster.headline).",
                 "Style: \(poster.style.displayName).",
+                "Copy-safe layout: \(textPlacement)",
                 hasProductReference ? "Do not add or copy any non-product text, letters, numbers, logos, brand marks, watermarks, QR codes, labels, stickers, buttons, captions, or interface elements. Only preserve marks that are physically printed on the supplied product itself." : "Strictly no text, letters, numbers, logos, brand marks, watermarks, QR codes, labels, stickers, buttons, captions, or interface elements anywhere in the image.",
-                "Leave clean negative space in the upper or middle area for app-rendered title and CTA text.",
                 "Realistic high-end product photography, clean lighting, strong commercial quality."
             ].compactMap { $0 }.joined(separator: " ")
         }
@@ -768,8 +769,8 @@ final class AppModel {
             "背景方向：\(backgroundDirection)。",
             "App 后续会叠加这个标题：\(poster.headline)。",
             "风格：\(poster.style.displayName)。",
+            "文案安全区：\(textPlacement)",
             hasProductReference ? "不要新增或复制任何非产品文字、汉字、英文字母、数字、logo、品牌标识、水印、二维码、标签、贴纸、按钮、字幕或 UI 元素；只允许保留真实产品本体上物理印刷的可见标识。" : "画面里严禁出现任何文字、汉字、英文字母、数字、logo、品牌标识、水印、二维码、标签、贴纸、按钮、字幕或 UI 元素。",
-            "画面中上部或中部保留干净留白，方便 App 叠加标题和按钮。",
             "真实高级商品摄影质感，光线干净，适合电商种草。"
         ].compactMap { $0 }.joined(separator: " ")
     }

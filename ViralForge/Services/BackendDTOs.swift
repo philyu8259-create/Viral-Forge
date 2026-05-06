@@ -92,6 +92,7 @@ struct PosterResponse: Decodable {
     var cta: String
     var channelLabel: String?
     var style: String?
+    var textPlacement: String?
     var backgroundDirection: String?
     var productImageIntegrationMode: String?
     var backgroundImageUrl: URL?
@@ -104,6 +105,7 @@ struct PosterResponse: Decodable {
             cta: cta,
             channelLabel: channelLabel,
             style: style.flatMap { PosterStyle(rawValue: $0) } ?? fallbackStyle,
+            textPlacement: textPlacement.flatMap { PosterTextPlacement(rawValue: $0) } ?? .automatic,
             backgroundDirection: backgroundDirection.flatMap { PosterBackgroundDirection(rawValue: $0) } ?? .clean,
             productImageIntegrationMode: productImageIntegrationMode.flatMap { ProductImageIntegrationMode(rawValue: $0) } ?? .natural,
             backgroundImageURL: backgroundImageUrl,
@@ -311,6 +313,7 @@ struct PosterPayload: Encodable {
     var cta: String
     var channelLabel: String?
     var style: String
+    var textPlacement: String
     var backgroundDirection: String
     var productImageIntegrationMode: String
     var backgroundImageUrl: URL?
@@ -322,6 +325,7 @@ struct PosterPayload: Encodable {
         self.cta = poster.cta
         self.channelLabel = poster.channelLabel
         self.style = poster.style.rawValue
+        self.textPlacement = poster.textPlacement.rawValue
         self.backgroundDirection = poster.backgroundDirection.rawValue
         self.productImageIntegrationMode = poster.productImageIntegrationMode.rawValue
         self.backgroundImageUrl = poster.backgroundImageURL

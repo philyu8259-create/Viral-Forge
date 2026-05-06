@@ -494,12 +494,85 @@ enum ProductImageIntegrationMode: String, CaseIterable, Identifiable, Hashable, 
     }
 }
 
+enum PosterTextPlacement: String, CaseIterable, Identifiable, Hashable, Codable {
+    case automatic = "Automatic"
+    case top = "Top"
+    case bottom = "Bottom"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .automatic: AppText.localized("Auto Avoid", "自动避让")
+        case .top: AppText.localized("Top", "上方")
+        case .bottom: AppText.localized("Bottom", "下方")
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .automatic:
+            AppText.localized("Avoid product when possible", "尽量避开产品主体")
+        case .top:
+            AppText.localized("Copy stays near the top", "文案放在画面上方")
+        case .bottom:
+            AppText.localized("Copy stays near the bottom", "文案放在画面下方")
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .automatic: "sparkles"
+        case .top: "arrow.up.to.line"
+        case .bottom: "arrow.down.to.line"
+        }
+    }
+
+    var accessibilitySuffix: String {
+        switch self {
+        case .automatic: "automatic"
+        case .top: "top"
+        case .bottom: "bottom"
+        }
+    }
+
+    func resolved(for poster: PosterDraft) -> PosterTextPlacement {
+        guard self == .automatic else { return self }
+        return poster.productImageIntegratedInBackground == true ? .top : .bottom
+    }
+
+    func promptInstruction(for language: ContentLanguage, poster: PosterDraft) -> String {
+        let resolvedPlacement = resolved(for: poster)
+        switch language {
+        case .english:
+            switch resolvedPlacement {
+            case .top:
+                return "Keep the hero product visually clear in the lower or middle area and reserve a clean, low-detail copy-safe zone in the upper third for app-rendered headline, subtitle, and CTA. Do not place the product behind that upper copy-safe zone."
+            case .bottom:
+                return "Keep the hero product visually clear in the upper or middle area and reserve a clean, low-detail copy-safe zone in the lower third for app-rendered headline, subtitle, and CTA. Do not place the product behind that lower copy-safe zone."
+            case .automatic:
+                return "Reserve a clean copy-safe zone for app-rendered headline, subtitle, and CTA without covering the hero product."
+            }
+        case .chinese:
+            switch resolvedPlacement {
+            case .top:
+                return "让产品主体主要保持在画面中下部且清晰可见，并在画面上方三分之一区域预留干净、低细节的文案安全区，用于 App 叠加标题、副标题和按钮；不要把产品放到这块上方文案区后面。"
+            case .bottom:
+                return "让产品主体主要保持在画面中上部且清晰可见，并在画面下方三分之一区域预留干净、低细节的文案安全区，用于 App 叠加标题、副标题和按钮；不要把产品放到这块下方文案区后面。"
+            case .automatic:
+                return "为 App 后续叠加标题、副标题和按钮预留干净文案安全区，避免遮挡产品主体。"
+            }
+        }
+    }
+}
+
 struct PosterDraft: Hashable, Codable {
     var headline: String
     var subtitle: String
     var cta: String
     var channelLabel: String? = nil
     var style: PosterStyle
+    var textPlacement: PosterTextPlacement = .automatic
     var backgroundDirection: PosterBackgroundDirection = .clean
     var productImageIntegrationMode: ProductImageIntegrationMode = .natural
     var backgroundImageURL: URL? = nil
@@ -513,6 +586,7 @@ struct PosterDraft: Hashable, Codable {
         cta: String,
         channelLabel: String? = nil,
         style: PosterStyle,
+        textPlacement: PosterTextPlacement = .automatic,
         backgroundDirection: PosterBackgroundDirection = .clean,
         productImageIntegrationMode: ProductImageIntegrationMode = .natural,
         backgroundImageURL: URL? = nil,
@@ -525,6 +599,7 @@ struct PosterDraft: Hashable, Codable {
         self.cta = cta
         self.channelLabel = channelLabel
         self.style = style
+        self.textPlacement = textPlacement
         self.backgroundDirection = backgroundDirection
         self.productImageIntegrationMode = productImageIntegrationMode
         self.backgroundImageURL = backgroundImageURL
@@ -539,6 +614,7 @@ struct PosterDraft: Hashable, Codable {
         case cta
         case channelLabel
         case style
+        case textPlacement
         case backgroundDirection
         case productImageIntegrationMode
         case backgroundImageURL
@@ -554,6 +630,7 @@ struct PosterDraft: Hashable, Codable {
         cta = try container.decode(String.self, forKey: .cta)
         channelLabel = try container.decodeIfPresent(String.self, forKey: .channelLabel)
         style = try container.decode(PosterStyle.self, forKey: .style)
+        textPlacement = try container.decodeIfPresent(PosterTextPlacement.self, forKey: .textPlacement) ?? .automatic
         backgroundDirection = try container.decodeIfPresent(PosterBackgroundDirection.self, forKey: .backgroundDirection) ?? .clean
         productImageIntegrationMode = try container.decodeIfPresent(ProductImageIntegrationMode.self, forKey: .productImageIntegrationMode) ?? .natural
         backgroundImageURL = try container.decodeIfPresent(URL.self, forKey: .backgroundImageURL)
