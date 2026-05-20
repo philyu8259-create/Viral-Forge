@@ -32,6 +32,7 @@
 		7B4BCF433D429A58D6A99240 /* ModelRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF7DB1105294A475EF485A28 /* ModelRouting.swift */; };
 		7B9835188AC6574EBB2C38CD /* CreationFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0987BBAA96C58EE63F59E6DC /* CreationFlowUITests.swift */; };
 		7C858866887A98780163CB4A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 183B2E86BF16396E0D2151E2 /* PrivacyInfo.xcprivacy */; };
+		869A0C365182EE5764DA85B7 /* Pods_ViralForge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53642F05501459A43AC35BA1 /* Pods_ViralForge.framework */; };
 		8F21A6B03326CACDE5A25535 /* BackendSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B73AF0B6A0CB5159DC1EF8 /* BackendSettingsView.swift */; };
 		91BECCB8742A5C4C7362C24B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 24A546EA52C98A01F028C9CC /* InfoPlist.strings */; };
 		ACA4C874E9B6798F32298BDF /* MockContentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13EA30A70042A3FEA3C738B3 /* MockContentService.swift */; };
@@ -85,6 +86,8 @@
 		45134448077867AFD09B0B9C /* TrackingAuthorizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingAuthorizationService.swift; sourceTree = "<group>"; };
 		48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		4FF09FC068E1A3F4F7C4ECFF /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
+		53642F05501459A43AC35BA1 /* Pods_ViralForge.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ViralForge.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		53EBE11BBFE956651364A66B /* Pods-ViralForge.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ViralForge.debug.xcconfig"; path = "Target Support Files/Pods-ViralForge/Pods-ViralForge.debug.xcconfig"; sourceTree = "<group>"; };
 		5C025243A6F9C5238A848603 /* AdSplashPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdSplashPlaceholderView.swift; sourceTree = "<group>"; };
 		5CCC0BBD19F07241283C2AE5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		64177FF007D6CE07527E00E1 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
@@ -94,6 +97,7 @@
 		6D0C08F899D5B6539FACE20B /* AdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdService.swift; sourceTree = "<group>"; };
 		7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		791D9AA12D1C4AFDD58B0271 /* PangleNativeFeedAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PangleNativeFeedAdView.swift; sourceTree = "<group>"; };
+		7D296FE37DB85A31983C5443 /* Pods-ViralForge.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ViralForge.release.xcconfig"; path = "Target Support Files/Pods-ViralForge/Pods-ViralForge.release.xcconfig"; sourceTree = "<group>"; };
 		8515AE8622366534FFE8A090 /* ViralForge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ViralForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F0A3B62468A44D99E7FC673 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		98560BBA4F3CC63974BA08E6 /* NoopAdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoopAdService.swift; sourceTree = "<group>"; };
@@ -116,6 +120,17 @@
 		F312110AB52B82F44594FED7 /* FeedAdPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedAdPlaceholderView.swift; sourceTree = "<group>"; };
 		FF7DB1105294A475EF485A28 /* ModelRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelRouting.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7D3E75F1851EFCF7CD9EF235 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				869A0C365182EE5764DA85B7 /* Pods_ViralForge.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		11D2A0831966E018045B72A9 /* Products */ = {
@@ -178,6 +193,16 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		6E083AB0190B9DB98FEEDF10 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				53EBE11BBFE956651364A66B /* Pods-ViralForge.debug.xcconfig */,
+				7D296FE37DB85A31983C5443 /* Pods-ViralForge.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		B4A04CB3DCD8B0513FD90C0A /* Ads */ = {
 			isa = PBXGroup;
 			children = (
@@ -227,6 +252,14 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		DC2F939AEF41A399697805B1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				53642F05501459A43AC35BA1 /* Pods_ViralForge.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		EA90C21E69117ADD413F27A6 = {
 			isa = PBXGroup;
 			children = (
@@ -234,6 +267,8 @@
 				32342ED8D0482EC53BDE26A2 /* ViralForge */,
 				F6866AAB428935FAD6960978 /* ViralForgeUITests */,
 				11D2A0831966E018045B72A9 /* Products */,
+				6E083AB0190B9DB98FEEDF10 /* Pods */,
+				DC2F939AEF41A399697805B1 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -252,16 +287,18 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = E625757A7A4D3FA40EC57DC7 /* Build configuration list for PBXNativeTarget "ViralForge" */;
 			buildPhases = (
+				4CC3ADE00692714728CD656A /* [CP] Check Pods Manifest.lock */,
 				95D4E898F2EC3062D1CC4E43 /* Sources */,
 				2A73F5BA32FD800A11B97FCD /* Resources */,
+				7D3E75F1851EFCF7CD9EF235 /* Frameworks */,
+				3FE99BEA61D079777254C6BD /* [CP] Embed Pods Frameworks */,
+				A23439194DA83EC79ABC3F05 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = ViralForge;
-			packageProductDependencies = (
-			);
 			productName = ViralForge;
 			productReference = 8515AE8622366534FFE8A090 /* ViralForge.app */;
 			productType = "com.apple.product-type.application";
@@ -278,8 +315,6 @@
 				C312FE8BCF99A82A61643A59 /* PBXTargetDependency */,
 			);
 			name = ViralForgeUITests;
-			packageProductDependencies = (
-			);
 			productName = ViralForgeUITests;
 			productReference = D36D31C093B28F6A0530B9C2 /* ViralForgeUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -336,6 +371,65 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		3FE99BEA61D079777254C6BD /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ViralForge/Pods-ViralForge-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ViralForge/Pods-ViralForge-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ViralForge/Pods-ViralForge-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		4CC3ADE00692714728CD656A /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-ViralForge-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A23439194DA83EC79ABC3F05 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ViralForge/Pods-ViralForge-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ViralForge/Pods-ViralForge-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ViralForge/Pods-ViralForge-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		22BB87DC15DFAEBC71DE456F /* Sources */ = {
@@ -478,6 +572,7 @@
 		};
 		17F0AD14EF5F4A3216465DA4 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7D296FE37DB85A31983C5443 /* Pods-ViralForge.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				BACKEND_BASE_URL = "https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run";
@@ -487,7 +582,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				OTHER_LDFLAGS = "$(inherited) -ObjC";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.phil.viralforge;
 				PRODUCT_NAME = ViralForge;
 				SDKROOT = iphoneos;
@@ -609,6 +707,7 @@
 		};
 		F569D8304764A78E4B3CB016 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 53EBE11BBFE956651364A66B /* Pods-ViralForge.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				BACKEND_BASE_URL = "https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run";
@@ -618,7 +717,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				OTHER_LDFLAGS = "$(inherited) -ObjC";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.phil.viralforge;
 				PRODUCT_NAME = ViralForge;
 				SDKROOT = iphoneos;
