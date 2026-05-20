@@ -78,7 +78,7 @@ Suggested review flow:
 4. Open the generated result, copy text, and tap the poster/image action to preview or edit the poster.
 5. Open Settings or the Pro tab to view Privacy Policy, Terms of Use, Support, Restore Purchases, and subscription status.
 
-Free copy generation is limited to 3 generations per day and resets daily. Free AI background generation includes 3 total uses and does not reset. Free users may see Pangle app-open ads, native/feed ads, and rewarded video ads. The app may request App Tracking Transparency permission for ad personalization and measurement. ViralForge Pro uses Apple StoreKit subscriptions and unlocks premium templates, watermark-free export, unlimited copy generation, AI background generation up to 10 per day / 200 per month, and a completely ad-free experience.
+Free copy generation is limited to 3 generations per day and resets daily. Free AI background generation includes 3 total uses and does not reset. Free users may see Pangle app-open ads, native/feed ads, and rewarded video ads. ViralForge requests App Tracking Transparency permission on first launch for free/non-Pro users before starting the Pangle SDK and before requesting app-open, native/feed, or rewarded ads. To review this, install a fresh build and open the app; the system tracking permission prompt appears from the Create tab before ads are loaded. ViralForge Pro uses Apple StoreKit subscriptions and unlocks premium templates, watermark-free export, unlimited copy generation, AI background generation up to 10 per day / 200 per month, and a completely ad-free experience.
 
 The Release build uses the public ViralForge backend:
 https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run
@@ -146,7 +146,7 @@ Suggested review flow:
 4. Open the generated result, copy text, and tap the poster/image action to preview or edit the poster.
 5. Open Settings or the Pro tab to view Privacy Policy, Terms of Use, Support, Restore Purchases, and subscription status.
 
-Free copy generation is limited to 3 generations per day and resets daily. Free AI background generation includes 3 total uses and does not reset. Free users may see Pangle app-open ads, native/feed ads, and rewarded video ads. The app may request App Tracking Transparency permission for ad personalization and measurement. ViralForge Pro uses Apple StoreKit subscriptions and unlocks premium templates, watermark-free export, unlimited copy generation, AI background generation up to 10 per day / 200 per month, and a completely ad-free experience.
+Free copy generation is limited to 3 generations per day and resets daily. Free AI background generation includes 3 total uses and does not reset. Free users may see Pangle app-open ads, native/feed ads, and rewarded video ads. ViralForge requests App Tracking Transparency permission on first launch for free/non-Pro users before starting the Pangle SDK and before requesting app-open, native/feed, or rewarded ads. To review this, install a fresh build and open the app; the system tracking permission prompt appears from the Create tab before ads are loaded. ViralForge Pro uses Apple StoreKit subscriptions and unlocks premium templates, watermark-free export, unlimited copy generation, AI background generation up to 10 per day / 200 per month, and a completely ad-free experience.
 
 The Release build uses the public ViralForge backend:
 https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run
@@ -209,7 +209,7 @@ Ad SDK diagnostics, ad performance, and SKAdNetwork attribution should be disclo
 
 - Release builds can show Pangle ads to free users: app-open, native/feed, and rewarded video.
 - Pro users are completely ad-free.
-- ATT copy is localized in `InfoPlist.strings`.
+- ATT is requested on first launch for free/non-Pro users before starting the Pangle SDK or loading any Pangle ad. The localized system prompt copy is in `InfoPlist.strings`.
 - `Info.plist` includes Pangle SKAdNetwork IDs `238da6jt44.skadnetwork` and `22mmun2rn5.skadnetwork`; verify against the current Pangle console/docs before final upload.
 
 ## Screenshot Plan

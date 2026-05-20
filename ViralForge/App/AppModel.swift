@@ -57,7 +57,9 @@ final class AppModel {
 
     private let fallbackContentService: ContentGenerating
     private let adService: AdService
+    private let adsConfiguration: AppAdConfiguration
     private var didConfigureStoreKit = false
+    private var didRequestAdTrackingAuthorization = false
     private var isBootstrappingAds = false
     private var transactionUpdatesTask: Task<Void, Never>?
 
@@ -70,6 +72,7 @@ final class AppModel {
         let isUITesting = processInfo.arguments.contains("VF_UI_TESTING")
         let isLiveBackendTesting = processInfo.arguments.contains("VF_LIVE_BACKEND_TESTING")
         self.fallbackContentService = contentService
+        self.adsConfiguration = adsConfiguration
         self.adService = AdServiceFactory.make(with: (isUITesting || isLiveBackendTesting) ? .unavailable : adsConfiguration)
         self.backendSettings = if isLiveBackendTesting {
             Self.liveBackendTestSettings(processInfo: processInfo)
@@ -655,6 +658,7 @@ final class AppModel {
         #if DEBUG
         print("vf_ad_debug: bootstrap begin service=\(String(describing: type(of: adService)))")
         #endif
+        await requestAdTrackingAuthorizationBeforeAdsIfNeeded()
         await adService.bootstrap()
         let presentationResult = await adService.requestAppOpenAd()
         #if DEBUG
@@ -665,6 +669,17 @@ final class AppModel {
 
     func dismissAppOpenAd() {
         shouldPresentAppOpenAd = false
+    }
+
+    func requestAdTrackingAuthorizationBeforeAdsIfNeeded() async {
+        guard !didRequestAdTrackingAuthorization else { return }
+        guard adsConfiguration.isEnabled, !quota.isPro else { return }
+        didRequestAdTrackingAuthorization = true
+
+        let outcome = await TrackingAuthorizationService.requestForAdsIfNeeded()
+        #if DEBUG
+        print("vf_ad_debug: ATT before ads outcome=\(outcome)")
+        #endif
     }
 
     @discardableResult

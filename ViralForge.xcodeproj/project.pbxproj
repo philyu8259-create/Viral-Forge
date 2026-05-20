@@ -40,6 +40,7 @@
 		BD60120398B530E8489DB73B /* BackendContentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F64EB59F1AEBB183A77E3A /* BackendContentService.swift */; };
 		BDB581EBDE526B70972FF64D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BA08513B6A611ADC6AA5DB /* SettingsView.swift */; };
 		C1AC0492FB57BD1C2BFFF969 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01292BC19CA55087155F90C7 /* AppConfiguration.swift */; };
+		C7087A0DAFC6ED1AF83AD81D /* TrackingAuthorizationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45134448077867AFD09B0B9C /* TrackingAuthorizationService.swift */; };
 		D8E1253C24307785AC59E071 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */; };
 		DAB68408B16581443A690917 /* BackendDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A85E893743A9153D469CAB /* BackendDataService.swift */; };
 		DAD8544C45ACB3C855E48481 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64177FF007D6CE07527E00E1 /* APIClient.swift */; };
@@ -81,6 +82,7 @@
 		387E20D6EEBB4DAF6F06913C /* ContentModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentModels.swift; sourceTree = "<group>"; };
 		394EF21C2B054FC7D2D87893 /* AdTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdTypes.swift; sourceTree = "<group>"; };
 		435A1758105F1C55CA31EC3C /* BrandKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandKitView.swift; sourceTree = "<group>"; };
+		45134448077867AFD09B0B9C /* TrackingAuthorizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingAuthorizationService.swift; sourceTree = "<group>"; };
 		48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		4FF09FC068E1A3F4F7C4ECFF /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
 		5C025243A6F9C5238A848603 /* AdSplashPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdSplashPlaceholderView.swift; sourceTree = "<group>"; };
@@ -185,6 +187,7 @@
 				394EF21C2B054FC7D2D87893 /* AdTypes.swift */,
 				98560BBA4F3CC63974BA08E6 /* NoopAdService.swift */,
 				DAF8F7B1F25BFEAB30A6CA19 /* PangleAdService.swift */,
+				45134448077867AFD09B0B9C /* TrackingAuthorizationService.swift */,
 			);
 			path = Ads;
 			sourceTree = "<group>";
@@ -385,6 +388,7 @@
 				BDB581EBDE526B70972FF64D /* SettingsView.swift in Sources */,
 				F5DE66E363E609C00EF58EDA /* SubscriptionModels.swift in Sources */,
 				6EEB30F52BD5F87097807B3D /* TemplatesView.swift in Sources */,
+				C7087A0DAFC6ED1AF83AD81D /* TrackingAuthorizationService.swift in Sources */,
 				5B8BA184FDF86DC812D90D4A /* VFGlobalStyle.swift in Sources */,
 				4C725A02C61AA20E52A76A9A /* ViralForgeApp.swift in Sources */,
 			);
@@ -447,7 +451,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -554,7 +558,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

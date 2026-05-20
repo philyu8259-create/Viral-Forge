@@ -1,6 +1,6 @@
 # App Store Connect Submission Materials
 
-Prepared for ViralForge `1.1 (9)`.
+Prepared for ViralForge `1.1 (10)`.
 
 ## App Information
 
@@ -45,7 +45,7 @@ Suggested review flow:
 4. Open the generated result, copy text, and tap the poster/image action to preview or edit the poster.
 5. Open Settings or the Pro tab to view Privacy Policy, Terms of Use, Support, Restore Purchases, and subscription status.
 
-Free users have a limited starter quota and may see Pangle app-open ads, native/feed ads, and rewarded video ads. The app may request App Tracking Transparency permission for ad personalization and measurement. ViralForge Pro uses Apple StoreKit subscriptions and unlocks premium templates, watermark-free export, unlimited copy generation, AI background generation up to 10 per day / 200 per month, and a completely ad-free experience.
+Free users have a limited starter quota and may see Pangle app-open ads, native/feed ads, and rewarded video ads. ViralForge requests App Tracking Transparency permission on first launch for free/non-Pro users before starting the Pangle SDK and before requesting app-open, native/feed, or rewarded ads. To review this, install a fresh build and open the app; the system tracking permission prompt appears from the Create tab before ads are loaded. ViralForge Pro uses Apple StoreKit subscriptions and unlocks premium templates, watermark-free export, unlimited copy generation, AI background generation up to 10/day and 200/month, and a completely ad-free experience.
 
 The Release build uses the public ViralForge backend:
 `https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run`
