@@ -39,12 +39,12 @@
           "internalID" : "E42F2A06",
           "localizations" : [
             {
-              "description" : "Unlimited copy generation, premium templates, and AI background credits.",
+              "description" : "Unlimited copy generation, premium templates, and AI backgrounds up to 10 per day / 200 per month.",
               "displayName" : "ViralForge Pro Monthly",
               "locale" : "en_US"
             },
             {
-              "description" : "解锁更多生成次数和专业模板",
+              "description" : "解锁不限文案、会员模板和 AI 背景 10张/天、200张/月",
               "displayName" : "ViralForge Pro 月度会员",
               "locale" : "zh_CN"
             }
@@ -63,12 +63,12 @@
           "internalID" : "A9DAE83C",
           "localizations" : [
             {
-              "description" : "A full year of ViralForge Pro at the best value.",
+              "description" : "A full year of ViralForge Pro with unlimited copy, premium templates, and AI backgrounds up to 10 per day / 200 per month.",
               "displayName" : "ViralForge Pro Yearly",
               "locale" : "en_US"
             },
             {
-              "description" : "解锁全年更多生成次数和专业模板",
+              "description" : "解锁全年不限文案、会员模板和 AI 背景 10张/天、200张/月",
               "displayName" : "ViralForge Pro 年度会员",
               "locale" : "zh_CN"
             }

@@ -8,15 +8,14 @@ enum AppLegalLinks {
     }
 
     static var terms: URL {
-        localizedURL(chinesePath: "zh/terms.html", englishPath: "en/terms.html")
+        URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
     }
 
     static var support: URL {
         localizedURL(chinesePath: "zh/support.html", englishPath: "en/support.html")
     }
 
-    static let supportEmail = URL(string: "mailto:philyu2023@qq.com?subject=ViralForge%20Support")!
-    static let dataDeletionEmail = URL(string: "mailto:philyu2023@qq.com?subject=ViralForge%20Data%20Deletion%20Request")!
+    static let appleSubscriptions = URL(string: "https://apps.apple.com/account/subscriptions")!
 
     private static func localizedURL(chinesePath: String, englishPath: String) -> URL {
         URL(string: "\(baseURL)/\(AppText.isChinese ? chinesePath : englishPath)")!
@@ -27,12 +26,15 @@ struct SettingsView: View {
     @Environment(AppModel.self) private var appModel
     @Environment(\.openURL) private var openURL
     @State private var showClearLocalDataConfirmation = false
+    #if DEBUG
+    @State private var isDebugAdRequestInFlight = false
+    #endif
 
     var body: some View {
         VFPage {
             VFPageHeader(
                 title: AppText.localized("Settings", "设置"),
-                subtitle: AppText.localized("Subscription, support, privacy, and release links", "会员、支持、隐私与上架必需入口"),
+                subtitle: AppText.localized("Subscription, support, privacy, and account links", "会员、支持、隐私与账号入口"),
                 icon: "gearshape.fill",
                 tint: VFStyle.ink
             )
@@ -41,6 +43,9 @@ struct SettingsView: View {
             legalCard
             dataCard
             appInfoCard
+            #if DEBUG
+            debugAdsCard
+            #endif
         }
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("vf.settings.screen")
@@ -71,12 +76,35 @@ struct SettingsView: View {
                         Text(appModel.quota.isPro ? AppText.localized("Pro Active", "会员已开通") : AppText.localized("Free Workspace", "免费工作台"))
                             .font(.headline.weight(.black))
                             .foregroundStyle(VFStyle.ink)
-                        Text(appModel.quota.isPro ? AppText.localized("Premium generation limits are active.", "会员生成权益已生效。") : AppText.localized("Upgrade anytime from the Pro tab.", "可随时在会员页升级。"))
+                        Text(appModel.quota.isPro ? AppText.localized("Premium generation limits are active.", "会员生成权益已生效。") : AppText.localized("Upgrade anytime from the Me tab.", "可随时在我的页升级。"))
                             .font(.caption.weight(.medium))
                             .foregroundStyle(VFStyle.secondaryText)
+                        if let subscriptionValidityText = appModel.subscriptionValidityText {
+                            Text(subscriptionValidityText)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(VFStyle.sunset)
+                                .accessibilityIdentifier("vf.settings.subscriptionValidity")
+                        }
                     }
                     Spacer()
                 }
+
+                Button {
+                    openURL(AppLegalLinks.appleSubscriptions)
+                } label: {
+                    Label(AppText.localized("Manage Apple Subscription", "管理 Apple 订阅"), systemImage: "calendar.badge.clock")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(VFStyle.ink)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                        .background(.white.opacity(0.62), in: Capsule())
+                        .overlay {
+                            Capsule()
+                                .stroke(.white.opacity(0.80), lineWidth: 1)
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("vf.settings.manageSubscriptionButton")
 
                 VFPrimaryButton(
                     title: appModel.isPurchasingSubscription ? AppText.localized("Restoring...", "正在恢复...") : AppText.localized("Restore Purchases", "恢复购买"),
@@ -108,7 +136,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 VFSectionHeader(
                     title: AppText.localized("Legal & Support", "协议与支持"),
-                    subtitle: AppText.localized("Privacy, terms, and ways to contact us", "隐私、协议与联系支持")
+                    subtitle: AppText.localized("Privacy, terms, and troubleshooting", "隐私、协议与问题排查")
                 )
 
                 settingsLink(
@@ -137,15 +165,6 @@ struct SettingsView: View {
                     url: AppLegalLinks.support,
                     identifier: "vf.settings.supportLink"
                 )
-
-                settingsLink(
-                    title: AppText.localized("Email Support", "邮件联系"),
-                    subtitle: "philyu2023@qq.com",
-                    icon: "envelope.fill",
-                    tint: VFStyle.primaryRed,
-                    url: AppLegalLinks.supportEmail,
-                    identifier: "vf.settings.emailSupportLink"
-                )
             }
         }
     }
@@ -155,41 +174,24 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 VFSectionHeader(
                     title: AppText.localized("Data & Deletion", "数据与删除"),
-                    subtitle: AppText.localized("Manage saved drafts and request data deletion", "管理本机草稿并申请数据删除")
+                    subtitle: AppText.localized("Manage saved drafts and local app data", "管理本机草稿与本地数据")
                 )
 
                 HStack(alignment: .top, spacing: 12) {
                     VFGradientIcon(icon: "trash.fill", tint: VFStyle.warning, size: 38)
                     VStack(alignment: .leading, spacing: 5) {
-                        Text(AppText.localized("Request account/data deletion", "申请账号/数据删除"))
+                        Text(AppText.localized("Delete local workspace data", "删除本机工作台数据"))
                             .font(.subheadline.weight(.black))
                             .foregroundStyle(VFStyle.ink)
                         Text(AppText.localized(
-                            "Send us an email if you want help deleting app data associated with your use of ViralForge.",
-                            "如需协助删除与你使用 ViralForge 相关的数据，请通过邮件联系我们。"
+                            "This clears projects, poster assets, snippets, and brand memory stored on this device.",
+                            "这会清除保存在本机的项目、海报素材、文案片段和品牌记忆。"
                         ))
                         .font(.caption.weight(.medium))
                         .foregroundStyle(VFStyle.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-
-                Button {
-                    openURL(AppLegalLinks.dataDeletionEmail)
-                } label: {
-                    Label(AppText.localized("Email Data Deletion Request", "发送数据删除邮件"), systemImage: "paperplane.fill")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(VFStyle.ink)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 13)
-                        .background(.white.opacity(0.62), in: Capsule())
-                        .overlay {
-                            Capsule()
-                                .stroke(.white.opacity(0.82), lineWidth: 1)
-                        }
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("vf.settings.dataDeletionLink")
 
                 Button {
                     showClearLocalDataConfirmation = true
@@ -234,6 +236,82 @@ struct SettingsView: View {
             }
         }
     }
+
+    #if DEBUG
+    private var debugAdsCard: some View {
+        VFGlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                VFSectionHeader(
+                    title: "Ad Diagnostics",
+                    subtitle: "Debug-only Pangle request probes"
+                )
+
+                HStack(spacing: 10) {
+                    debugAdButton(title: "App Open", icon: "rectangle.portrait.and.arrow.right") {
+                        await runDebugAdProbe("App Open") {
+                            let result = await appModel.debugRequestAppOpenAd()
+                            return result.debugLabel
+                        }
+                    }
+
+                    debugAdButton(title: "Reward", icon: "play.rectangle.fill") {
+                        await runDebugAdProbe("Reward") {
+                            let result = await appModel.debugRequestRewardedTextGenerationAd()
+                            return result.debugLabel
+                        }
+                    }
+                }
+
+                debugAdButton(title: "Native Feed", icon: "rectangle.grid.1x2.fill") {
+                    await MainActor.run {
+                        appModel.debugPresentNativeFeedAd()
+                    }
+                }
+
+                if let debugAdStatusMessage = appModel.debugAdStatusMessage {
+                    Text(debugAdStatusMessage)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(11)
+                        .background(.white.opacity(0.52), in: RoundedRectangle(cornerRadius: 14))
+                        .accessibilityIdentifier("vf.settings.adDiagnosticsStatus")
+                }
+            }
+        }
+        .accessibilityIdentifier("vf.settings.adDiagnosticsCard")
+    }
+
+    private func debugAdButton(title: String, icon: String, action: @escaping () async -> Void) -> some View {
+        Button {
+            guard !isDebugAdRequestInFlight else { return }
+            isDebugAdRequestInFlight = true
+            Task {
+                await action()
+                await MainActor.run {
+                    isDebugAdRequestInFlight = false
+                }
+            }
+        } label: {
+            Label(title, systemImage: icon)
+                .font(.caption.weight(.black))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(VFStyle.ink, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(isDebugAdRequestInFlight)
+        .opacity(isDebugAdRequestInFlight ? 0.62 : 1)
+    }
+
+    @MainActor
+    private func runDebugAdProbe(_ name: String, action: @escaping () async -> String) async {
+        appModel.debugAdStatusMessage = "\(name): loading..."
+        let result = await action()
+        appModel.debugAdStatusMessage = "\(name): \(result)"
+    }
+    #endif
 
     private var appVersionText: String {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
@@ -296,3 +374,33 @@ struct SettingsView: View {
             .environment(AppModel())
     }
 }
+
+#if DEBUG
+private extension AdPresentationResult {
+    var debugLabel: String {
+        switch self {
+        case .unavailable:
+            return "unavailable"
+        case .shown:
+            return "shown"
+        case .presentedBySDK:
+            return "presentedBySDK"
+        case .suppressed:
+            return "suppressed"
+        }
+    }
+}
+
+private extension AdRewardResult {
+    var debugLabel: String {
+        switch self {
+        case .unavailable:
+            return "unavailable"
+        case .granted:
+            return "granted"
+        case .failed:
+            return "failed"
+        }
+    }
+}
+#endif

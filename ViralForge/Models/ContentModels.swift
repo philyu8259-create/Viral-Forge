@@ -158,6 +158,17 @@ struct QuotaState: Equatable, Codable {
     var remainingTextGenerations: Int
     var remainingPosterExports: Int
     var isPro: Bool
+    var freeTextDailyKey: String? = nil
+    var proPosterUsage: ProPosterUsage? = nil
+}
+
+struct ProPosterUsage: Equatable, Codable {
+    var dailyUsed: Int
+    var dailyLimit: Int
+    var monthlyUsed: Int
+    var monthlyLimit: Int
+    var dailyKey: String
+    var monthlyKey: String
 }
 
 struct GenerationDraft: Hashable, Codable {
@@ -372,7 +383,7 @@ enum PosterBackgroundDirection: String, CaseIterable, Identifiable, Hashable, Co
         case .clean: AppText.localized("Cleaner", "更干净")
         case .lifestyle: AppText.localized("More Lifestyle", "更生活化")
         case .premiumCommerce: AppText.localized("Premium Commerce", "更高端电商")
-        case .negativeSpace: AppText.localized("More Negative Space", "更强留白")
+        case .negativeSpace: AppText.localized("Clear Hierarchy", "层级更清楚")
         }
     }
 
@@ -408,24 +419,24 @@ enum PosterBackgroundDirection: String, CaseIterable, Identifiable, Hashable, Co
         case .english:
             switch self {
             case .clean:
-                return "clean minimal product photography, uncluttered surface, restrained props, fresh bright lighting"
+                return "clean curated product photography, restrained but visible category-relevant props, fresh bright lighting, no bare empty wall, blank window area, or large empty tabletop area"
             case .lifestyle:
                 return "natural daily-use lifestyle scene, believable home or office context, warm human-scale atmosphere, no people required"
             case .premiumCommerce:
                 return "premium ecommerce hero shot, refined studio lighting, elevated materials, polished reflections, luxury retail quality"
             case .negativeSpace:
-                return "strong negative space for app-rendered headline and CTA, simple composition, product kept visually clear without crowding"
+                return "full-frame premium poster photography with clear visual hierarchy, natural low-contrast pockets for app-rendered copy, recognizable scene detail across the upper and lower frame without clutter"
             }
         case .chinese:
             switch self {
             case .clean:
-                return "更干净的极简商品摄影，桌面不杂乱，道具克制，光线清爽明亮"
+                return "干净但完整的精选商品摄影，道具克制但必须可见且与品类相关，光线清爽明亮，不要空墙或大片空桌面"
             case .lifestyle:
                 return "更生活化的真实使用场景，像家里或办公室自然摆放，有日常氛围但不需要出现人物"
             case .premiumCommerce:
                 return "更高端电商主图质感，精致棚拍光线，高级材质，反光干净，适合商业投放"
             case .negativeSpace:
-                return "更强留白，方便 App 后续叠加标题和 CTA，构图简单，产品主体清楚且不拥挤"
+                return "完整全画幅高级海报摄影构图，视觉层级清楚，上下画幅都有可识别的自然场景细节，可形成柔和低对比区域供 App 叠字，但不要大面积留白或空白板"
             }
         }
     }
@@ -538,7 +549,7 @@ enum PosterTextPlacement: String, CaseIterable, Identifiable, Hashable, Codable 
 
     func resolved(for poster: PosterDraft) -> PosterTextPlacement {
         guard self == .automatic else { return self }
-        return poster.productImageIntegratedInBackground == true ? .top : .bottom
+        return poster.productImageData != nil || poster.productImageIntegratedInBackground == true ? .top : .bottom
     }
 
     func promptInstruction(for language: ContentLanguage, poster: PosterDraft) -> String {
@@ -547,21 +558,193 @@ enum PosterTextPlacement: String, CaseIterable, Identifiable, Hashable, Codable 
         case .english:
             switch resolvedPlacement {
             case .top:
-                return "Keep the hero product visually clear in the lower or middle area and reserve a clean, low-detail copy-safe zone in the upper third for app-rendered headline, subtitle, and CTA. Do not place the product behind that upper copy-safe zone."
+                return "Use a full-frame premium product-photo composition with rich detail across the whole image. Let the upper visual path feel slightly calmer or softer if it fits the scene, but keep it filled with at least two recognizable contextual layers such as props, plants, reflections, light texture, shelf edges, or background objects. Do not turn the upper frame into abstract blur. Never create a blank panel or let a bare wall, blank window, or empty tabletop dominate the frame. Keep the hero product complete, fully visible, and naturally surrounded by props, shadows, texture, depth, and light."
             case .bottom:
-                return "Keep the hero product visually clear in the upper or middle area and reserve a clean, low-detail copy-safe zone in the lower third for app-rendered headline, subtitle, and CTA. Do not place the product behind that lower copy-safe zone."
+                return "Use a full-frame premium product-photo composition with rich detail across the whole image. Let the lower visual path feel slightly calmer or softer if it fits the scene, but keep it filled with recognizable contextual layers such as props, plants, reflections, light texture, shelf edges, or background objects. Do not turn any half of the frame into abstract blur. Never create a blank panel or let a bare wall, blank window, or empty tabletop dominate the frame. Keep the hero product complete, fully visible, and naturally surrounded by props, shadows, texture, depth, and light."
             case .automatic:
-                return "Reserve a clean copy-safe zone for app-rendered headline, subtitle, and CTA without covering the hero product."
+                return "Create a full-frame premium product-photo composition with no large empty block. Keep visual hierarchy clear for later app-rendered copy, while the product, props, shadows, texture, depth, and light fill the poster naturally. Do not let any single low-detail wall, window, or tabletop surface dominate the frame."
             }
         case .chinese:
             switch resolvedPlacement {
             case .top:
-                return "让产品主体主要保持在画面中下部且清晰可见，并在画面上方三分之一区域预留干净、低细节的文案安全区，用于 App 叠加标题、副标题和按钮；不要把产品放到这块上方文案区后面。"
+                return "采用完整全画幅高级商品摄影构图，整张图都要有自然场景、光影、材质和层次。上方可以略微更柔和、更低对比，但必须至少有两个可识别的道具、植物、反光、光影纹理、置物架边缘或背景物件，不能只是一片抽象虚化；绝不能生成空白板，也不能让空墙、空窗或空桌面占据画面。产品主体必须完整可见，并由道具、阴影、纹理、空间纵深和光线自然包围。"
             case .bottom:
-                return "让产品主体主要保持在画面中上部且清晰可见，并在画面下方三分之一区域预留干净、低细节的文案安全区，用于 App 叠加标题、副标题和按钮；不要把产品放到这块下方文案区后面。"
+                return "采用完整全画幅高级商品摄影构图，整张图都要有自然场景、光影、材质和层次。下方可以略微更柔和、更低对比，但必须有可识别的道具、植物、反光、光影纹理、置物架边缘或背景物件，不能让任一半画幅变成抽象虚化；绝不能生成空白板，也不能让空墙、空窗或空桌面占据画面。产品主体必须完整可见，并由道具、阴影、纹理、空间纵深和光线自然包围。"
             case .automatic:
-                return "为 App 后续叠加标题、副标题和按钮预留干净文案安全区，避免遮挡产品主体。"
+                return "生成完整全画幅高级商品摄影构图，不要大面积空白块。画面要有清晰视觉层级，方便 App 后续叠字，但产品、道具、阴影、材质、空间纵深和光线要自然铺满整张海报，不能让单一低细节的空墙、空窗或空桌面占据画面。"
             }
+        }
+    }
+}
+
+enum PosterTextFontFamily: String, CaseIterable, Identifiable, Hashable, Codable {
+    case rounded = "Rounded"
+    case system = "System"
+    case serif = "Serif"
+    case monospaced = "Monospaced"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .rounded: AppText.localized("Rounded", "圆角")
+        case .system: AppText.localized("System", "系统")
+        case .serif: AppText.localized("Serif", "衬线")
+        case .monospaced: AppText.localized("Mono", "等宽")
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .rounded: "textformat.alt"
+        case .system: "textformat.size"
+        case .serif: "textformat.abc"
+        case .monospaced: "text.alignleft"
+        }
+    }
+
+    var design: Font.Design {
+        switch self {
+        case .rounded: .rounded
+        case .system: .default
+        case .serif: .serif
+        case .monospaced: .monospaced
+        }
+    }
+}
+
+enum PosterTextWeight: String, CaseIterable, Identifiable, Hashable, Codable {
+    case regular = "Regular"
+    case semibold = "Semibold"
+    case bold = "Bold"
+    case black = "Black"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .regular: AppText.localized("Regular", "常规")
+        case .semibold: AppText.localized("Semibold", "中粗")
+        case .bold: AppText.localized("Bold", "粗体")
+        case .black: AppText.localized("Black", "特粗")
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .regular: "textformat"
+        case .semibold: "textformat.size"
+        case .bold: "textformat.size.larger"
+        case .black: "bold"
+        }
+    }
+
+    var weight: Font.Weight {
+        switch self {
+        case .regular: .regular
+        case .semibold: .semibold
+        case .bold: .bold
+        case .black: .black
+        }
+    }
+}
+
+enum PosterTextColor: String, CaseIterable, Identifiable, Hashable, Codable {
+    case auto = "Auto"
+    case white = "White"
+    case black = "Black"
+    case brand = "Brand"
+    case accent = "Accent"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .auto: AppText.localized("Auto", "自动")
+        case .white: AppText.localized("White", "白")
+        case .black: AppText.localized("Black", "黑")
+        case .brand: AppText.localized("Brand", "主色")
+        case .accent: AppText.localized("Accent", "强调色")
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .auto: "wand.and.stars"
+        case .white: "sun.max.fill"
+        case .black: "moon.fill"
+        case .brand: "paintbrush.pointed.fill"
+        case .accent: "paintpalette.fill"
+        }
+    }
+
+    func resolvedColor(
+        palette: PosterPalette,
+        hasImageBackground: Bool,
+        isButtonText: Bool = false
+    ) -> Color {
+        switch self {
+        case .auto:
+            if isButtonText {
+                return palette.background
+            }
+            return hasImageBackground ? .white : palette.primary
+        case .white:
+            return .white
+        case .black:
+            return .black
+        case .brand:
+            return palette.primary
+        case .accent:
+            return palette.accent
+        }
+    }
+}
+
+enum PosterTextAlignment: String, CaseIterable, Identifiable, Hashable, Codable {
+    case leading = "Leading"
+    case center = "Center"
+    case trailing = "Trailing"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .leading: AppText.localized("Left", "左")
+        case .center: AppText.localized("Center", "居中")
+        case .trailing: AppText.localized("Right", "右")
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .leading: "text.alignleft"
+        case .center: "text.aligncenter"
+        case .trailing: "text.alignright"
+        }
+    }
+
+    var horizontalAlignment: HorizontalAlignment {
+        switch self {
+        case .leading: .leading
+        case .center: .center
+        case .trailing: .trailing
+        }
+    }
+
+    var textAlignment: TextAlignment {
+        switch self {
+        case .leading: .leading
+        case .center: .center
+        case .trailing: .trailing
+        }
+    }
+
+    var frameAlignment: Alignment {
+        switch self {
+        case .leading: .leading
+        case .center: .center
+        case .trailing: .trailing
         }
     }
 }
@@ -579,6 +762,15 @@ struct PosterDraft: Hashable, Codable {
     var productImageData: Data? = nil
     var productImageIntegratedInBackground: Bool? = nil
     var backgroundHistory: [PosterBackgroundVersion] = []
+    var textFontFamily: PosterTextFontFamily = .rounded
+    var textWeight: PosterTextWeight = .black
+    var textColor: PosterTextColor = .auto
+    var textAlignment: PosterTextAlignment = .leading
+    var headlineScale: Double = 1.0
+    var subtitleScale: Double = 1.0
+    var ctaScale: Double = 1.0
+    var copyOffsetX: Double = 0.0
+    var copyOffsetY: Double = 0.0
 
     init(
         headline: String,
@@ -592,7 +784,16 @@ struct PosterDraft: Hashable, Codable {
         backgroundImageURL: URL? = nil,
         productImageData: Data? = nil,
         productImageIntegratedInBackground: Bool? = nil,
-        backgroundHistory: [PosterBackgroundVersion] = []
+        backgroundHistory: [PosterBackgroundVersion] = [],
+        textFontFamily: PosterTextFontFamily = .rounded,
+        textWeight: PosterTextWeight = .black,
+        textColor: PosterTextColor = .auto,
+        textAlignment: PosterTextAlignment = .leading,
+        headlineScale: Double = 1.0,
+        subtitleScale: Double = 1.0,
+        ctaScale: Double = 1.0,
+        copyOffsetX: Double = 0.0,
+        copyOffsetY: Double = 0.0
     ) {
         self.headline = headline
         self.subtitle = subtitle
@@ -606,6 +807,15 @@ struct PosterDraft: Hashable, Codable {
         self.productImageData = productImageData
         self.productImageIntegratedInBackground = productImageIntegratedInBackground
         self.backgroundHistory = backgroundHistory
+        self.textFontFamily = textFontFamily
+        self.textWeight = textWeight
+        self.textColor = textColor
+        self.textAlignment = textAlignment
+        self.headlineScale = headlineScale
+        self.subtitleScale = subtitleScale
+        self.ctaScale = ctaScale
+        self.copyOffsetX = copyOffsetX
+        self.copyOffsetY = copyOffsetY
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -621,6 +831,15 @@ struct PosterDraft: Hashable, Codable {
         case productImageData
         case productImageIntegratedInBackground
         case backgroundHistory
+        case textFontFamily
+        case textWeight
+        case textColor
+        case textAlignment
+        case headlineScale
+        case subtitleScale
+        case ctaScale
+        case copyOffsetX
+        case copyOffsetY
     }
 
     init(from decoder: Decoder) throws {
@@ -637,6 +856,35 @@ struct PosterDraft: Hashable, Codable {
         productImageData = try container.decodeIfPresent(Data.self, forKey: .productImageData)
         productImageIntegratedInBackground = try container.decodeIfPresent(Bool.self, forKey: .productImageIntegratedInBackground)
         backgroundHistory = try container.decodeIfPresent([PosterBackgroundVersion].self, forKey: .backgroundHistory) ?? []
+        textFontFamily = try container.decodeIfPresent(PosterTextFontFamily.self, forKey: .textFontFamily) ?? .rounded
+        textWeight = try container.decodeIfPresent(PosterTextWeight.self, forKey: .textWeight) ?? .black
+        textColor = try container.decodeIfPresent(PosterTextColor.self, forKey: .textColor) ?? .auto
+        textAlignment = try container.decodeIfPresent(PosterTextAlignment.self, forKey: .textAlignment) ?? .leading
+        headlineScale = try container.decodeIfPresent(Double.self, forKey: .headlineScale) ?? 1.0
+        subtitleScale = try container.decodeIfPresent(Double.self, forKey: .subtitleScale) ?? 1.0
+        ctaScale = try container.decodeIfPresent(Double.self, forKey: .ctaScale) ?? 1.0
+        copyOffsetX = try container.decodeIfPresent(Double.self, forKey: .copyOffsetX) ?? 0.0
+        copyOffsetY = try container.decodeIfPresent(Double.self, forKey: .copyOffsetY) ?? 0.0
+    }
+
+    var clampedHeadlineScale: Double {
+        min(max(0.7, headlineScale), 1.6)
+    }
+
+    var clampedSubtitleScale: Double {
+        min(max(0.7, subtitleScale), 1.6)
+    }
+
+    var clampedCtaScale: Double {
+        min(max(0.7, ctaScale), 1.6)
+    }
+
+    var clampedCopyOffsetX: Double {
+        min(max(-80, copyOffsetX), 80)
+    }
+
+    var clampedCopyOffsetY: Double {
+        min(max(-80, copyOffsetY), 80)
     }
 
     func resolvedChannelLabel(for platform: SocialPlatform) -> String {
@@ -645,7 +893,7 @@ struct PosterDraft: Hashable, Codable {
     }
 
     var shouldOverlayProductImage: Bool {
-        productImageData != nil && productImageIntegratedInBackground != true
+        productImageData != nil && backgroundImageURL == nil
     }
 
     func recordingBackgroundVersion(imageURL: URL, usedProductReference: Bool?) -> PosterDraft {

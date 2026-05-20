@@ -85,6 +85,11 @@ This is the source of truth for the first TestFlight build. Keep the first deplo
 - [x] Add in-app Settings entry for privacy policy, terms, support, restore purchases, data deletion, version, and user ID.
 - [x] Draft separate Simplified Chinese and English Privacy Policy, Terms, and Support pages under `docs/zh/` and `docs/en/`.
 - [x] Deploy public locale-specific Privacy Policy, Terms, and Support URLs through GitHub Pages and verify they open outside GitHub file view.
+- [ ] Publish the updated privacy pages that disclose Pangle ads, ATT, selected product reference image upload, and Pro ad removal.
+- [ ] Complete App Store Connect App Privacy with Tracking = Yes for the ad-enabled Release build, unless ads are removed from that build.
+- [ ] Confirm Pangle production app ID and placement IDs are configured for Release and are not test-only placements.
+- [ ] Re-verify Pangle SKAdNetwork IDs against the current Pangle console/docs before archive upload.
+- [ ] Generate the Xcode privacy report for the final archive and confirm the app manifest plus Pangle SDK privacy manifests match the App Store privacy answers.
 - [ ] Finish App Store Connect agreements, tax, and banking so subscriptions can be tested and sold.
 - [x] Draft Simplified Chinese and English App Store metadata in `APP_STORE_METADATA.md`.
 - [ ] Add final app screenshots and subscription review screenshots after UI/UX design is final.

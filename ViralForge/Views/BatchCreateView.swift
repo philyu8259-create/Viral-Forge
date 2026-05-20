@@ -193,7 +193,7 @@ struct BatchCreateView: View {
                     if !appModel.quota.isPro {
                         Button {
                             appModel.generationError = nil
-                            appModel.selectedTab = .pro
+                            appModel.openPaywall(reason: message)
                         } label: {
                             Label(AppText.localized("Upgrade Pro", "升级 Pro"), systemImage: "crown.fill")
                                 .font(.subheadline.weight(.bold))

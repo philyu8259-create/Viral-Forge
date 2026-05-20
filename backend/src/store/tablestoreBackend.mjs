@@ -26,8 +26,13 @@ export async function getQuotaRecord(userId) {
   if (!row) return null;
   return {
     remaining_text_generations: Number(row.remainingTextGenerations ?? 0),
+    free_text_daily_key: row.freeTextDailyKey ?? "",
     remaining_poster_exports: Number(row.remainingPosterExports ?? 0),
-    is_pro: row.isPro ? 1 : 0
+    is_pro: row.isPro ? 1 : 0,
+    pro_poster_daily_used: Number(row.proPosterDailyUsed ?? 0),
+    pro_poster_daily_key: row.proPosterDailyKey ?? "",
+    pro_poster_monthly_used: Number(row.proPosterMonthlyUsed ?? 0),
+    pro_poster_monthly_key: row.proPosterMonthlyKey ?? ""
   };
 }
 
@@ -35,8 +40,13 @@ export async function putQuotaRecord(userId, quota) {
   await putRecord(userPK(userId), "quota", {
     type: "quota",
     remainingTextGenerations: quota.remainingTextGenerations,
+    freeTextDailyKey: quota.freeTextDailyKey ?? "",
     remainingPosterExports: quota.remainingPosterExports,
     isPro: Boolean(quota.isPro),
+    proPosterDailyUsed: quota.proPosterDailyUsed ?? 0,
+    proPosterDailyKey: quota.proPosterDailyKey ?? "",
+    proPosterMonthlyUsed: quota.proPosterMonthlyUsed ?? 0,
+    proPosterMonthlyKey: quota.proPosterMonthlyKey ?? "",
     updatedAt: nowISO()
   });
 }

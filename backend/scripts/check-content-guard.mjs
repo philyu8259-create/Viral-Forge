@@ -1,4 +1,4 @@
-import { normalizeContentResponse } from "../src/providers/contentSchema.mjs";
+import { buildContentPrompt, normalizeContentResponse } from "../src/providers/contentSchema.mjs";
 
 const request = {
   language: "zh-Hans",
@@ -26,6 +26,7 @@ const driftedModelOutput = {
 };
 
 const normalized = normalizeContentResponse(driftedModelOutput, request);
+const prompt = buildContentPrompt(request);
 const joined = [
   ...normalized.titles.map((line) => line.text),
   ...normalized.hooks.map((line) => line.text),
@@ -44,6 +45,8 @@ const reasons = [
 ];
 assert(reasons.every(hasChinese), "Chinese generation reasons should be localized to Chinese");
 assert(reasons.every((reason) => !looksMostlyEnglish(reason)), "Chinese generation reasons should not be mostly English");
+assert(prompt.includes("Do not invent exact specifications"), "prompt should forbid invented exact product specifications");
+assert(prompt.includes("describe it qualitatively"), "prompt should ask the model to avoid made-up numeric proof");
 
 console.log("Content guard check passed.");
 

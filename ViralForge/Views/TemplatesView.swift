@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TemplatesView: View {
     @Environment(AppModel.self) private var appModel
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedCategory: TemplateCategory = .productSeeding
 
     private var filteredTemplates: [CreativeTemplate] {
@@ -36,7 +37,7 @@ struct TemplatesView: View {
                 )
 
                 LazyVStack(spacing: 14) {
-                    ForEach(filteredTemplates) { template in
+                    ForEach(Array(filteredTemplates.enumerated()), id: \.element.id) { index, template in
                         NavigationLink {
                             TemplateDetailView(template: template)
                         } label: {
@@ -44,6 +45,12 @@ struct TemplatesView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("vf.templateCard.\(template.name)")
+
+                        if shouldInsertFeedAd(after: index, total: filteredTemplates.count),
+                           let adPlacement = templateFeedPlacement {
+                            FeedAdPlaceholderView(placement: adPlacement)
+                                .accessibilityIdentifier("vf.templates.list.adCard")
+                        }
                     }
                 }
             }
@@ -67,6 +74,18 @@ struct TemplatesView: View {
         .task {
             await appModel.refreshTemplatesIfNeeded()
         }
+        .onChange(of: appModel.pendingTemplateWorkflow) { _, workflow in
+            guard workflow != nil else { return }
+            dismiss()
+        }
+    }
+
+    private var templateFeedPlacement: AdFeedPlacement? {
+        appModel.feedPlacement(for: .templatesList)
+    }
+
+    private func shouldInsertFeedAd(after index: Int, total: Int) -> Bool {
+        total >= 6 && index == 5
     }
 
     private var categoryStrip: some View {
@@ -223,23 +242,16 @@ struct TemplatePosterPreview: View {
             ZStack {
                 visual.background
 
-                Circle()
-                    .fill(visual.accent.opacity(0.30))
-                    .frame(width: size.width * 0.92, height: size.width * 0.92)
-                    .blur(radius: size.width * 0.14)
-                    .offset(x: -size.width * 0.34, y: -size.height * 0.34)
+                RoundedRectangle(cornerRadius: size.width * 0.08)
+                    .fill(.white.opacity(0.16))
+                    .rotationEffect(.degrees(-8))
+                    .frame(width: size.width * 1.18, height: size.height * 0.34)
+                    .offset(y: -size.height * 0.24)
 
-                Circle()
-                    .fill(visual.secondary.opacity(0.30))
-                    .frame(width: size.width * 0.76, height: size.width * 0.76)
-                    .blur(radius: size.width * 0.15)
-                    .offset(x: size.width * 0.34, y: -size.height * 0.08)
-
-                Rectangle()
-                    .fill(.white.opacity(0.08))
-                    .rotationEffect(.degrees(-11))
-                    .frame(width: size.width * 1.4, height: size.height * 0.42)
-                    .offset(y: -size.height * 0.18)
+                RoundedRectangle(cornerRadius: size.width * 0.06)
+                    .fill(visual.secondary.opacity(0.13))
+                    .frame(width: size.width * 0.74, height: size.height * 0.20)
+                    .offset(x: size.width * 0.18, y: size.height * 0.20)
 
                 posterScene(size: size, visual: visual)
                     .padding(.horizontal, size.width * 0.08)
@@ -307,19 +319,27 @@ struct TemplatePosterPreview: View {
 
     @ViewBuilder
     private func posterScene(size: CGSize, visual: TemplatePosterSpec) -> some View {
-        switch template.category {
-        case .productSeeding:
+        switch visual.layout {
+        case .productHero:
             ProductPosterScene(visual: visual)
-        case .storeTraffic:
+        case .videoCover:
+            VideoCoverTemplateScene(visual: visual)
+        case .comparison:
+            ComparisonTemplateScene(visual: visual)
+        case .checklist:
+            ChecklistTemplateScene(visual: visual)
+        case .localVisit:
             StorePosterScene(visual: visual)
-        case .personalBrand:
+        case .profileStory:
             PersonalBrandPosterScene(visual: visual)
-        case .liveLaunch:
+        case .liveEvent:
             LiveLaunchPosterScene(visual: visual)
-        case .seasonalPromo:
+        case .giftGuide:
             SeasonalPosterScene(visual: visual)
-        case .newLaunch:
+        case .launchHero:
             NewLaunchPosterScene(visual: visual)
+        case .infoCard:
+            InfoCardTemplateScene(visual: visual)
         }
     }
 
@@ -341,6 +361,39 @@ private struct TemplatePosterSpec {
 
     var isChinese: Bool {
         [.xiaohongshu, .douyin, .weChat].contains(template.platform)
+    }
+
+    var layout: TemplatePreviewLayout {
+        let text = "\(template.name) \(template.promptHint)".lowercased()
+
+        if text.contains("直播") || text.contains("live") || text.contains("预约") || text.contains("倒计时") || text.contains("countdown") {
+            return .liveEvent
+        }
+        if text.contains("节日") || text.contains("礼物") || text.contains("促销") || text.contains("gift") || text.contains("promo") || text.contains("sale") || text.contains("deal") {
+            return .giftGuide
+        }
+        if text.contains("新品") || text.contains("首发") || text.contains("new product") || text.contains("launch") || text.contains("arrival") {
+            return .launchHero
+        }
+        if text.contains("门店") || text.contains("探店") || text.contains("到店") || text.contains("local") || text.contains("visit") || text.contains("route") {
+            return .localVisit
+        }
+        if text.contains("ip") || text.contains("专家") || text.contains("创始人") || text.contains("founder") || text.contains("expert") || text.contains("creator") {
+            return .profileStory
+        }
+        if text.contains("对比") || text.contains("before after") || text.contains("comparison") {
+            return .comparison
+        }
+        if text.contains("清单") || text.contains("checklist") || text.contains("guide") || text.contains("faq") || text.contains("carousel") {
+            return .checklist
+        }
+        if text.contains("首帧") || text.contains("封面") || text.contains("cover") || text.contains("first-frame") || text.contains("shorts") || text.contains("tiktok") || text.contains("douyin") || text.contains("口播") || text.contains("脚本") || text.contains("script") {
+            return .videoCover
+        }
+        if text.contains("成分") || text.contains("解析") || text.contains("ingredient") || text.contains("breakdown") {
+            return .infoCard
+        }
+        return .productHero
     }
 
     var accent: Color {
@@ -391,48 +444,77 @@ private struct TemplatePosterSpec {
     }
 
     var icon: String {
-        switch template.category {
-        case .productSeeding: "shippingbox.fill"
-        case .storeTraffic: "mappin.and.ellipse"
-        case .personalBrand: "person.crop.circle.fill"
-        case .liveLaunch: "dot.radiowaves.left.and.right"
-        case .seasonalPromo: "gift.fill"
-        case .newLaunch: "sparkles"
+        switch layout {
+        case .productHero: "shippingbox.fill"
+        case .videoCover: "play.rectangle.fill"
+        case .comparison: "rectangle.split.2x1.fill"
+        case .checklist: "checklist"
+        case .localVisit: "mappin.and.ellipse"
+        case .profileStory: "person.crop.circle.fill"
+        case .liveEvent: "dot.radiowaves.left.and.right"
+        case .giftGuide: "gift.fill"
+        case .launchHero: "sparkles"
+        case .infoCard: "text.magnifyingglass"
         }
     }
 
     var headline: String {
-        switch template.category {
-        case .productSeeding: isChinese ? "一眼想买" : "Worth Buying"
-        case .storeTraffic: isChinese ? "周末就去" : "Go This Weekend"
-        case .personalBrand: isChinese ? "建立信任" : "Build Trust"
-        case .liveLaunch: isChinese ? "今晚开抢" : "Live Drop"
-        case .seasonalPromo: isChinese ? "限时好礼" : "Giftable Now"
-        case .newLaunch: isChinese ? "新品首发" : "New Arrival"
+        switch layout {
+        case .productHero: isChinese ? "一眼想买" : "Worth Buying"
+        case .videoCover: isChinese ? "停留首帧" : "Stop Scroll"
+        case .comparison: isChinese ? "对比有结论" : "Clear Comparison"
+        case .checklist: isChinese ? "收藏清单" : "Saveable List"
+        case .localVisit: isChinese ? "周末就去" : "Go This Weekend"
+        case .profileStory: isChinese ? "建立信任" : "Build Trust"
+        case .liveEvent: isChinese ? "今晚开抢" : "Live Drop"
+        case .giftGuide: isChinese ? "限时好礼" : "Giftable Now"
+        case .launchHero: isChinese ? "新品首发" : "New Arrival"
+        case .infoCard: isChinese ? "看懂再买" : "Know Why"
         }
     }
 
     var subtitle: String {
-        switch template.category {
-        case .productSeeding: isChinese ? "商品主视觉" : "Product hero visual"
-        case .storeTraffic: isChinese ? "门店打卡场景" : "Local visit hook"
-        case .personalBrand: isChinese ? "专家信任背书" : "Creator authority"
-        case .liveLaunch: isChinese ? "直播成交氛围" : "Live commerce drop"
-        case .seasonalPromo: isChinese ? "节日促销氛围" : "Seasonal promo visual"
-        case .newLaunch: isChinese ? "新品发布主视觉" : "Launch key visual"
+        switch layout {
+        case .productHero: isChinese ? "商品主视觉" : "Product hero visual"
+        case .videoCover: isChinese ? "短视频封面骨架" : "Short video cover"
+        case .comparison: isChinese ? "卖点对比结构" : "Benefit comparison"
+        case .checklist: isChinese ? "清单图文结构" : "Checklist layout"
+        case .localVisit: isChinese ? "门店打卡场景" : "Local visit hook"
+        case .profileStory: isChinese ? "专家信任背书" : "Creator authority"
+        case .liveEvent: isChinese ? "直播成交氛围" : "Live commerce drop"
+        case .giftGuide: isChinese ? "节日促销氛围" : "Seasonal promo visual"
+        case .launchHero: isChinese ? "新品发布主视觉" : "Launch key visual"
+        case .infoCard: isChinese ? "信息拆解卡片" : "Explainer card"
         }
     }
 
     var badge: String {
-        switch template.category {
-        case .productSeeding: isChinese ? "商品实拍感" : "Product shot"
-        case .storeTraffic: isChinese ? "打卡场景" : "Visit hook"
-        case .personalBrand: isChinese ? "信任背书" : "Authority"
-        case .liveLaunch: isChinese ? "强转化" : "High intent"
-        case .seasonalPromo: isChinese ? "优惠氛围" : "Promo"
-        case .newLaunch: isChinese ? "发布感" : "Launch"
+        switch layout {
+        case .productHero: isChinese ? "商品实拍感" : "Product shot"
+        case .videoCover: isChinese ? "大字首帧" : "Cover"
+        case .comparison: isChinese ? "对比图" : "Compare"
+        case .checklist: isChinese ? "可收藏" : "Saveable"
+        case .localVisit: isChinese ? "打卡场景" : "Visit hook"
+        case .profileStory: isChinese ? "信任背书" : "Authority"
+        case .liveEvent: isChinese ? "强转化" : "High intent"
+        case .giftGuide: isChinese ? "优惠氛围" : "Promo"
+        case .launchHero: isChinese ? "发布感" : "Launch"
+        case .infoCard: isChinese ? "信息解释" : "Explainer"
         }
     }
+}
+
+private enum TemplatePreviewLayout {
+    case productHero
+    case videoCover
+    case comparison
+    case checklist
+    case localVisit
+    case profileStory
+    case liveEvent
+    case giftGuide
+    case launchHero
+    case infoCard
 }
 
 private struct ProductPosterScene: View {
@@ -454,14 +536,9 @@ private struct ProductPosterScene: View {
                     .fill(LinearGradient(colors: [.white, visual.accent.opacity(0.18)], startPoint: .top, endPoint: .bottom))
                     .frame(width: w * 0.23, height: h * 0.50)
                     .overlay(alignment: .center) {
-                        Capsule()
-                            .fill(visual.accent.opacity(0.92))
-                            .frame(width: w * 0.15, height: h * 0.11)
-                            .overlay {
-                                Text("VF")
-                                    .font(.system(size: max(7, w * 0.06), weight: .black, design: .rounded))
-                                    .foregroundStyle(.white)
-                            }
+                        RoundedRectangle(cornerRadius: w * 0.035)
+                            .stroke(visual.accent.opacity(0.62), lineWidth: max(1, w * 0.012))
+                            .frame(width: w * 0.13, height: h * 0.18)
                     }
                     .offset(x: w * 0.12, y: -h * 0.04)
                     .shadow(color: .black.opacity(0.12), radius: w * 0.07, x: 0, y: w * 0.04)
@@ -479,6 +556,131 @@ private struct ProductPosterScene: View {
                         .offset(x: CGFloat(index - 2) * w * 0.12, y: -h * 0.24 + CGFloat(index % 2) * h * 0.08)
                 }
             }
+        }
+    }
+}
+
+private struct VideoCoverTemplateScene: View {
+    let visual: TemplatePosterSpec
+
+    var body: some View {
+        GeometryReader { proxy in
+            let w = proxy.size.width
+            let h = proxy.size.height
+            ZStack {
+                RoundedRectangle(cornerRadius: w * 0.07)
+                    .fill(.black.opacity(visual.template.category == .liveLaunch ? 0.26 : 0.12))
+                    .frame(width: w * 0.76, height: h * 0.54)
+                    .overlay(alignment: .topLeading) {
+                        VStack(alignment: .leading, spacing: h * 0.035) {
+                            Capsule()
+                                .fill(.white.opacity(0.86))
+                                .frame(width: w * 0.46, height: h * 0.052)
+                            Capsule()
+                                .fill(.white.opacity(0.62))
+                                .frame(width: w * 0.32, height: h * 0.035)
+                        }
+                        .padding(w * 0.075)
+                    }
+                    .overlay(alignment: .bottomTrailing) {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: w * 0.16, weight: .black))
+                            .foregroundStyle(.white)
+                            .frame(width: w * 0.26, height: w * 0.26)
+                            .background(visual.accent.opacity(0.92), in: Circle())
+                            .padding(w * 0.055)
+                    }
+                    .shadow(color: visual.accent.opacity(0.22), radius: w * 0.07, x: 0, y: w * 0.04)
+
+                RoundedRectangle(cornerRadius: w * 0.04)
+                    .fill(visual.secondary.opacity(0.84))
+                    .frame(width: w * 0.24, height: h * 0.18)
+                    .rotationEffect(.degrees(-8))
+                    .offset(x: -w * 0.24, y: h * 0.20)
+            }
+        }
+    }
+}
+
+private struct ComparisonTemplateScene: View {
+    let visual: TemplatePosterSpec
+
+    var body: some View {
+        GeometryReader { proxy in
+            let w = proxy.size.width
+            let h = proxy.size.height
+            HStack(spacing: w * 0.06) {
+                comparisonPanel(tint: visual.secondary, icon: "minus")
+                comparisonPanel(tint: visual.accent, icon: "checkmark")
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay(alignment: .center) {
+                Capsule()
+                    .fill(.white.opacity(0.94))
+                    .frame(width: w * 0.10, height: h * 0.36)
+                    .overlay {
+                        Image(systemName: "arrow.left.arrow.right")
+                            .font(.system(size: w * 0.055, weight: .black))
+                            .foregroundStyle(visual.accent)
+                    }
+            }
+        }
+    }
+
+    private func comparisonPanel(tint: Color, icon: String) -> some View {
+        GeometryReader { proxy in
+            let w = proxy.size.width
+            let h = proxy.size.height
+            RoundedRectangle(cornerRadius: w * 0.12)
+                .fill(.white.opacity(0.72))
+                .overlay(alignment: .top) {
+                    RoundedRectangle(cornerRadius: w * 0.10)
+                        .fill(tint.opacity(0.88))
+                        .frame(height: h * 0.42)
+                        .overlay {
+                            Image(systemName: icon)
+                                .font(.system(size: w * 0.18, weight: .black))
+                                .foregroundStyle(.white)
+                        }
+                        .padding(w * 0.08)
+                }
+                .overlay(alignment: .bottomLeading) {
+                    VStack(alignment: .leading, spacing: h * 0.035) {
+                        Capsule().fill(VFStyle.ink.opacity(0.18)).frame(width: w * 0.60, height: h * 0.035)
+                        Capsule().fill(VFStyle.ink.opacity(0.12)).frame(width: w * 0.46, height: h * 0.030)
+                    }
+                    .padding(w * 0.10)
+                }
+        }
+    }
+}
+
+private struct ChecklistTemplateScene: View {
+    let visual: TemplatePosterSpec
+
+    var body: some View {
+        GeometryReader { proxy in
+            let w = proxy.size.width
+            let h = proxy.size.height
+            RoundedRectangle(cornerRadius: w * 0.08)
+                .fill(.white.opacity(0.76))
+                .frame(width: w * 0.78, height: h * 0.56)
+                .overlay {
+                    VStack(alignment: .leading, spacing: h * 0.06) {
+                        ForEach(0..<4, id: \.self) { index in
+                            HStack(spacing: w * 0.04) {
+                                Image(systemName: index == 0 ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: w * 0.075, weight: .bold))
+                                    .foregroundStyle(index == 0 ? visual.accent : visual.secondary.opacity(0.52))
+                                Capsule()
+                                    .fill(index == 0 ? visual.accent.opacity(0.52) : VFStyle.ink.opacity(0.12))
+                                    .frame(width: w * (0.42 - CGFloat(index % 2) * 0.08), height: h * 0.032)
+                            }
+                        }
+                    }
+                    .padding(w * 0.11)
+                }
+                .shadow(color: visual.accent.opacity(0.18), radius: w * 0.07, x: 0, y: w * 0.04)
         }
     }
 }
@@ -570,6 +772,45 @@ private struct PersonalBrandPosterScene: View {
     }
 }
 
+private struct InfoCardTemplateScene: View {
+    let visual: TemplatePosterSpec
+
+    var body: some View {
+        GeometryReader { proxy in
+            let w = proxy.size.width
+            let h = proxy.size.height
+            ZStack {
+                RoundedRectangle(cornerRadius: w * 0.08)
+                    .fill(.white.opacity(0.78))
+                    .frame(width: w * 0.78, height: h * 0.56)
+                    .overlay(alignment: .topLeading) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: w * 0.14, weight: .black))
+                            .foregroundStyle(.white)
+                            .frame(width: w * 0.24, height: w * 0.24)
+                            .background(visual.accent, in: Circle())
+                            .padding(w * 0.08)
+                    }
+                    .overlay(alignment: .bottomLeading) {
+                        VStack(alignment: .leading, spacing: h * 0.035) {
+                            Capsule().fill(visual.accent.opacity(0.44)).frame(width: w * 0.42, height: h * 0.04)
+                            Capsule().fill(VFStyle.ink.opacity(0.13)).frame(width: w * 0.58, height: h * 0.03)
+                            Capsule().fill(VFStyle.ink.opacity(0.10)).frame(width: w * 0.46, height: h * 0.03)
+                        }
+                        .padding(w * 0.10)
+                    }
+                    .shadow(color: visual.accent.opacity(0.18), radius: w * 0.07, x: 0, y: w * 0.04)
+
+                RoundedRectangle(cornerRadius: w * 0.04)
+                    .fill(visual.secondary.opacity(0.82))
+                    .frame(width: w * 0.28, height: h * 0.16)
+                    .rotationEffect(.degrees(8))
+                    .offset(x: w * 0.24, y: -h * 0.20)
+            }
+        }
+    }
+}
+
 private struct LiveLaunchPosterScene: View {
     let visual: TemplatePosterSpec
 
@@ -590,11 +831,15 @@ private struct LiveLaunchPosterScene: View {
                     .fill(LinearGradient(colors: [visual.secondary, visual.accent], startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: w * 0.70, height: h * 0.42)
                     .overlay {
-                        VStack(spacing: h * 0.02) {
-                            Text(visual.isChinese ? "LIVE" : "LIVE")
-                                .font(.system(size: max(16, w * 0.18), weight: .black, design: .rounded))
-                            Text(visual.isChinese ? "爆品福利" : "DROP DEAL")
-                                .font(.system(size: max(8, w * 0.08), weight: .black, design: .rounded))
+                        VStack(spacing: h * 0.04) {
+                            Image(systemName: "dot.radiowaves.left.and.right")
+                                .font(.system(size: w * 0.22, weight: .black))
+                            Capsule()
+                                .fill(.white.opacity(0.86))
+                                .frame(width: w * 0.36, height: h * 0.035)
+                            Capsule()
+                                .fill(.white.opacity(0.62))
+                                .frame(width: w * 0.50, height: h * 0.030)
                         }
                         .foregroundStyle(.white)
                     }
@@ -604,8 +849,8 @@ private struct LiveLaunchPosterScene: View {
                     .fill(.white.opacity(0.90))
                     .frame(width: w * 0.30, height: h * 0.14)
                     .overlay {
-                        Text("¥99")
-                            .font(.system(size: max(12, w * 0.12), weight: .black, design: .rounded))
+                        Image(systemName: "tag.fill")
+                            .font(.system(size: w * 0.12, weight: .black))
                             .foregroundStyle(visual.accent)
                     }
                     .rotationEffect(.degrees(-9))
@@ -679,11 +924,10 @@ private struct NewLaunchPosterScene: View {
                     .foregroundStyle(visual.secondary)
                     .offset(x: w * 0.20, y: -h * 0.04)
 
-                Text("NEW")
-                    .font(.system(size: max(13, w * 0.15), weight: .black, design: .rounded))
+                Image(systemName: "sparkle")
+                    .font(.system(size: w * 0.15, weight: .black))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, w * 0.06)
-                    .padding(.vertical, h * 0.025)
+                    .frame(width: w * 0.25, height: w * 0.25)
                     .background(visual.secondary, in: Capsule())
                     .rotationEffect(.degrees(9))
                     .offset(x: w * 0.20, y: -h * 0.24)
@@ -985,10 +1229,38 @@ struct TemplateDetailView: View {
                     .disabled(!canGenerate)
                     .accessibilityIdentifier("vf.templateDetail.generationError.retryButton")
 
-                    if !appModel.quota.isPro {
+                    if appModel.showTextGenerationRewardError {
+                        Button {
+                            Task {
+                                if await appModel.requestTextGenerationReward() {
+                                    appModel.generationError = nil
+                                    generate()
+                                }
+                            }
+                        } label: {
+                            Label(AppText.localized("Watch Ad", "看广告"), systemImage: "play.rectangle.on.rectangle")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color(red: 0.09, green: 0.16, blue: 0.34), VFStyle.primaryRed],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ),
+                                    in: Capsule()
+                                )
+                                .shadow(color: Color(red: 0.1, green: 0.16, blue: 0.34).opacity(0.28), radius: 10, x: 0, y: 5)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(appModel.isRequestingTextGenerationReward)
+                        .accessibilityLabel(AppText.localized("Watch Ad", "看广告"))
+                        .accessibilityIdentifier("vf.templateDetail.generationError.watchAdButton")
+                    } else if !appModel.quota.isPro {
                         Button {
                             appModel.generationError = nil
-                            appModel.selectedTab = .pro
+                            appModel.openPaywall(reason: message)
                         } label: {
                             Label(AppText.localized("Upgrade Pro", "升级 Pro"), systemImage: "crown.fill")
                                 .font(.subheadline.weight(.bold))

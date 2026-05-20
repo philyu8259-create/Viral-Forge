@@ -4,10 +4,8 @@ import StoreKit
 
 enum AppTab: Hashable {
     case create
-    case templates
-    case brand
-    case assets
-    case pro
+    case projects
+    case me
 }
 
 struct AppliedTemplateWorkflow: Identifiable, Hashable {
@@ -40,23 +38,43 @@ final class AppModel {
     var purchaseStatusMessage: String?
     var localDataStatusMessage: String?
     var paywallReasonMessage: String?
+    var isPaywallPresented = false
     var subscriptionProducts: [Product] = []
     var purchasedSubscriptionIDs: Set<String> = []
+    var activeSubscriptionProductID: String?
+    var subscriptionExpirationDate: Date?
     var pendingTemplateWorkflow: AppliedTemplateWorkflow?
+    var activeTemplateWorkflow: AppliedTemplateWorkflow?
+    var createNavigationResetToken = UUID()
+    var shouldPresentAppOpenAd = false
+    var showTextGenerationRewardError = false
+    var isRequestingTextGenerationReward = false
+    var textGenerationRewardGrantCount = 0
+    #if DEBUG
+    var debugNativeFeedPlacement: AdFeedPlacement?
+    var debugAdStatusMessage: String?
+    #endif
 
     private let fallbackContentService: ContentGenerating
+    private let adService: AdService
     private var didConfigureStoreKit = false
+    private var isBootstrappingAds = false
     private var transactionUpdatesTask: Task<Void, Never>?
 
-    init(contentService: ContentGenerating = MockContentService(), settings: BackendSettings = BackendSettingsStore.load()) {
+    init(
+        contentService: ContentGenerating = MockContentService(),
+        settings: BackendSettings = BackendSettingsStore.load(),
+        adsConfiguration: AppAdConfiguration = AppConfiguration.current.adConfiguration
+    ) {
         let processInfo = ProcessInfo.processInfo
         let isUITesting = processInfo.arguments.contains("VF_UI_TESTING")
         let isLiveBackendTesting = processInfo.arguments.contains("VF_LIVE_BACKEND_TESTING")
         self.fallbackContentService = contentService
-        self.backendSettings = if isUITesting {
-            BackendSettings()
-        } else if isLiveBackendTesting {
+        self.adService = AdServiceFactory.make(with: (isUITesting || isLiveBackendTesting) ? .unavailable : adsConfiguration)
+        self.backendSettings = if isLiveBackendTesting {
             Self.liveBackendTestSettings(processInfo: processInfo)
+        } else if isUITesting {
+            BackendSettings()
         } else {
             settings
         }
@@ -88,6 +106,24 @@ final class AppModel {
         !purchasedSubscriptionIDs.isDisjoint(with: SubscriptionProductID.all)
     }
 
+    var canOfferTextGenerationReward: Bool {
+        !quota.isPro && textGenerationRewardGrantCount < 1 && adService.isRewardedTextGenerationEnabled
+    }
+
+    var subscriptionValidityText: String? {
+        guard quota.isPro else { return nil }
+        guard let subscriptionExpirationDate else {
+            return AppText.localized("Pro benefits are active.", "会员权益已生效。")
+        }
+
+        if subscriptionExpirationDate <= .now {
+            return AppText.localized("Pro subscription has expired.", "会员已过期。")
+        }
+
+        let dateText = Self.subscriptionDateFormatter.string(from: subscriptionExpirationDate)
+        return AppText.localized("Valid until \(dateText)", "会员有效至 \(dateText)")
+    }
+
     var launchLanguage: ContentLanguage {
         .defaultGenerationLanguage
     }
@@ -106,18 +142,37 @@ final class AppModel {
         BackendAccountToken.uuid(for: backendSettings.userId)
     }
 
+    private static var subscriptionDateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = AppText.isChinese ? Locale(identifier: "zh_CN") : .current
+        formatter.calendar = .current
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }
+
     func generateProject(from draft: GenerationDraft) async -> ContentProject? {
+        showTextGenerationRewardError = false
+
         if let topicValidationMessage = draft.topicValidationMessage {
             generationError = topicValidationMessage
             return nil
         }
 
-        guard quota.remainingTextGenerations > 0 || quota.isPro else {
+        if quota.isPro {
+            // Pro users are never blocked by local free quotas.
+        } else if textGenerationRewardGrantCount > 0 {
+            textGenerationRewardGrantCount -= 1
+        } else if quota.remainingTextGenerations <= 0 {
             generationError = AppText.localized(
-                "Free generations are used up for today. Upgrade to Pro to keep creating.",
-                "今日免费文案额度已用完。升级 Pro 后可继续创作。"
+                "Today's free copy limit of 3 generations has been reached. Watch an ad to unlock one extra generation or upgrade to Pro.",
+                "今日免费文案生成 3 次已用完，可看广告再获得一次生成机会或升级会员继续创作。"
             )
-            openPaywall(reason: generationError)
+            showTextGenerationRewardError = canOfferTextGenerationReward
+
+            if !showTextGenerationRewardError {
+                openPaywall(reason: generationError)
+            }
             return nil
         }
 
@@ -166,8 +221,8 @@ final class AppModel {
     func generatePosterBackground(for project: ContentProject, poster: PosterDraft, aspectRatio: String = "9:16") async -> PosterDraft? {
         guard quota.remainingPosterExports > 0 || quota.isPro else {
             posterGenerationError = AppText.localized(
-                "Free AI background exports are used up for today. Upgrade to Pro to keep generating visuals.",
-                "今日免费 AI 背景额度已用完。升级 Pro 后可继续生成视觉素材。"
+                "The 3 free AI background generations have been used. Upgrade to Pro to keep generating; this free quota does not reset.",
+                "免费 AI 背景生成 3 次已用完。开通会员后可继续生成；该免费额度不会自动重置。"
             )
             openPaywall(reason: posterGenerationError)
             return nil
@@ -187,6 +242,12 @@ final class AppModel {
         posterGenerationError = nil
         defer { isGeneratingPosterBackground = false }
 
+        let shouldDeductQuota = !quota.isPro && quota.remainingPosterExports > 0
+        let quotaBeforeGeneration = quota.remainingPosterExports
+        if shouldDeductQuota {
+            quota.remainingPosterExports = max(0, quota.remainingPosterExports - 1)
+        }
+
         do {
             let request = PosterBackgroundRequest(
                 projectId: project.id.uuidString,
@@ -200,12 +261,15 @@ final class AppModel {
             let response: PosterBackgroundResponse = try await apiClient.post("/api/poster/background", body: request)
             let updatedPoster = poster.recordingBackgroundVersion(
                 imageURL: response.imageUrl,
-                usedProductReference: response.usedProductReference ?? false
+                usedProductReference: response.usedProductReference ?? (poster.productImageData != nil)
             )
             await savePosterDraft(for: project, poster: updatedPoster)
             await refreshQuota()
             return updatedPoster
         } catch {
+            if shouldDeductQuota {
+                quota.remainingPosterExports = quotaBeforeGeneration
+            }
             posterGenerationError = userFacingPosterError(for: error)
             return nil
         }
@@ -345,20 +409,28 @@ final class AppModel {
         appliedDraft.templatePromptHint = template.promptHint
         appliedDraft.templateStyle = template.style
 
-        pendingTemplateWorkflow = AppliedTemplateWorkflow(
+        let workflow = AppliedTemplateWorkflow(
             templateName: template.name,
             platform: template.platform,
             category: template.category,
             draft: appliedDraft
         )
+        pendingTemplateWorkflow = workflow
+        activeTemplateWorkflow = workflow
         generationError = nil
+        createNavigationResetToken = UUID()
         selectedTab = .create
     }
 
     func consumeTemplateWorkflow() -> AppliedTemplateWorkflow? {
-        let workflow = pendingTemplateWorkflow
+        let workflow = activeTemplateWorkflow ?? pendingTemplateWorkflow
         pendingTemplateWorkflow = nil
         return workflow
+    }
+
+    func clearActiveTemplateWorkflow() {
+        activeTemplateWorkflow = nil
+        pendingTemplateWorkflow = nil
     }
 
     func batchIdeas(for brief: String, platforms: [SocialPlatform], count: Int) -> [CampaignIdea] {
@@ -540,8 +612,12 @@ final class AppModel {
             quota = try await remoteQuota
             templates = try await remoteTemplates
             brandProfile = try await remoteBrand
-            projects = try await remoteProjects
-            posterAssets = assetsFromProjects(projects)
+            let remoteProjectsResolved = try await remoteProjects
+            let mergedProjects = remoteProjectsResolved.map { remoteProject in
+                mergeProjectWithLocalFallback(remoteProject: remoteProject)
+            }
+            projects = mergedProjects
+            posterAssets = assetsFromProjects(mergedProjects)
             persistProjectsLocally()
             backendStatusMessage = AppText.localized("Synced from backend.", "已从后端同步数据。")
         } catch {
@@ -556,27 +632,126 @@ final class AppModel {
         }
     }
 
-    func updateProStatus(_ isPro: Bool) async {
-        if backendSettings.mode == .backend, let dataService = makeBackendDataService() {
-            do {
-                quota = try await dataService.updateProStatus(isPro: isPro)
-                backendStatusMessage = isPro
-                    ? AppText.localized("Pro mode enabled.", "Pro 模式已开启。")
-                    : AppText.localized("Pro mode disabled.", "Pro 模式已关闭。")
-            } catch {
-                backendStatusMessage = userFacingBackendError(prefix: AppText.localized("Pro update failed", "Pro 状态更新失败"), error: error)
-            }
-        } else {
-            quota.isPro = isPro
-        }
-    }
-
     func openPaywall(reason: String? = nil) {
         if let reason, !reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             paywallReasonMessage = reason
         }
-        selectedTab = .pro
+        isPaywallPresented = true
     }
+
+    func bootstrapAds() async {
+        guard !isBootstrappingAds else { return }
+        isBootstrappingAds = true
+        defer { isBootstrappingAds = false }
+
+        guard !quota.isPro else {
+            #if DEBUG
+            print("vf_ad_debug: bootstrap skipped because user is Pro")
+            #endif
+            shouldPresentAppOpenAd = false
+            return
+        }
+
+        #if DEBUG
+        print("vf_ad_debug: bootstrap begin service=\(String(describing: type(of: adService)))")
+        #endif
+        await adService.bootstrap()
+        let presentationResult = await adService.requestAppOpenAd()
+        #if DEBUG
+        print("vf_ad_debug: app open result=\(presentationResult)")
+        #endif
+        shouldPresentAppOpenAd = presentationResult == .shown
+    }
+
+    func dismissAppOpenAd() {
+        shouldPresentAppOpenAd = false
+    }
+
+    @discardableResult
+    func requestTextGenerationReward() async -> Bool {
+        guard !quota.isPro, canOfferTextGenerationReward else {
+            return false
+        }
+
+        isRequestingTextGenerationReward = true
+        defer { isRequestingTextGenerationReward = false }
+
+        switch await adService.requestRewardedTextGeneration() {
+        case .granted:
+            textGenerationRewardGrantCount += 1
+            showTextGenerationRewardError = false
+            generationError = nil
+            paywallReasonMessage = nil
+            return true
+        case .failed:
+            generationError = AppText.localized(
+                "Ad playback failed. Please retry.",
+                "广告播放失败，请重试。"
+            )
+            return false
+        case .unavailable:
+            generationError = AppText.localized(
+                "No rewarded ad is available yet. Please try later or upgrade Pro.",
+                "暂未配置可用激励视频广告，请稍后重试或升级会员。"
+            )
+            return false
+        }
+    }
+
+    func feedPlacement(for surface: AdSurface) -> AdFeedPlacement? {
+        guard !quota.isPro else {
+            #if DEBUG
+            print("vf_ad_debug: feed skipped surface=\(surface.rawValue) reason=pro")
+            #endif
+            return nil
+        }
+        let placement = adService.feedPlacement(for: surface)
+        #if DEBUG
+        print("vf_ad_debug: feed placement surface=\(surface.rawValue) placementID=\(placement?.placementID ?? "nil") sdkBacked=\(placement?.isSDKBacked.description ?? "nil")")
+        #endif
+        return placement
+    }
+
+    #if DEBUG
+    func debugRequestAppOpenAd() async -> AdPresentationResult {
+        guard !quota.isPro else {
+            print("vf_ad_debug: debug appOpen skipped because user is Pro")
+            return .unavailable
+        }
+        await adService.bootstrap()
+        let result = await adService.requestAppOpenAd()
+        print("vf_ad_debug: debug appOpen result=\(result)")
+        return result
+    }
+
+    func debugRequestRewardedTextGenerationAd() async -> AdRewardResult {
+        guard !quota.isPro else {
+            print("vf_ad_debug: debug reward skipped because user is Pro")
+            return .unavailable
+        }
+        await adService.bootstrap()
+        let result = await adService.requestRewardedTextGeneration()
+        print("vf_ad_debug: debug reward result=\(result)")
+        return result
+    }
+
+    func debugPresentNativeFeedAd() {
+        guard !quota.isPro else {
+            print("vf_ad_debug: debug native skipped because user is Pro")
+            debugAdStatusMessage = "Native Feed: skipped because user is Pro"
+            return
+        }
+        guard let placement = feedPlacement(for: .templatesList) else {
+            print("vf_ad_debug: debug native unavailable")
+            debugAdStatusMessage = "Native Feed: unavailable"
+            return
+        }
+        print("vf_ad_debug: debug native presenting placement=\(placement.placementID)")
+        debugAdStatusMessage = "Native Feed: opened test view"
+        debugNativeFeedPlacement = placement
+    }
+
+    #endif
 
     func configureStoreKitIfNeeded() async {
         guard !didConfigureStoreKit else { return }
@@ -637,6 +812,7 @@ final class AppModel {
             case .success(let verification):
                 let transaction = try verified(verification)
                 await transaction.finish()
+                recordActiveSubscription(transaction)
                 await syncSubscriptionWithBackend(transaction: transaction, signedTransactionInfo: verification.jwsRepresentation)
                 await refreshStoreEntitlements(syncBackend: false)
                 purchaseStatusMessage = AppText.localized("Pro is active.", "会员已开通。")
@@ -681,8 +857,11 @@ final class AppModel {
     func refreshProjectsIfNeeded() async {
         guard backendSettings.mode == .backend, let dataService = makeBackendDataService() else { return }
         if let remoteProjects = try? await dataService.projects() {
-            projects = remoteProjects
-            posterAssets = assetsFromProjects(remoteProjects)
+            let mergedProjects = remoteProjects.map { remoteProject in
+                mergeProjectWithLocalFallback(remoteProject: remoteProject)
+            }
+            projects = mergedProjects
+            posterAssets = assetsFromProjects(mergedProjects)
             persistProjectsLocally()
         }
     }
@@ -742,35 +921,39 @@ final class AppModel {
         let textPlacement = poster.textPlacement.promptInstruction(for: project.draft.language, poster: poster)
         if project.draft.language == .english {
             return [
-                "Generate a pure commercial photography background layer, not a finished poster design.",
-                "It will be used as a \(channelLabel) background, but the image itself must not contain platform UI.",
+                "Generate one pure commercial photography image, not a finished poster, not a graphic design, and not a social app screen.",
+                "It will be used as a \(channelLabel) visual background, but the image itself must look like a clean camera photo.",
                 hasProductReference ? "Use the supplied product reference image only for the hero product identity. Preserve the product's real shape, proportions, color, material, texture, transparent windows, visible internal parts, and packaging details. Do not add liquid, fruit, props, labels, or decorative content inside transparent product areas unless they already exist in the reference product. Ignore and do not reproduce the reference image background, watermark, non-product text, or non-product logos. Do not replace it with a similar product or redesign it. Build a natural commercial scene around that exact product with coherent lighting, perspective, contact shadows, and reflections." : nil,
                 hasProductReference ? "Product reference integration mode: \(productIntegration)." : nil,
-                "Product or topic: \(project.draft.topic).",
+                hasProductReference ? nil : "Use a plain unbranded product surface with no label panel, no decorative markings, and no invented brand mark.",
+                "Private visual context only, never render these words: \(project.draft.topic).",
                 "Audience: \(project.draft.audience.isEmpty ? brandProfile.audience : project.draft.audience).",
                 "Scene direction: \(scene).",
                 "Background direction: \(backgroundDirection).",
-                "The app will overlay this headline later: \(poster.headline).",
                 "Style: \(poster.style.displayName).",
-                "Copy-safe layout: \(textPlacement)",
-                hasProductReference ? "Do not add or copy any non-product text, letters, numbers, logos, brand marks, watermarks, QR codes, labels, stickers, buttons, captions, or interface elements. Only preserve marks that are physically printed on the supplied product itself." : "Strictly no text, letters, numbers, logos, brand marks, watermarks, QR codes, labels, stickers, buttons, captions, or interface elements anywhere in the image.",
+                "Composition direction: \(textPlacement)",
+                "Fill the whole frame with a finished-looking premium commercial scene: foreground blur, surface reflections, soft shadows, product-adjacent props, background depth, light streaks, fabric or paper texture, fruit or lifestyle cues when relevant, and subtle color accents. Use three to six category-relevant supporting elements distributed across foreground, midground, and background. The upper half must also contain at least two recognizable contextual objects such as softly focused props, plants, reflections, shelf edges, light texture, bokeh, or background objects; do not turn it into abstract blur. Do not create a large blank block, empty panel, poster-template placeholder, bare wall, blank window area, or large empty tabletop area. No single low-detail wall, window, or tabletop surface should dominate the image. The app will render copy later, so readability should come from natural soft gradients and visual hierarchy, not from empty space.",
+                "If papers, notebooks, books, screens, packaging, labels, receipts, stickers, menus, or documents appear, they must be blank, turned away, cropped, or so out of focus that no letters, numbers, symbols, UI, or handwriting are readable.",
+                hasProductReference ? "No graphic overlay, no readable marks, no signage, no printed matter, no stickers, no interface elements. Only preserve marks that are physically printed on the supplied product itself." : "No graphic overlay, no readable marks, no signage, no printed matter, no stickers, no interface elements, no label panels, and no invented brand marks anywhere in the image.",
                 "Realistic high-end product photography, clean lighting, strong commercial quality."
             ].compactMap { $0 }.joined(separator: " ")
         }
 
         return [
-            "生成一张纯商业摄影背景底图，不要生成成品海报设计。",
-            "用途是\(channelLabel)背景，但画面里不能出现平台界面。",
+            "生成一张纯商业摄影图片，不是成品海报，不是平面设计图，也不是社交 App 截图。",
+            "用途是\(channelLabel)视觉背景，但画面本身必须像干净的相机照片。",
             hasProductReference ? "上传的参考图只用于识别主商品本体。保留产品真实的外形、比例、颜色、材质、纹理、透明窗口、可见内部结构和包装细节；不要在产品透明区域里新增液体、水果、道具、标签或装饰内容，除非参考图产品本身已有。忽略并不要复刻参考图里的背景、水印、非产品文字或非产品 logo。不要替换成相似产品，也不要重新设计产品。围绕这个真实产品生成自然商业摄影场景，让光线、透视、接触阴影和环境反射一致。" : nil,
             hasProductReference ? "产品参考图融合模式：\(productIntegration)" : nil,
-            "产品或主题：\(project.draft.topic)。",
+            hasProductReference ? nil : "商品外观保持无品牌、无标签面板、无装饰标记，不要生成虚构品牌标识。",
+            "仅作为画面语义参考，严禁把这些词画进图里：\(project.draft.topic)。",
             "目标人群：\(project.draft.audience.isEmpty ? brandProfile.audience : project.draft.audience)。",
             "场景方向：\(scene)。",
             "背景方向：\(backgroundDirection)。",
-            "App 后续会叠加这个标题：\(poster.headline)。",
             "风格：\(poster.style.displayName)。",
-            "文案安全区：\(textPlacement)",
-            hasProductReference ? "不要新增或复制任何非产品文字、汉字、英文字母、数字、logo、品牌标识、水印、二维码、标签、贴纸、按钮、字幕或 UI 元素；只允许保留真实产品本体上物理印刷的可见标识。" : "画面里严禁出现任何文字、汉字、英文字母、数字、logo、品牌标识、水印、二维码、标签、贴纸、按钮、字幕或 UI 元素。",
+            "构图方向：\(textPlacement)",
+            "整张画面都要像完成度很高的商业摄影场景：加入前景虚化、桌面反光、柔和阴影、产品周边道具、背景空间纵深、光斑/轮廓光、织物或纸张纹理、与品类相关的水果或生活方式线索、克制的色彩点缀。必须有 3 到 6 个与品类相关的辅助元素分布在前景、中景和背景。上半画幅也必须至少有两个可识别的场景物件，例如柔焦道具、植物、反光、置物架边缘、光影纹理、光斑或背景物件，不能只是一片抽象虚化。不要生成大面积空白、纯色大板、像模板占位区的画面、空墙、空窗或大片空桌面；任何单一低细节墙面、窗面或桌面都不能占据画面主导面积。后续 App 会叠加文案，文字可读性应该来自自然柔和的明暗过渡和清晰视觉层级，而不是牺牲画面留空。",
+            "如果画面出现纸张、笔记本、书、本子、屏幕、包装、标签、收据、贴纸、菜单或文件，它们必须是空白、背向镜头、被裁切，或虚化到看不清任何字母、数字、符号、界面和手写内容。",
+            hasProductReference ? "不要新增或复制任何可读标记、招牌、印刷物、贴纸或界面元素；只允许保留真实产品本体上物理印刷的可见标识。" : "画面里不要出现任何可读标记、招牌、印刷物、贴纸、界面元素、标签面板或虚构品牌标识。",
             "真实高级商品摄影质感，光线干净，适合电商种草。"
         ].compactMap { $0 }.joined(separator: " ")
     }
@@ -792,39 +975,39 @@ final class AppModel {
 
         if draft.language == .english {
             if matches(templateContext, keywords: ["store", "traffic", "local", "visit", "restaurant", "cafe", "shop"]) {
-                return "A warm local shop or cafe visit scene with the featured product naturally placed on a table, lifestyle depth, no signage or readable menus."
+                return "A warm local shop or cafe visit scene with the featured product naturally placed on a table, layered lifestyle depth, ambient window light, blurred foreground tableware or plants, no signage or readable menus."
             }
             if matches(templateContext, keywords: ["live", "stream", "launch room"]) {
-                return "A livestream product setup with soft studio lighting, product display props, phone tripod silhouette, energetic but clean, no screens with text."
+                return "A livestream product setup with soft studio lighting, product display props, subtle cables, rim light, phone tripod silhouette, energetic layered backdrop, no screens with text."
             }
             if matches(templateContext, keywords: ["season", "holiday", "promo", "festival", "gift"]) {
                 return "A festive product still life with tasteful seasonal props, ribbons, soft glow, premium ecommerce styling, no printed words."
             }
             if matches(templateContext, keywords: ["new", "launch", "drop", "release"]) {
-                return "A new product launch hero shot on a clean pedestal with crisp light beams, premium minimal backdrop, generous negative space."
+                return "A new product launch hero shot on a clean pedestal with crisp light beams, layered shadows, premium backdrop texture, subtle reflective surface, and full-frame commercial depth."
             }
             if matches(templateContext, keywords: ["personal", "brand", "expert", "coach", "founder"]) {
-                return "A creator workspace scene with notebook, camera, soft daylight, professional personal-brand atmosphere, no visible text."
+                return "A creator workspace scene with notebook, camera, lens cap, soft daylight, desk depth, professional personal-brand atmosphere, no visible text."
             }
-            return "A realistic product still life for \(topic), placed in a bright daily-use scene with premium props and clean negative space."
+            return "A realistic product still life for \(topic), placed in a bright daily-use scene with premium props, foreground depth, soft reflections, natural shadows, and full-frame commercial depth."
         }
 
         if matches(templateContext, keywords: ["探店", "门店", "到店", "店铺", "餐厅", "咖啡", "打卡", "store", "traffic"]) {
-            return "真实探店场景，产品自然摆放在门店桌面或橱窗光线里，有生活氛围和空间纵深，但不要出现招牌、菜单或任何可读文字。"
+            return "真实探店场景，产品自然摆放在门店桌面或橱窗光线里，有前景虚化、环境光、桌面层次和空间纵深，但不要出现招牌、菜单或任何可读文字。"
         }
         if matches(templateContext, keywords: ["直播", "live", "预热", "开播"]) {
-            return "直播间产品陈列场景，柔和补光、桌面道具、手机支架剪影、热闹但干净，不要出现屏幕文字或直播界面。"
+            return "直播间产品陈列场景，柔和补光、桌面道具、手机支架剪影、轮廓光和层次背景，热闹但干净，不要出现屏幕文字或直播界面。"
         }
         if matches(templateContext, keywords: ["节日", "促销", "季节", "双11", "春节", "礼物", "season", "promo"]) {
             return "节日促销商品静物场景，搭配高级礼盒、丝带、暖光和季节道具，质感丰富但不出现任何印刷字。"
         }
         if matches(templateContext, keywords: ["新品", "发布", "上新", "new", "launch"]) {
-            return "新品发布主视觉，产品放在干净展台或亚克力台面上，光束清晰、背景极简、留白充足。"
+            return "新品发布主视觉，产品放在干净展台或亚克力台面上，有光束、反光、材质纹理和完整背景层次，画面高级但不空。"
         }
         if matches(templateContext, keywords: ["个人", "ip", "专家", "创始人", "人设", "personal", "brand"]) {
-            return "个人品牌创作者工作台场景，有笔记本、相机、柔和自然光和专业感道具，但不要出现纸面文字。"
+            return "个人品牌创作者工作台场景，有笔记本、相机、镜头盖、柔和自然光、桌面纵深和专业感道具，但不要出现纸面文字。"
         }
-        return "真实商品静物场景，\(topic) 放在明亮日常使用环境中，搭配高级道具和干净留白。"
+        return "真实商品静物场景，\(topic) 放在明亮日常使用环境中，搭配高级道具、前景虚化、柔和反光、自然阴影和完整画面层次。"
     }
 
     private func matches(_ text: String, keywords: [String]) -> Bool {
@@ -877,6 +1060,16 @@ final class AppModel {
             if let savedProject = try await dataService.saveProject(project),
                let index = projects.firstIndex(where: { $0.id == savedProject.id }) {
                 var mergedProject = savedProject
+                // Backward compatibility for backend nodes that may not yet persist the new poster text-layer fields yet.
+                mergedProject.poster.textFontFamily = project.poster.textFontFamily
+                mergedProject.poster.textWeight = project.poster.textWeight
+                mergedProject.poster.textColor = project.poster.textColor
+                mergedProject.poster.textAlignment = project.poster.textAlignment
+                mergedProject.poster.headlineScale = project.poster.headlineScale
+                mergedProject.poster.subtitleScale = project.poster.subtitleScale
+                mergedProject.poster.ctaScale = project.poster.ctaScale
+                mergedProject.poster.copyOffsetX = project.poster.copyOffsetX
+                mergedProject.poster.copyOffsetY = project.poster.copyOffsetY
                 if mergedProject.poster.productImageData == nil {
                     mergedProject.poster.productImageData = project.poster.productImageData
                 }
@@ -893,6 +1086,51 @@ final class AppModel {
         } catch {
             backendStatusMessage = "Project save failed: \(error.localizedDescription)"
         }
+    }
+
+    private func mergeProjectWithLocalFallback(remoteProject: ContentProject) -> ContentProject {
+        guard let localIndex = projects.firstIndex(where: { $0.id == remoteProject.id }) else { return remoteProject }
+        var mergedProject = remoteProject
+        let localProject = projects[localIndex]
+
+        if mergedProject.poster.textFontFamily == .rounded, localProject.poster.textFontFamily != .rounded {
+            mergedProject.poster.textFontFamily = localProject.poster.textFontFamily
+        }
+        if mergedProject.poster.textWeight == .black, localProject.poster.textWeight != .black {
+            mergedProject.poster.textWeight = localProject.poster.textWeight
+        }
+        if mergedProject.poster.textColor == .auto, localProject.poster.textColor != .auto {
+            mergedProject.poster.textColor = localProject.poster.textColor
+        }
+        if mergedProject.poster.textAlignment == .leading, localProject.poster.textAlignment != .leading {
+            mergedProject.poster.textAlignment = localProject.poster.textAlignment
+        }
+        if mergedProject.poster.headlineScale == 1.0, localProject.poster.headlineScale != 1.0 {
+            mergedProject.poster.headlineScale = localProject.poster.headlineScale
+        }
+        if mergedProject.poster.subtitleScale == 1.0, localProject.poster.subtitleScale != 1.0 {
+            mergedProject.poster.subtitleScale = localProject.poster.subtitleScale
+        }
+        if mergedProject.poster.ctaScale == 1.0, localProject.poster.ctaScale != 1.0 {
+            mergedProject.poster.ctaScale = localProject.poster.ctaScale
+        }
+        if mergedProject.poster.copyOffsetX == 0, localProject.poster.copyOffsetX != 0 {
+            mergedProject.poster.copyOffsetX = localProject.poster.copyOffsetX
+        }
+        if mergedProject.poster.copyOffsetY == 0, localProject.poster.copyOffsetY != 0 {
+            mergedProject.poster.copyOffsetY = localProject.poster.copyOffsetY
+        }
+        if mergedProject.poster.productImageData == nil, let localProductImage = localProject.poster.productImageData {
+            mergedProject.poster.productImageData = localProductImage
+        }
+        if mergedProject.poster.channelLabel == nil, let localChannelLabel = localProject.poster.channelLabel {
+            mergedProject.poster.channelLabel = localChannelLabel
+        }
+        if mergedProject.poster.backgroundHistory.isEmpty && !localProject.poster.backgroundHistory.isEmpty {
+            mergedProject.poster.backgroundHistory = localProject.poster.backgroundHistory
+        }
+
+        return mergedProject
     }
 
     private func deleteProjectFromBackendIfNeeded(_ projectID: UUID) async {
@@ -956,6 +1194,7 @@ final class AppModel {
         do {
             let transaction = try verified(result)
             await transaction.finish()
+            recordActiveSubscription(transaction)
             await syncSubscriptionWithBackend(transaction: transaction, signedTransactionInfo: result.jwsRepresentation)
             await refreshStoreEntitlements(syncBackend: false)
         } catch {
@@ -986,25 +1225,38 @@ final class AppModel {
         }
 
         purchasedSubscriptionIDs = activeSubscriptionIDs
-        if !activeSubscriptionIDs.isEmpty {
+        if let latestActiveTransaction {
+            recordActiveSubscription(latestActiveTransaction)
             quota.isPro = true
+            textGenerationRewardGrantCount = 0
+            shouldPresentAppOpenAd = false
+            showTextGenerationRewardError = false
         } else if backendSettings.mode != .backend {
             quota.isPro = false
+            activeSubscriptionProductID = nil
+            subscriptionExpirationDate = nil
         }
 
         guard syncBackend else { return }
         if let latestActiveTransaction {
             await syncSubscriptionWithBackend(transaction: latestActiveTransaction, signedTransactionInfo: latestSignedTransactionInfo)
         } else {
-            await updateProStatus(false)
+            quota.isPro = false
+            activeSubscriptionProductID = nil
+            subscriptionExpirationDate = nil
+            textGenerationRewardGrantCount = 0
+            showTextGenerationRewardError = false
         }
     }
 
     private func syncSubscriptionWithBackend(transaction: Transaction, signedTransactionInfo: String) async {
         guard backendSettings.mode == .backend, let dataService = makeBackendDataService() else {
+            recordActiveSubscription(transaction)
             quota.isPro = true
             return
         }
+
+        recordActiveSubscription(transaction)
 
         let request = SubscriptionSyncRequest(
             productId: transaction.productID,
@@ -1023,10 +1275,6 @@ final class AppModel {
         } catch {
             backendStatusMessage = "Subscription sync failed: \(error.localizedDescription)"
             quota.isPro = true
-            if let fallbackQuota = try? await dataService.updateProStatus(isPro: true) {
-                quota = quotaKeepingActiveStoreSubscription(fallbackQuota)
-                backendStatusMessage = "Subscription sync failed; Pro status was enabled on backend."
-            }
         }
     }
 
@@ -1035,7 +1283,15 @@ final class AppModel {
 
         var mergedQuota = remoteQuota
         mergedQuota.isPro = true
+        textGenerationRewardGrantCount = 0
+        shouldPresentAppOpenAd = false
+        showTextGenerationRewardError = false
         return mergedQuota
+    }
+
+    private func recordActiveSubscription(_ transaction: Transaction) {
+        activeSubscriptionProductID = transaction.productID
+        subscriptionExpirationDate = transaction.expirationDate
     }
 
     private func verified<T>(_ result: VerificationResult<T>) throws -> T {
@@ -1062,8 +1318,8 @@ final class AppModel {
                 )
             case "quota_exhausted":
                 return AppText.localized(
-                    "Free generations are used up for today. Upgrade to Pro or try again tomorrow.",
-                    "今日免费文案额度已用完。可以升级 Pro，或明天再试。"
+                    "Today's free copy limit of 3 generations has been reached. Upgrade to Pro to continue creating now.",
+                    "今日免费文案生成 3 次已用完。开通会员后可立即继续创作。"
                 )
             case "upstream_timeout":
                 return AppText.localized(
@@ -1104,8 +1360,18 @@ final class AppModel {
                 )
             case "quota_exhausted":
                 return AppText.localized(
-                    "Free AI background exports are used up for today.",
-                    "今日免费 AI 背景额度已用完。"
+                    "The 3 free AI background generations have been used. Upgrade to Pro to keep generating; this free quota does not reset.",
+                    "免费 AI 背景生成 3 次已用完。开通会员后可继续生成；该免费额度不会自动重置。"
+                )
+            case "pro_daily_poster_limit_exhausted":
+                return AppText.localized(
+                    "Today's Pro AI background limit has been reached. Please continue tomorrow.",
+                    "今日会员 AI 背景额度已用完，请明天继续生成。"
+                )
+            case "pro_monthly_poster_limit_exhausted":
+                return AppText.localized(
+                    "This month's Pro AI background limit has been reached.",
+                    "本月会员 AI 背景额度已用完。"
                 )
             case "upstream_timeout":
                 return AppText.localized(

@@ -69,6 +69,8 @@ export function buildContentPrompt(request) {
     `Brand: ${brand}.`,
     `Brand industry: ${brandIndustry}.`,
     `Banned words, claims, or angles: ${bannedWords}.`,
+    `Do not invent exact specifications, measured data, prices, dates, usage durations, test results, certification claims, stock status, weight, dimensions, decibel levels, battery capacity, charging ports, material details, or personal-use timelines unless those facts are explicitly present in the topic, audience, tone, brand, template hint, or banned words fields.`,
+    `If a useful fact is not provided, describe it qualitatively instead of making up a number or pretending it was tested.`,
     `Template: ${template}.`,
     `Template hint: ${templateHint}.`,
     `Return only one JSON object with exactly these top-level keys: titles, hooks, caption, sellingPoints, hashtags, poster.`,

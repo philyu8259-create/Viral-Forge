@@ -8,12 +8,16 @@ struct AssetsView: View {
     @State private var projectPendingDeletion: ContentProject?
     @State private var posterPendingRemoval: PosterAsset?
 
+    private var projectsFeedPlacement: AdFeedPlacement? {
+        appModel.feedPlacement(for: .projectsList)
+    }
+
     var body: some View {
         VFPage {
             VFPageHeader(
-                title: AppText.localized("Assets", "素材"),
-                subtitle: AppText.localized("Manage generated copy, posters, and reusable snippets", "管理生成文案、海报与可复用片段"),
-                icon: "folder.fill",
+                title: AppText.localized("Projects", "项目"),
+                subtitle: AppText.localized("Continue generated copy, posters, and reusable snippets", "继续编辑生成文案、海报与可复用片段"),
+                icon: "rectangle.stack.fill",
                 tint: VFStyle.sunset
             )
 
@@ -171,16 +175,16 @@ struct AssetsView: View {
 
     @ViewBuilder
     private func projectCards(_ projects: [ContentProject]) -> some View {
-        if projects.isEmpty {
-            emptyCard(
-                title: AppText.localized("No assets yet", "暂无素材"),
-                subtitle: AppText.localized("Generate your first content pack, then copy, poster, and snippets will appear here.", "先生成第一个内容资产包，之后文案、海报和片段都会出现在这里。"),
+            if projects.isEmpty {
+                emptyCard(
+                    title: AppText.localized("No projects yet", "暂无项目"),
+                subtitle: AppText.localized("Create your first content pack, then you can continue editing it here.", "先生成第一个内容包并从这里继续编辑。"),
                 icon: "folder",
                 primaryTitle: AppText.localized("Start Creating", "去创作"),
-                secondaryTitle: AppText.localized("Browse Templates", "浏览模板")
+                secondaryTitle: AppText.localized("Use Template", "套用模板")
             )
         } else {
-            ForEach(projects) { project in
+            ForEach(Array(projects.enumerated()), id: \.element.id) { index, project in
                 ProjectAssetCard(
                     project: project,
                     copy: {
@@ -195,9 +199,18 @@ struct AssetsView: View {
                         projectPendingDeletion = project
                     }
                 )
-                .accessibilityIdentifier("vf.assets.projectCard")
+
+                if shouldInsertFeedAd(after: index, total: projects.count),
+                   let adPlacement = projectsFeedPlacement {
+                    FeedAdPlaceholderView(placement: adPlacement)
+                        .accessibilityIdentifier("vf.assets.projectAdCard")
+                }
             }
         }
+    }
+
+    private func shouldInsertFeedAd(after index: Int, total: Int) -> Bool {
+        total >= 6 && index == 5
     }
 
     private func posterCopy(for poster: PosterAsset) -> String {
@@ -263,7 +276,6 @@ struct AssetsView: View {
                         posterPendingRemoval = poster
                     }
                 )
-                .accessibilityIdentifier("vf.assets.posterCard")
             }
         }
     }
@@ -303,7 +315,7 @@ struct AssetsView: View {
                         appModel.selectedTab = .create
                     }
                     emptyAction(secondaryTitle, icon: "rectangle.3.group", tint: VFStyle.purpleFlow) {
-                        appModel.selectedTab = .templates
+                        appModel.selectedTab = .create
                     }
                 }
                 .padding(.top, 4)
@@ -394,9 +406,13 @@ private struct ProjectAssetCard: View {
 
                 HStack(spacing: 8) {
                     NavigationLink {
-                        ResultView(project: project)
+                        PosterEditorView(project: project)
                     } label: {
-                        assetAction(AppText.localized("Open", "打开"), icon: "arrow.up.right", tint: VFStyle.ink)
+                        assetAction(
+                            AppText.localized("Continue Poster", "继续编辑海报"),
+                            icon: "arrow.up.right",
+                            tint: VFStyle.sunset
+                        )
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("vf.assets.project.openButton")

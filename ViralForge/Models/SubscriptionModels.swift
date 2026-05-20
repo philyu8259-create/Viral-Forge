@@ -23,8 +23,8 @@ struct SubscriptionPlan: Identifiable, Hashable {
         id: SubscriptionProductID.monthly,
         title: AppText.localized("ViralForge Pro Monthly", "ViralForge Pro 月度会员"),
         subtitle: AppText.localized("Flexible monthly access", "按月灵活使用"),
-        displayPrice: "¥39.8",
-        localizedPriceHint: "¥39.8/月",
+        displayPrice: AppText.localized("US$5.99", "¥39.8"),
+        localizedPriceHint: AppText.localized("US$5.99/mo", "¥39.8/月"),
         billingPeriod: AppText.localized("per month", "每月"),
         savingsBadge: nil
     )
@@ -33,8 +33,8 @@ struct SubscriptionPlan: Identifiable, Hashable {
         id: SubscriptionProductID.yearly,
         title: AppText.localized("ViralForge Pro Yearly", "ViralForge Pro 年度会员"),
         subtitle: AppText.localized("Best value for serious creators", "适合长期创作"),
-        displayPrice: "¥398",
-        localizedPriceHint: "¥398/年",
+        displayPrice: AppText.localized("US$59.99", "¥398"),
+        localizedPriceHint: AppText.localized("US$59.99/yr", "¥398/年"),
         billingPeriod: AppText.localized("per year", "每年"),
         savingsBadge: AppText.localized("Best Value", "更划算")
     )

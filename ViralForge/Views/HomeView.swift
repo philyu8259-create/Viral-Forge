@@ -7,13 +7,70 @@ import Vision
 
 struct HomeView: View {
     @Environment(AppModel.self) private var appModel
+
+    private enum GenerationMode: String, CaseIterable, Identifiable {
+        case posterAndCopy
+        case copyOnly
+
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .posterAndCopy:
+                return AppText.localized("Poster Studio", "海报创作")
+            case .copyOnly:
+                return AppText.localized("Copy Only", "仅文案")
+            }
+        }
+
+        var description: String {
+            switch self {
+            case .posterAndCopy:
+                return AppText.localized(
+                    "Creates copy first, then opens Poster Studio. Product image can be added below.",
+                    "先生成文案，再进入海报工作室；产品图可在下方添加。"
+                )
+            case .copyOnly:
+                return AppText.localized(
+                    "Generates a copy pack only.",
+                    "仅生成文案包。"
+                )
+            }
+        }
+
+        var accessibilityIdentifier: String {
+            switch self {
+            case .posterAndCopy:
+                return "vf.home.generationMode.copyAndPoster"
+            case .copyOnly:
+                return "vf.home.generationMode.copyOnly"
+            }
+        }
+    }
+
+    private enum HomeGenerationRoute: Hashable, Identifiable {
+        case result(ContentProject)
+        case poster(ContentProject)
+
+        var id: String {
+            switch self {
+            case .result(let project):
+                return "result.\(project.id.uuidString)"
+            case .poster(let project):
+                return "poster.\(project.id.uuidString)"
+            }
+        }
+    }
+
     @State private var draft = GenerationDraft()
-    @State private var generatedProject: ContentProject?
+    @State private var generatedRoute: HomeGenerationRoute?
+    @State private var generationMode: GenerationMode = .posterAndCopy
     @State private var activeEditor: StrategyEditor?
     @State private var pasteStatusMessage: String?
     @State private var inputToolStatusMessage: String?
     @State private var selectedProductPhotoItem: PhotosPickerItem?
     @State private var productImageData: Data?
+    @State private var cachedProductUIImage: UIImage?
     @State private var productImageWasSubjectOptimized = false
     @State private var isLoadingProductImage = false
     @State private var isRecordingVoice = false
@@ -56,9 +113,6 @@ struct HomeView: View {
                         if shouldShowContentPipeline {
                             contentPipelineSection
                         }
-                        templatePreviewSection
-                        brandKitShortcut
-                        workflowShortcuts
                     }
                     .frame(width: contentWidth, alignment: .leading)
                     .padding(.horizontal, 20)
@@ -84,8 +138,13 @@ struct HomeView: View {
             }
         }
         .preferredColorScheme(.light)
-        .navigationDestination(item: $generatedProject) { project in
-            ResultView(project: project)
+        .navigationDestination(item: $generatedRoute) { route in
+            switch route {
+            case .result(let project):
+                ResultView(project: project, shouldShowContinuePosterAction: true)
+            case .poster(let project):
+                PosterEditorView(project: project)
+            }
         }
         .sheet(item: $activeEditor) { editor in
             StrategyEditorSheet(editor: editor, draft: $draft)
@@ -94,6 +153,7 @@ struct HomeView: View {
         }
         .task {
             await appModel.refreshQuota()
+            applyUITestTopicIfNeeded()
             applyUITestProductImageIfNeeded()
             applyPendingTemplateWorkflow()
         }
@@ -118,6 +178,8 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("ViralForge Studio")
                     .font(.system(size: 29, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [VFStudioDesign.primaryRed, VFStudioDesign.sunset, VFStudioDesign.accent],
@@ -125,6 +187,7 @@ struct HomeView: View {
                             endPoint: .trailing
                         )
                     )
+                    .layoutPriority(1)
 
                 HStack(spacing: 7) {
                     Image(systemName: appModel.quota.isPro ? "crown.fill" : "bolt.fill")
@@ -139,9 +202,11 @@ struct HomeView: View {
 
             Spacer()
 
-            QuotaRingBadge(
-                text: quotaRingText,
+            QuotaStatusBadge(
+                title: quotaBadgeTitle,
+                value: quotaBadgeValue,
                 progress: quotaProgress,
+                icon: appModel.quota.isPro ? "crown.fill" : "doc.text.fill",
                 tint: VFStudioDesign.primaryRed
             )
         }
@@ -166,6 +231,8 @@ struct HomeView: View {
                         .buttonStyle(.plain)
                     }
                 }
+
+                creationWorkflowGuide
 
                 if let appliedWorkflow {
                     appliedTemplateCard(appliedWorkflow)
@@ -232,9 +299,13 @@ struct HomeView: View {
                 }
                 .frame(minHeight: 154)
 
-                if productImageData != nil {
-                    productImageAttachmentCard
-                }
+                generationModeSelector
+
+                Text(generationMode.description)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(VFStudioDesign.secondaryText)
+                    .lineLimit(2)
+                    .accessibilityIdentifier("vf.home.generationModeDescription")
 
                 if let message = visibleTopicValidationMessage {
                     Label(message, systemImage: "exclamationmark.circle.fill")
@@ -258,6 +329,7 @@ struct HomeView: View {
                             tint: VFStudioDesign.primaryRed
                         ) {
                             Haptics.selection()
+                            activeEditor = .platform
                         }
 
                         StrategyMiniChip(
@@ -294,8 +366,180 @@ struct HomeView: View {
 
                 generateFAB
                     .padding(.top, 2)
+
+                if generationMode == .posterAndCopy || productImageData != nil {
+                    productImageReferenceSection
+                }
+
+                creationSupportRow
             }
         }
+    }
+
+    private var generationModeSelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(AppText.localized("Generation mode", "生成模式"))
+                .font(.caption.weight(.bold))
+                .foregroundStyle(VFStudioDesign.secondaryText)
+
+            HStack(spacing: 8) {
+                ForEach(GenerationMode.allCases) { mode in
+                    generationModeButton(mode)
+                }
+            }
+            .padding(4)
+            .background(.white.opacity(0.80), in: RoundedRectangle(cornerRadius: 15))
+            .overlay {
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(.white.opacity(0.96), lineWidth: 1)
+            }
+        }
+        .accessibilityIdentifier("vf.home.generationMode")
+    }
+
+    private var creationWorkflowGuide: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "list.bullet.clipboard")
+                .font(.caption.weight(.black))
+                .foregroundStyle(VFStudioDesign.primaryRed)
+
+            HStack(spacing: 6) {
+                creationStep(
+                    number: 1,
+                    icon: "pencil",
+                    title: AppText.localized("Brief", "简报"),
+                    identifier: "vf.home.workflowGuide.step1"
+                )
+                workflowArrow
+
+                creationStep(
+                    number: 2,
+                    icon: "wand.and.stars",
+                    title: AppText.localized("Copy Pack", "文案包"),
+                    identifier: "vf.home.workflowGuide.step2"
+                )
+                workflowArrow
+
+                creationStep(
+                    number: 3,
+                    icon: "paintpalette.fill",
+                    title: generationMode == .copyOnly
+                        ? AppText.localized("Poster Optional", "海报可选")
+                        : AppText.localized("AI Poster", "AI 海报"),
+                    identifier: "vf.home.workflowGuide.step3"
+                )
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(.white.opacity(0.84), lineWidth: 1)
+        }
+        .accessibilityLabel(generationMode == .copyOnly
+            ? AppText.localized("Workflow: brief, copy pack, optional poster", "流程：简报、文案包、可选海报")
+            : AppText.localized("Workflow: brief, copy pack, AI poster", "流程：简报、文案包、AI 海报")
+        )
+        .accessibilityIdentifier("vf.home.creationWorkflowGuide")
+    }
+
+    private func creationStep(
+        number: Int,
+        icon: String,
+        title: String,
+        identifier: String
+    ) -> some View {
+        HStack(spacing: 5) {
+            Text(String(number))
+                .font(.caption2.weight(.black))
+                .foregroundStyle(VFStudioDesign.primaryRed)
+                .frame(width: 18, height: 18)
+                .background(VFStudioDesign.primaryRed.opacity(0.12), in: Circle())
+
+            Image(systemName: icon)
+                .font(.caption2.weight(.black))
+                .foregroundStyle(VFStudioDesign.primaryRed)
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(VFStudioDesign.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .layoutPriority(number == 3 ? 1 : 0)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(identifier)
+    }
+
+    private var workflowArrow: some View {
+        Image(systemName: "chevron.right")
+            .font(.caption2.weight(.black))
+            .foregroundStyle(VFStudioDesign.secondaryText.opacity(0.48))
+    }
+
+    private func generationModeButton(_ mode: GenerationMode) -> some View {
+        let isSelected = generationMode == mode
+        return Button {
+            Haptics.selection()
+            generationMode = mode
+        } label: {
+            Text(mode.title)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(isSelected ? .white : VFStudioDesign.ink)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .padding(.horizontal, 12)
+                .background {
+                    if isSelected {
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [VFStudioDesign.primaryRed, VFStudioDesign.sunset],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    } else {
+                        Capsule()
+                            .fill(Color.clear)
+                    }
+                }
+                .overlay {
+                    Capsule()
+                        .stroke(isSelected ? Color.clear : VFStudioDesign.secondaryText.opacity(0.20), lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(mode.accessibilityIdentifier)
+    }
+
+    private var creationSupportRow: some View {
+        HStack(spacing: 10) {
+            NavigationLink {
+                TemplatesView()
+            } label: {
+                CompactCreationShortcut(
+                    icon: "rectangle.on.rectangle.fill",
+                    title: AppText.localized("Use Template", "套用模板"),
+                    tint: VFStudioDesign.accent
+                )
+            }
+            .buttonStyle(.plain)
+
+            NavigationLink {
+                BrandKitView()
+            } label: {
+                CompactCreationShortcut(
+                    icon: "brain.head.profile",
+                    title: AppText.localized("Brand Memory", "品牌记忆"),
+                    tint: brandAccentColor
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .accessibilityIdentifier("vf.home.creationSupportRow")
     }
 
     private var inputStatusMessage: String? {
@@ -317,44 +561,68 @@ struct HomeView: View {
             .buttonStyle(.plain)
             .accessibilityLabel(isRecordingVoice ? AppText.localized("Stop voice input", "停止语音输入") : AppText.localized("Start voice input", "开始语音输入"))
             .accessibilityIdentifier("vf.home.voiceInputButton")
-
-            PhotosPicker(selection: $selectedProductPhotoItem, matching: .images, photoLibrary: .shared()) {
-                productImagePickerLabel
-            }
-            .buttonStyle(.plain)
-            .disabled(isLoadingProductImage)
-            .accessibilityLabel(AppText.localized("Add product image", "添加产品图"))
-            .accessibilityIdentifier("vf.home.productImageButton")
         }
     }
 
-    @ViewBuilder
-    private var productImagePickerLabel: some View {
-        if let productUIImage {
-            Image(uiImage: productUIImage)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(.white.opacity(0.96), lineWidth: 1)
+    private var productImageReferenceSection: some View {
+        Group {
+            if productImageData != nil {
+                productImageAttachmentCard
+            } else {
+                PhotosPicker(selection: $selectedProductPhotoItem, matching: .images, photoLibrary: .shared()) {
+                    HStack(spacing: 10) {
+                        if isLoadingProductImage {
+                            ProgressView()
+                                .controlSize(.regular)
+                                .frame(width: 42, height: 42)
+                                .background(.white.opacity(0.90), in: Circle())
+                        } else {
+                            Image(systemName: "photo.on.rectangle")
+                                .font(.headline.weight(.black))
+                                .foregroundStyle(VFStudioDesign.electricCyan)
+                                .frame(width: 42, height: 42)
+                                .background(VFStudioDesign.electricCyan.opacity(0.12), in: Circle())
+                                .background(.white.opacity(0.94), in: Circle())
+                                .overlay {
+                                    Circle()
+                                        .stroke(VFStudioDesign.electricCyan.opacity(0.28), lineWidth: 1.4)
+                                }
+                        }
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(AppText.localized("Optional: add real product image", "可选：添加真实产品图"))
+                                .font(.caption.weight(.black))
+                                .foregroundStyle(VFStudioDesign.ink)
+                            Text(AppText.localized(
+                                "Only used later for AI background, not for copy generation.",
+                                "只用于后续 AI 背景，不影响文案生成。"
+                            ))
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(VFStudioDesign.secondaryText)
+                        }
+
+                        Spacer(minLength: 0)
+
+                        Image(systemName: "plus")
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(VFStudioDesign.electricCyan)
+                            .frame(width: 30, height: 30)
+                            .background(.white.opacity(0.70), in: Circle())
+                    }
+                    .padding(10)
+                    .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 16))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(VFStudioDesign.electricCyan.opacity(0.20), lineWidth: 1)
+                    }
                 }
-                .shadow(color: VFStudioDesign.electricCyan.opacity(0.22), radius: 12, x: 0, y: 6)
-                .accessibilityIdentifier("vf.home.productImageThumbnail")
-        } else if isLoadingProductImage {
-            ProgressView()
-                .controlSize(.regular)
-                .frame(width: 44, height: 44)
-                .background(.white.opacity(0.90), in: Circle())
-        } else {
-            inputToolButtonContent(
-                icon: "photo.on.rectangle",
-                tint: VFStudioDesign.electricCyan,
-                background: VFStudioDesign.electricCyan.opacity(0.12),
-                stroke: VFStudioDesign.electricCyan.opacity(0.28)
-            )
+                .buttonStyle(.plain)
+                .disabled(isLoadingProductImage)
+                .accessibilityLabel(AppText.localized("Add real product image for AI background", "添加用于 AI 背景的真实产品图"))
+                .accessibilityIdentifier("vf.home.productImageButton")
+            }
         }
+        .accessibilityIdentifier("vf.home.productImageReferenceSection")
     }
 
     private var productImageAttachmentCard: some View {
@@ -373,10 +641,10 @@ struct HomeView: View {
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(AppText.localized("Product image attached", "已添加真实产品图"))
+                Text(AppText.localized("Product image attached", "已添加产品图"))
                     .font(.caption.weight(.black))
                     .foregroundStyle(VFStudioDesign.ink)
-                Text(productImageWasSubjectOptimized ? AppText.localized("Subject reference optimized", "主体参考图已优化") : AppText.localized("Product reference ready", "产品参考图已准备"))
+                Text(productImageWasSubjectOptimized ? AppText.localized("Subject optimized for AI background", "已优化主体，便于 AI 生成背景") : AppText.localized("Product reference ready for AI background", "产品参考图已准备，可用于 AI 背景"))
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(VFStudioDesign.secondaryText)
                     .accessibilityIdentifier("vf.home.productImageSubjectStatus")
@@ -387,6 +655,7 @@ struct HomeView: View {
             Button {
                 Haptics.selection()
                 productImageData = nil
+                cachedProductUIImage = nil
                 productImageWasSubjectOptimized = false
                 selectedProductPhotoItem = nil
                 showInputToolStatus(AppText.localized("Product image removed", "已移除产品图"))
@@ -412,7 +681,7 @@ struct HomeView: View {
     }
 
     private var productUIImage: UIImage? {
-        productImageData.flatMap(UIImage.init(data:))
+        cachedProductUIImage
     }
 
     private func inputToolButtonContent(
@@ -479,6 +748,7 @@ struct HomeView: View {
                 Haptics.selection()
                 withAnimation(.spring(response: 0.30, dampingFraction: 0.86)) {
                     appliedWorkflow = nil
+                    appModel.clearActiveTemplateWorkflow()
                     draft = GenerationDraft(language: appModel.launchLanguage, platform: SocialPlatform.defaultPlatform(for: appModel.launchLanguage))
                 }
             } label: {
@@ -510,46 +780,11 @@ struct HomeView: View {
         .accessibilityIdentifier("vf.home.appliedTemplateCard")
     }
 
-    private var templatePreviewSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                sectionHeader(
-                    title: AppText.localized("Hot templates", "热门创作模板"),
-                    subtitle: AppText.localized("Commerce-ready starting points", "电商种草快速起稿")
-                )
-
-                Spacer()
-
-                NavigationLink {
-                    TemplatesView()
-                } label: {
-                    Text(AppText.localized("More", "更多"))
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(VFStudioDesign.primaryRed)
-                }
-            }
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(Array(appModel.visibleTemplates.prefix(4))) { template in
-                        NavigationLink {
-                            TemplateDetailView(template: template)
-                        } label: {
-                            HotTemplateCard(template: template)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-        }
-    }
-
     private var contentPipelineSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             sectionHeader(
-                title: AppText.localized("In progress", "正在进行中"),
-                subtitle: AppText.localized("Recent drafts and active creation jobs", "最近草稿与当前创作任务")
+                title: AppText.localized("Recent projects", "最近项目"),
+                subtitle: AppText.localized("Continue copy packs and poster drafts", "继续编辑文案包和海报草稿")
             )
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -557,7 +792,7 @@ struct HomeView: View {
                     if appModel.isGenerating {
                         PipelineItem(
                             title: draft.topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? AppText.localized("New content pack", "新内容资产包") : draft.topic,
-                            status: AppText.localized("Generating copy and poster direction", "正在生成文案与海报方向"),
+                            status: AppText.localized("Generating content pack", "正在生成内容包"),
                             progress: 0.64,
                             tint: VFStudioDesign.accent
                         )
@@ -569,7 +804,7 @@ struct HomeView: View {
                         } label: {
                             PipelineItem(
                                 title: pipelineTitle(for: project),
-                                status: project.hasPosterExport ? AppText.localized("Poster exported", "海报已导出") : AppText.localized("Copy pack ready", "内容包已就绪"),
+                                status: project.hasPosterExport ? AppText.localized("Poster ready", "海报已生成") : AppText.localized("Content pack ready", "内容包已生成"),
                                 progress: project.hasPosterExport ? 1.0 : 0.76,
                                 tint: project.hasPosterExport ? VFStudioDesign.teal : VFStudioDesign.sky,
                                 showsDisclosure: true
@@ -581,80 +816,6 @@ struct HomeView: View {
                     }
                 }
                 .padding(.vertical, 2)
-            }
-        }
-    }
-
-    private var brandKitShortcut: some View {
-        NavigationLink {
-            BrandKitView()
-        } label: {
-            StudioGlassCard(level: .thin) {
-                HStack(spacing: 15) {
-                    ZStack {
-                        Circle()
-                            .fill(brandAccentColor.opacity(0.18))
-                            .frame(width: 46, height: 46)
-                            .blur(radius: 12)
-
-                        Circle()
-                            .fill(brandAccentColor)
-                            .frame(width: 18, height: 18)
-                            .shadow(color: brandAccentColor.opacity(0.42), radius: 10, x: 0, y: 4)
-                    }
-
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text(AppText.localized("Brand Memory", "品牌记忆"))
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(VFStudioDesign.ink)
-                        Text(appModel.brandProfile.hasSavedMemory ? appModel.brandProfile.memorySummary : AppText.localized("Set brand colors, audience, tone, and banned claims.", "设置品牌色、人群、语气与禁用表述。"))
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(VFStudioDesign.secondaryText)
-                            .lineLimit(2)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(VFStudioDesign.secondaryText.opacity(0.56))
-                }
-            }
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var workflowShortcuts: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader(
-                title: AppText.localized("Pro Studio tools", "专业工作室工具"),
-                subtitle: AppText.localized("Move from one-off assets to repeatable production", "从单次生成进入持续生产")
-            )
-
-            HStack(spacing: 14) {
-                NavigationLink {
-                    BatchCreateView()
-                } label: {
-                    StudioToolTile(
-                        icon: "calendar.badge.plus",
-                        title: AppText.localized("Batch", "批量创作"),
-                        subtitle: AppText.localized("7/14-day content calendar", "7/14 天内容日历"),
-                        tint: VFStudioDesign.teal
-                    )
-                }
-                .buttonStyle(.plain)
-
-                NavigationLink {
-                    TemplatesView()
-                } label: {
-                    StudioToolTile(
-                        icon: "rectangle.on.rectangle.fill",
-                        title: AppText.localized("Templates", "模板开始"),
-                        subtitle: AppText.localized("TikTok, Instagram, Shorts", "国内平台创意格式"),
-                        tint: VFStudioDesign.accent
-                    )
-                }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -673,7 +834,7 @@ struct HomeView: View {
                         .font(.headline.weight(.bold))
                         .symbolEffect(.pulse, options: .repeating, isActive: appModel.isGenerating)
                 }
-                Text(appModel.isGenerating ? AppText.localized("Creating...", "正在创作...") : AppText.localized("Start Viral Creation", "开启爆款创作"))
+                Text(generateButtonTitle)
                     .font(.headline.weight(.bold))
             }
             .foregroundStyle(canGenerate ? .white : VFStudioDesign.secondaryText)
@@ -718,15 +879,46 @@ struct HomeView: View {
         .accessibilityIdentifier("vf.home.generateButton")
     }
 
-    private var quotaRingText: String {
-        appModel.quota.isPro ? "Pro" : "\(appModel.quota.remainingTextGenerations)"
+    private var generateButtonTitle: String {
+        if appModel.isGenerating {
+            return AppText.localized("Generating...", "正在生成...")
+        }
+
+        switch generationMode {
+        case .posterAndCopy:
+            return AppText.localized("Generate Copy, Open Poster", "生成文案并进入海报")
+        case .copyOnly:
+            return AppText.localized("Generate Copy Pack", "生成文案包")
+        }
+    }
+
+    private var quotaBadgeTitle: String {
+        if appModel.quota.isPro {
+            return AppText.localized("Pro", "Pro 会员")
+        }
+
+        return AppText.localized("Copy today", "今日文案")
+    }
+
+    private var quotaBadgeValue: String {
+        if appModel.quota.isPro {
+            return AppText.localized("Unlimited", "文案不限")
+        }
+
+        return "\(displayedFreeTextQuotaRemaining)/\(freeTextQuotaDailyLimit)"
     }
 
     private var quotaProgress: Double {
         if appModel.quota.isPro {
             return 1
         }
-        return min(1, max(0.08, Double(appModel.quota.remainingTextGenerations) / 10))
+        return min(1, max(0.08, Double(displayedFreeTextQuotaRemaining) / Double(freeTextQuotaDailyLimit)))
+    }
+
+    private var freeTextQuotaDailyLimit: Int { 3 }
+
+    private var displayedFreeTextQuotaRemaining: Int {
+        min(max(0, appModel.quota.remainingTextGenerations), freeTextQuotaDailyLimit)
     }
 
     private var brandAccentColor: Color {
@@ -783,11 +975,50 @@ struct HomeView: View {
                 .disabled(!canGenerate)
                 .accessibilityIdentifier("vf.home.generationError.retryButton")
 
-                if shouldOfferProRecovery(for: message) {
+                if shouldOfferAdReward {
+                    Button {
+                        Haptics.selection()
+                        Task {
+                            let rewarded = await appModel.requestTextGenerationReward()
+                            if rewarded {
+                                generate()
+                            }
+                        }
+                    } label: {
+                        Group {
+                            if appModel.isRequestingTextGenerationReward {
+                                Label(AppText.localized("Loading Ad...", "广告加载中..."), systemImage: "hourglass")
+                                    .font(.subheadline.weight(.bold))
+                                    .foregroundStyle(.white)
+                            } else {
+                                Label(AppText.localized("Watch Ad", "看广告"), systemImage: "play.rectangle.on.rectangle")
+                                    .font(.subheadline.weight(.bold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(red: 0.09, green: 0.16, blue: 0.34), VFStudioDesign.primaryRed],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ),
+                            in: Capsule()
+                        )
+                        .shadow(color: Color(red: 0.1, green: 0.16, blue: 0.34).opacity(0.28), radius: 10, x: 0, y: 5)
+                    }
+                    .disabled(!canGenerate || appModel.isRequestingTextGenerationReward)
+                    .buttonStyle(.plain)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(AppText.localized("Watch Ad", "看广告"))
+                    .accessibilityIdentifier("vf.home.generationError.watchAdButton")
+                } else if shouldOfferUpgrade {
                     Button {
                         Haptics.selection()
                         appModel.generationError = nil
-                        appModel.selectedTab = .pro
+                        appModel.openPaywall(reason: message)
                     } label: {
                         Label(AppText.localized("Upgrade Pro", "升级 Pro"), systemImage: "crown.fill")
                             .font(.subheadline.weight(.bold))
@@ -822,8 +1053,12 @@ struct HomeView: View {
         .accessibilityIdentifier("vf.home.generationError")
     }
 
-    private func shouldOfferProRecovery(for message: String) -> Bool {
-        !appModel.quota.isPro && !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    private var shouldOfferUpgrade: Bool {
+        !appModel.quota.isPro
+    }
+
+    private var shouldOfferAdReward: Bool {
+        appModel.showTextGenerationRewardError
     }
 
     private func generate() {
@@ -834,7 +1069,13 @@ struct HomeView: View {
                 project.poster.productImageData = productImageData
                 await appModel.savePosterDraft(for: project, poster: project.poster)
             }
-            generatedProject = project
+
+            generatedRoute = switch generationMode {
+            case .posterAndCopy:
+                .poster(project)
+            case .copyOnly:
+                .result(project)
+            }
         }
     }
 
@@ -848,6 +1089,28 @@ struct HomeView: View {
         showPasteStatus(AppText.localized("Template preset loaded", "模板参数已载入"))
     }
 
+    private func applyUITestTopicIfNeeded() {
+        guard ProcessInfo.processInfo.arguments.contains("VF_UI_TESTING"),
+              draft.topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let topic = Self.uiTestLaunchValue(named: "VF_UI_TEST_TOPIC")?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !topic.isEmpty else {
+            return
+        }
+
+        draft.topic = topic
+    }
+
+    private static func uiTestLaunchValue(named name: String) -> String? {
+        let processInfo = ProcessInfo.processInfo
+        if let value = processInfo.environment[name], !value.isEmpty {
+            return value
+        }
+        guard let index = processInfo.arguments.firstIndex(of: name) else { return nil }
+        let valueIndex = processInfo.arguments.index(after: index)
+        guard processInfo.arguments.indices.contains(valueIndex) else { return nil }
+        return processInfo.arguments[valueIndex]
+    }
+
     private func applyUITestProductImageIfNeeded() {
         guard ProcessInfo.processInfo.arguments.contains("VF_UI_TEST_ATTACHED_PRODUCT_IMAGE"),
               productImageData == nil,
@@ -856,30 +1119,40 @@ struct HomeView: View {
         }
 
         productImageData = imageData
+        cachedProductUIImage = UIImage(data: imageData)
         productImageWasSubjectOptimized = true
     }
 
     private func uiTestProductImageData() -> Data? {
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: 360, height: 520))
         let image = renderer.image { context in
-            UIColor.white.setFill()
+            UIColor(red: 0.99, green: 0.96, blue: 0.91, alpha: 1).setFill()
             context.fill(CGRect(x: 0, y: 0, width: 360, height: 520))
-            UIColor(red: 0.86, green: 0.88, blue: 0.82, alpha: 1).setFill()
-            UIBezierPath(roundedRect: CGRect(x: 118, y: 52, width: 124, height: 54), cornerRadius: 18).fill()
-            UIColor(red: 0.96, green: 0.95, blue: 0.88, alpha: 1).setFill()
-            UIBezierPath(roundedRect: CGRect(x: 106, y: 92, width: 148, height: 360), cornerRadius: 22).fill()
-            UIColor(red: 0.78, green: 0.80, blue: 0.82, alpha: 1).setStroke()
-            let windowPath = UIBezierPath(roundedRect: CGRect(x: 148, y: 180, width: 64, height: 178), cornerRadius: 24)
-            windowPath.lineWidth = 5
-            windowPath.stroke()
-            UIColor(red: 0.45, green: 0.46, blue: 0.48, alpha: 1).setStroke()
-            let bladePath = UIBezierPath()
-            bladePath.move(to: CGPoint(x: 180, y: 296))
-            bladePath.addLine(to: CGPoint(x: 151, y: 326))
-            bladePath.move(to: CGPoint(x: 180, y: 296))
-            bladePath.addLine(to: CGPoint(x: 210, y: 324))
-            bladePath.lineWidth = 5
-            bladePath.stroke()
+            UIColor(red: 0.95, green: 0.79, blue: 0.42, alpha: 0.22).setFill()
+            UIBezierPath(ovalIn: CGRect(x: 56, y: 356, width: 248, height: 36)).fill()
+
+            UIColor(red: 0.96, green: 0.92, blue: 0.84, alpha: 1).setFill()
+            UIBezierPath(roundedRect: CGRect(x: 72, y: 208, width: 124, height: 168), cornerRadius: 20).fill()
+            UIColor.white.withAlphaComponent(0.92).setFill()
+            UIBezierPath(roundedRect: CGRect(x: 82, y: 218, width: 104, height: 118), cornerRadius: 16).fill()
+            UIColor(red: 0.79, green: 0.58, blue: 0.28, alpha: 1).setFill()
+            UIBezierPath(roundedRect: CGRect(x: 72, y: 196, width: 124, height: 22), cornerRadius: 8).fill()
+
+            UIColor(red: 0.99, green: 0.98, blue: 0.94, alpha: 1).setFill()
+            UIBezierPath(roundedRect: CGRect(x: 176, y: 96, width: 76, height: 250), cornerRadius: 28).fill()
+            UIColor(red: 0.80, green: 0.58, blue: 0.29, alpha: 1).setFill()
+            UIBezierPath(roundedRect: CGRect(x: 174, y: 112, width: 80, height: 34), cornerRadius: 10).fill()
+            UIColor.white.withAlphaComponent(0.52).setFill()
+            UIBezierPath(roundedRect: CGRect(x: 192, y: 158, width: 18, height: 156), cornerRadius: 9).fill()
+
+            UIColor(red: 0.93, green: 0.88, blue: 0.78, alpha: 0.92).setFill()
+            UIBezierPath(roundedRect: CGRect(x: 108, y: 122, width: 90, height: 150), cornerRadius: 22).fill()
+            UIColor(red: 0.81, green: 0.62, blue: 0.32, alpha: 1).setStroke()
+            let shinePath = UIBezierPath()
+            shinePath.move(to: CGPoint(x: 128, y: 150))
+            shinePath.addCurve(to: CGPoint(x: 174, y: 232), controlPoint1: CGPoint(x: 152, y: 158), controlPoint2: CGPoint(x: 170, y: 188))
+            shinePath.lineWidth = 4
+            shinePath.stroke()
         }
         return image.jpegData(compressionQuality: 0.84)
     }
@@ -917,9 +1190,10 @@ struct HomeView: View {
             }
 
             productImageData = processedImage.data
+            cachedProductUIImage = UIImage(data: processedImage.data)
             productImageWasSubjectOptimized = processedImage.wasSubjectOptimized
             Haptics.success()
-            showInputToolStatus(processedImage.wasSubjectOptimized ? AppText.localized("Product subject optimized", "产品主体已优化") : AppText.localized("Product image added to poster", "产品图已添加到海报"))
+            showInputToolStatus(processedImage.wasSubjectOptimized ? AppText.localized("Product subject optimized for AI background", "产品主体已优化，适配 AI 背景") : AppText.localized("Product image added for AI poster background", "产品图已保存，用于 AI 海报背景"))
         } catch {
             showInputToolStatus(AppText.localized("Image import failed", "图片导入失败"))
         }
@@ -1073,8 +1347,14 @@ struct HomeView: View {
 
     private func requestMicrophonePermission() async -> Bool {
         await withCheckedContinuation { continuation in
-            AVAudioSession.sharedInstance().requestRecordPermission { isGranted in
-                continuation.resume(returning: isGranted)
+            if #available(iOS 17.0, *) {
+                AVAudioApplication.requestRecordPermission { isGranted in
+                    continuation.resume(returning: isGranted)
+                }
+            } else {
+                AVAudioSession.sharedInstance().requestRecordPermission { isGranted in
+                    continuation.resume(returning: isGranted)
+                }
             }
         }
     }
@@ -1351,31 +1631,61 @@ private struct StudioGlassCard<Content: View>: View {
     }
 }
 
-private struct QuotaRingBadge: View {
-    let text: String
+private struct QuotaStatusBadge: View {
+    let title: String
+    let value: String
     let progress: Double
+    let icon: String
     let tint: Color
 
     var body: some View {
-        ZStack {
-            Circle()
-                .stroke(Color.black.opacity(0.055), lineWidth: 3.5)
-            Circle()
-                .trim(from: 0, to: progress)
-                .stroke(tint, style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            Text(text)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 8, weight: .black))
+                    .foregroundStyle(tint)
+
+                Text(title)
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .foregroundStyle(VFStudioDesign.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+            }
+
+            Text(value)
+                .font(.system(size: 15, weight: .black, design: .rounded))
                 .foregroundStyle(VFStudioDesign.ink)
-                .minimumScaleFactor(0.72)
+                .lineLimit(1)
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(tint.opacity(0.10))
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [tint, VFStudioDesign.sunset],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: max(5, proxy.size.width * progress))
+                }
+            }
+            .frame(height: 4)
         }
-        .frame(width: 42, height: 42)
-        .background(.white.opacity(0.56), in: Circle())
+        .frame(width: 54, alignment: .leading)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 7)
+        .background(.white.opacity(0.70), in: RoundedRectangle(cornerRadius: 14))
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
         .overlay {
-            Circle()
-                .stroke(.white.opacity(0.82), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(tint.opacity(0.16), lineWidth: 1)
         }
-        .shadow(color: tint.opacity(0.16), radius: 12, x: 0, y: 7)
+        .shadow(color: tint.opacity(0.10), radius: 12, x: 0, y: 7)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title) \(value)")
     }
 }
 
@@ -1542,105 +1852,29 @@ private struct PipelineItem: View {
     }
 }
 
-private struct HotTemplateCard: View {
-    let template: CreativeTemplate
-
-    private var tint: Color {
-        VFStudioDesign.platformTint(template.platform)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ZStack(alignment: .topTrailing) {
-                TemplatePosterPreview(template: template)
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
-
-                if template.lockedToPro {
-                    Image(systemName: "crown.fill")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(VFStudioDesign.sunset)
-                        .frame(width: 25, height: 25)
-                        .background(.white.opacity(0.88), in: Circle())
-                        .padding(9)
-                }
-            }
-            .frame(height: 112)
-            .shadow(color: tint.opacity(0.18), radius: 14, x: 0, y: 8)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(template.name)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(VFStudioDesign.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-
-                Text(template.promptHint)
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(VFStudioDesign.secondaryText)
-                    .lineLimit(2)
-            }
-        }
-        .padding(10)
-        .frame(width: 154)
-        .background(.white.opacity(0.68), in: RoundedRectangle(cornerRadius: 22))
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 22))
-        .overlay {
-            RoundedRectangle(cornerRadius: 22)
-                .stroke(.white.opacity(0.86), lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(0.035), radius: 16, x: 0, y: 8)
-    }
-}
-
-private struct StudioToolTile: View {
+private struct CompactCreationShortcut: View {
     let icon: String
     let title: String
-    let subtitle: String
     let tint: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: icon)
-                .font(.title3.weight(.bold))
-                .foregroundStyle(.white)
-                .frame(width: 38, height: 38)
-                .background(
-                    LinearGradient(colors: [tint.opacity(0.96), tint.opacity(0.66)], startPoint: .topLeading, endPoint: .bottomTrailing),
-                    in: RoundedRectangle(cornerRadius: 13)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 13)
-                        .stroke(.white.opacity(0.42), lineWidth: 1)
-                }
-                .shadow(color: tint.opacity(0.28), radius: 10, x: 0, y: 6)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(VFStudioDesign.ink)
-                    .lineLimit(1)
-                Text(subtitle)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(VFStudioDesign.secondaryText)
-                    .lineLimit(2)
+        Label(title, systemImage: icon)
+            .font(.caption.weight(.black))
+            .foregroundStyle(tint)
+            .lineLimit(1)
+            .minimumScaleFactor(0.84)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 11)
+            .background(tint.opacity(0.10), in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(tint.opacity(0.18), lineWidth: 1)
             }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(colors: [tint.opacity(0.09), .white.opacity(0.60)], startPoint: .topLeading, endPoint: .bottomTrailing),
-            in: RoundedRectangle(cornerRadius: 21)
-        )
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 21))
-        .overlay {
-            RoundedRectangle(cornerRadius: 21)
-                .stroke(.white.opacity(0.82), lineWidth: 1.1)
-        }
-        .shadow(color: .black.opacity(0.03), radius: 14, x: 0, y: 8)
     }
 }
 
 private enum StrategyEditor: String, Identifiable {
+    case platform
     case goal
     case audience
     case tone
@@ -1659,6 +1893,22 @@ private struct StrategyEditorSheet: View {
         NavigationStack {
             List {
                 switch editor {
+                case .platform:
+                    ForEach(SocialPlatform.launchPlatforms(for: draft.language)) { platform in
+                        Button {
+                            draft.platform = platform
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Label(platform.displayName, systemImage: platformIcon(for: platform))
+                                Spacer()
+                                if draft.platform == platform {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.tint)
+                                }
+                            }
+                        }
+                    }
                 case .goal:
                     ForEach(ContentGoal.allCases) { goal in
                         Button {
@@ -1710,8 +1960,8 @@ private struct StrategyEditorSheet: View {
                 case .brand:
                     Section {
                         Text(AppText.localized(
-                            "Brand memory is managed in the Brand tab and automatically applied during generation.",
-                            "品牌记忆在「品牌」页管理，生成时会自动套用。"
+                            "Brand memory is managed from the Me tab and automatically applied during generation.",
+                            "品牌记忆可在「我的」页管理，生成时会自动套用。"
                         ))
                         .foregroundStyle(.secondary)
                     }
@@ -1730,6 +1980,7 @@ private struct StrategyEditorSheet: View {
 
     private var editorTitle: String {
         switch editor {
+        case .platform: AppText.localized("Platform", "平台")
         case .goal: AppText.localized("Goal", "目标")
         case .audience: AppText.localized("Audience", "目标人群")
         case .tone: AppText.localized("Tone", "语气风格")
@@ -1744,6 +1995,15 @@ private struct StrategyEditorSheet: View {
         case .boldLaunch: "bolt.fill"
         case .softLifestyle: "cup.and.saucer.fill"
         case .editorial: "text.rectangle.fill"
+        }
+    }
+
+    private func platformIcon(for platform: SocialPlatform) -> String {
+        switch platform {
+        case .xiaohongshu: "camera.fill"
+        case .douyin, .tikTok, .youtubeShorts: "video.fill"
+        case .weChat: "bubble.left.fill"
+        case .instagram: "camera.aperture"
         }
     }
 }

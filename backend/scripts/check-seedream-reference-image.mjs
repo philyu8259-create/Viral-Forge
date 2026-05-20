@@ -19,8 +19,11 @@ assert.equal(bodyWithReference.watermark, false);
 assert.equal(bodyWithReference.response_format, "url");
 assert.match(bodyWithReference.prompt, /真实产品/);
 assert.match(bodyWithReference.prompt, /透明窗口、可见内部结构/);
-assert.match(bodyWithReference.prompt, /不要复刻输入图里的背景、水印、非产品文字/);
+assert.match(bodyWithReference.prompt, /不要复刻输入图里的背景或非产品标记/);
 assert.match(bodyWithReference.prompt, /只允许保留输入产品本体上物理印刷的可见标识/);
+assert.doesNotMatch(bodyWithReference.prompt, /二维码/);
+assert.doesNotMatch(bodyWithReference.prompt, /标题区/);
+assert.doesNotMatch(bodyWithReference.prompt, /按钮/);
 
 const bodyWithoutReference = buildSeedreamRequestBody({
   prompt: "Generate a clean product scene.",

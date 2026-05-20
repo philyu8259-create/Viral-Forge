@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PaywallView: View {
     @Environment(AppModel.self) private var appModel
+    @Environment(\.openURL) private var openURL
     @State private var selectedPlan = SubscriptionPlan.yearly
 
     var body: some View {
@@ -77,6 +78,16 @@ struct PaywallView: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 7)
                     .background((appModel.quota.isPro ? VFStyle.teal : VFStyle.primaryRed).opacity(0.10), in: Capsule())
+
+                if let subscriptionValidityText = appModel.subscriptionValidityText {
+                    Label(subscriptionValidityText, systemImage: "calendar.badge.clock")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(.white.opacity(0.58), in: Capsule())
+                        .accessibilityIdentifier("vf.paywall.subscriptionValidity")
+                }
             }
         }
     }
@@ -89,8 +100,9 @@ struct PaywallView: View {
             )
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                feature(AppText.localized("Ad-free", "完全去广告"), icon: "shield.lefthalf.filled", tint: VFStyle.primaryRed)
                 feature(AppText.localized("Unlimited copy", "不限文案"), icon: "sparkles", tint: VFStyle.primaryRed)
-                feature(AppText.localized("Unlimited AI backgrounds", "不限 AI 背景"), icon: "sparkles.rectangle.stack", tint: VFStyle.purpleFlow)
+                feature(AppText.localized("10/day, 200/month AI backgrounds", "AI 背景 10张/天，200张/月"), icon: "sparkles.rectangle.stack", tint: VFStyle.purpleFlow)
                 feature(AppText.localized("Premium templates", "会员模板"), icon: "rectangle.3.group", tint: VFStyle.sunset)
                 feature(AppText.localized("No watermark", "无水印导出"), icon: "checkmark.seal.fill", tint: VFStyle.electricCyan)
             }
@@ -113,7 +125,6 @@ struct PaywallView: View {
                     } label: {
                         SubscriptionPlanCard(
                             plan: plan,
-                            productPrice: appModel.product(for: plan)?.displayPrice,
                             isSelected: selectedPlan == plan
                         )
                     }
@@ -127,6 +138,8 @@ struct PaywallView: View {
     private var purchaseCard: some View {
         VFGlassCard {
             VStack(spacing: 13) {
+                selectedPlanSummary
+
                 VFPrimaryButton(
                     title: primaryButtonTitle,
                     icon: appModel.quota.isPro ? "checkmark.circle.fill" : "bolt.fill",
@@ -192,6 +205,69 @@ struct PaywallView: View {
                 .font(.caption2.weight(.medium))
                 .foregroundStyle(VFStyle.secondaryText)
                 .multilineTextAlignment(.center)
+
+                legalLinksRow
+            }
+        }
+    }
+
+    private var selectedPlanSummary: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(AppText.localized("Selected Subscription", "当前订阅方案"))
+                .font(.caption.weight(.black))
+                .foregroundStyle(VFStyle.secondaryText)
+
+            HStack(alignment: .top, spacing: 12) {
+                VFGradientIcon(icon: selectedPlan == .yearly ? "calendar.badge.clock" : "calendar", tint: selectedPlan == .yearly ? VFStyle.sunset : VFStyle.primaryRed, size: 36)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(selectedPlan.title)
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(VFStyle.ink)
+                    Text(selectedPlan.subtitle)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(VFStyle.secondaryText)
+                    Text(AppText.localized(
+                        "\(selectedPlan.localizedPriceHint), auto-renews until canceled.",
+                        "\(selectedPlan.localizedPriceHint)，自动续订，可随时取消。"
+                    ))
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(selectedPlan == .yearly ? VFStyle.sunset : VFStyle.primaryRed)
+                }
+
+                Spacer()
+            }
+            .padding(14)
+            .background(.white.opacity(0.56), in: RoundedRectangle(cornerRadius: 18))
+        }
+    }
+
+    private var legalLinksRow: some View {
+        VStack(spacing: 10) {
+            Text(AppText.localized(
+                "By continuing, you agree to the Terms of Use (EULA) and Privacy Policy.",
+                "继续购买即表示你同意《用户协议（EULA）》和《隐私政策》。"
+            ))
+            .font(.caption2.weight(.medium))
+            .foregroundStyle(VFStyle.secondaryText)
+            .multilineTextAlignment(.center)
+
+            HStack(spacing: 10) {
+                purchaseLinkButton(
+                    title: AppText.localized("Privacy Policy", "隐私政策"),
+                    icon: "hand.raised.fill",
+                    tint: VFStyle.teal,
+                    url: AppLegalLinks.privacy,
+                    identifier: "vf.paywall.privacyLink"
+                )
+
+                purchaseLinkButton(
+                    title: AppText.localized("Terms of Use (EULA)", "用户协议（EULA）"),
+                    icon: "doc.text.fill",
+                    tint: VFStyle.purpleFlow,
+                    url: AppLegalLinks.terms,
+                    identifier: "vf.paywall.termsLink"
+                )
             }
         }
     }
@@ -261,11 +337,35 @@ struct PaywallView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
+
+    private func purchaseLinkButton(
+        title: String,
+        icon: String,
+        tint: Color,
+        url: URL,
+        identifier: String
+    ) -> some View {
+        Button {
+            openURL(url)
+        } label: {
+            Label(title, systemImage: icon)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(tint)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(tint.opacity(0.10), in: Capsule())
+                .overlay {
+                    Capsule()
+                        .stroke(tint.opacity(0.18), lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(identifier)
+    }
 }
 
 private struct SubscriptionPlanCard: View {
     let plan: SubscriptionPlan
-    let productPrice: String?
     let isSelected: Bool
 
     private var tint: Color {
@@ -296,9 +396,6 @@ private struct SubscriptionPlanCard: View {
                     Text(plan.subtitle)
                         .font(.caption.weight(.medium))
                         .foregroundStyle(VFStyle.secondaryText)
-                    Text(plan.id)
-                        .font(.caption2.monospaced())
-                        .foregroundStyle(VFStyle.secondaryText.opacity(0.68))
                 }
 
                 Spacer()
@@ -307,9 +404,6 @@ private struct SubscriptionPlanCard: View {
                     Text(plan.localizedPriceHint)
                         .font(.headline.weight(.black))
                         .foregroundStyle(tint)
-                    Text("\(productPrice ?? plan.displayPrice) \(plan.billingPeriod)")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(VFStyle.secondaryText)
                 }
             }
         }

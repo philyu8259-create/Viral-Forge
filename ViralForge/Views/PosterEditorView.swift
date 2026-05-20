@@ -18,13 +18,20 @@ struct PosterEditorView: View {
     @State private var backgroundStatusMessage: String?
     @State private var isSavingToPhotos = false
     @State private var isGeneratingDirectionPreviews = false
+    @State private var isRenderingExport = false
+    @State private var showsDirectionPreviewCostAlert = false
     @State private var selectedTarget: PosterCanvasTarget
     @State private var exportMode: PosterExportMode = .watermarked
+    @State private var showAdvancedSettings = false
+    @State private var selectedTitleID: UUID?
+    @State private var selectedHookID: UUID?
 
     init(project: ContentProject) {
         self.project = project
         _poster = State(initialValue: project.poster)
         _selectedTarget = State(initialValue: PosterCanvasTarget.defaultTarget(for: project.draft.platform))
+        _selectedTitleID = State(initialValue: project.result.titles.first?.id)
+        _selectedHookID = State(initialValue: project.result.hooks.first?.id)
     }
 
     var body: some View {
@@ -37,6 +44,10 @@ struct PosterEditorView: View {
             )
 
             VStack(spacing: 18) {
+                posterWorkflowGuide
+                generatedCopyCandidates
+                backgroundGenerationControls
+
                 PosterPreview(
                     poster: poster,
                     platform: project.draft.platform,
@@ -46,16 +57,577 @@ struct PosterEditorView: View {
                     .frame(height: 520)
                     .clipShape(RoundedRectangle(cornerRadius: 28))
                     .shadow(color: VFStyle.platformTint(project.draft.platform).opacity(0.16), radius: 22, x: 0, y: 12)
+                    .accessibilityIdentifier("vf.poster.preview")
 
-                controls
                 if poster.productImageData != nil {
-                    productIntegrationControls
+                    productImageLockNotice
                 }
-                textPlacementControls
-                backgroundDirectionControls
+
+                posterCopyControls
+                posterTextLayerControls
                 exportOptions
 
                 QuotaStatusView(quota: appModel.quota, compact: true)
+
+                VFPrimaryButton(
+                    title: isRenderingExport
+                        ? AppText.localized("Rendering Final Poster...", "正在渲染最终海报...")
+                        : showsWatermarkForExport
+                        ? AppText.localized("Render Final Branded Poster", "生成最终带标识海报")
+                        : AppText.localized("Render Final No-Watermark Poster", "生成最终无水印海报"),
+                    icon: "square.and.arrow.down",
+                    isLoading: isRenderingExport,
+                    isEnabled: !isRenderingExport
+                ) {
+                    exportPoster()
+                }
+                .accessibilityIdentifier("vf.poster.renderButton")
+
+                if let exportedImageURL {
+                    VFGlassCard {
+                        VStack(spacing: 12) {
+                            exportResultHeader
+
+                            HStack(spacing: 10) {
+                                ShareLink(item: exportedImageURL) {
+                                    exportActionLabel(AppText.localized("Share PNG", "分享 PNG 图片"), icon: "square.and.arrow.up", tint: VFStyle.primaryRed)
+                                }
+                                .buttonStyle(.plain)
+                                .frame(maxWidth: .infinity)
+
+                                Button {
+                                    saveToPhotoLibrary()
+                                } label: {
+                                    exportActionLabel(
+                                        isSavingToPhotos ? AppText.localized("Saving...", "保存中...") : AppText.localized("Save to Photos", "保存到相册"),
+                                        icon: "photo.badge.arrow.down",
+                                        tint: VFStyle.ink
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(isSavingToPhotos || exportedUIImage == nil)
+                                .frame(maxWidth: .infinity)
+                            }
+
+                            Button {
+                                requestCleanExport()
+                            } label: {
+                                exportActionLabel(
+                                    appModel.quota.isPro
+                                        ? AppText.localized("Render No-Watermark Copy", "重新生成无水印版")
+                                        : AppText.localized("Unlock No-Watermark Export", "解锁无水印导出"),
+                                    icon: appModel.quota.isPro ? "checkmark.seal.fill" : "crown.fill",
+                                    tint: appModel.quota.isPro ? VFStyle.teal : VFStyle.sunset
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isRenderingExport)
+                            .accessibilityIdentifier("vf.poster.noWatermarkButton")
+                        }
+                    }
+                }
+
+                advancedPosterSettings
+
+                if let exportStatusMessage {
+                    Label(exportStatusMessage, systemImage: "checkmark.circle")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(VFStyle.secondaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityIdentifier("vf.poster.exportStatus")
+                }
+
+                if let exportedUIImage {
+                    VFGlassCard {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(AppText.localized("Export Preview", "导出预览"))
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(VFStyle.ink)
+                            Image(uiImage: exportedUIImage)
+                                .resizable()
+                                .scaledToFit()
+                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .stroke(.white.opacity(0.8), lineWidth: 1)
+                                }
+                        }
+                    }
+                }
+            }
+        }
+        .accessibilityIdentifier("vf.poster.screen")
+        .alert(AppText.localized("Generate direction previews?", "生成方向预览？"), isPresented: $showsDirectionPreviewCostAlert) {
+            Button(AppText.localized("Cancel", "取消"), role: .cancel) {}
+            Button(AppText.localized("Generate", "生成")) {
+                runDirectionPreviews(generationLimit: directionPreviewGenerationLimit)
+            }
+        } message: {
+            Text(AppText.localized(
+                "This will use \(directionPreviewGenerationLimit) AI background credits.",
+                "这将消耗 \(directionPreviewGenerationLimit) 次 AI 背景额度。"
+            ))
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            NavigationLink {
+                ResultView(project: project)
+            } label: {
+                Label(AppText.localized("Content", "文案"), systemImage: "doc.text")
+            }
+        }
+        .onAppear {
+            if appModel.quota.isPro {
+                exportMode = .clean
+            }
+        }
+    }
+
+    private var posterCopyControls: some View {
+        VFGlassCard(level: .thick) {
+            VStack(alignment: .leading, spacing: 14) {
+                VFSectionHeader(
+                    title: AppText.localized("Poster Copy", "海报文案"),
+                    subtitle: AppText.localized("Editable text layer for headline, subtitle, and CTA; adjust placement in Advanced settings.", "可编辑文字层：先完成标题、文案与 CTA，可在高级设置里调文案位置。")
+                )
+
+                posterField(
+                    AppText.localized("Headline", "主标题"),
+                    text: posterHeadlineBinding,
+                    icon: "textformat.size",
+                    tint: VFStyle.primaryRed,
+                    lines: 2,
+                    accessibilityIdentifier: "vf.poster.headlineField"
+                )
+                posterField(
+                    AppText.localized("Subtitle", "副标题"),
+                    text: posterSubtitleBinding,
+                    icon: "text.alignleft",
+                    tint: VFStyle.electricCyan,
+                    accessibilityIdentifier: "vf.poster.subtitleField"
+                )
+                posterField(
+                    AppText.localized("CTA", "行动按钮"),
+                    text: posterCtaBinding,
+                    icon: "hand.tap.fill",
+                    tint: VFStyle.sunset,
+                    accessibilityIdentifier: "vf.poster.ctaField"
+                )
+                posterField(
+                    AppText.localized("Poster label", "海报标签"),
+                    text: posterChannelLabelBinding,
+                    icon: "tag.fill",
+                    tint: VFStyle.teal,
+                    accessibilityIdentifier: "vf.poster.channelLabelField"
+                )
+            }
+        }
+    }
+
+    private var posterTextLayerControls: some View {
+        VFGlassCard(level: .thick) {
+            VStack(alignment: .leading, spacing: 14) {
+                VFSectionHeader(
+                    title: AppText.localized("Text Layer", "文字层样式"),
+                    subtitle: AppText.localized("Tune font, size, color, alignment, and fine position.", "调节字体、字号、颜色、对齐和微调位置。")
+                )
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(AppText.localized("Font", "字体"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+                    Picker(AppText.localized("Font Family", "字体"), selection: posterTextFontFamilyBinding) {
+                        ForEach(PosterTextFontFamily.allCases) { preset in
+                            Label(preset.displayName, systemImage: preset.icon).tag(preset)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("vf.poster.textFontFamily")
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(AppText.localized("Weight", "字重"))
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(VFStyle.secondaryText)
+                        Picker(AppText.localized("Weight", "字重"), selection: posterTextWeightBinding) {
+                            ForEach(PosterTextWeight.allCases) { preset in
+                                Text(preset.displayName).tag(preset)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .accessibilityIdentifier("vf.poster.textWeight")
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(AppText.localized("Alignment", "对齐"))
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(VFStyle.secondaryText)
+                        Picker(AppText.localized("Alignment", "对齐"), selection: posterTextAlignmentBinding) {
+                            ForEach(PosterTextAlignment.allCases) { preset in
+                                Label(preset.displayName, systemImage: preset.icon).tag(preset)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .accessibilityIdentifier("vf.poster.textAlignment")
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(AppText.localized("Text color", "文字颜色"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+                    Picker(AppText.localized("Color", "颜色"), selection: posterTextColorBinding) {
+                        ForEach(PosterTextColor.allCases) { preset in
+                            Label(preset.displayName, systemImage: preset.icon).tag(preset)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("vf.poster.textColor")
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(AppText.localized("Headline size", "标题字号"))
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(VFStyle.secondaryText)
+                        Slider(
+                            value: posterHeadlineScaleBinding,
+                            in: 0.70...1.60,
+                            step: 0.05
+                        )
+                        HStack {
+                            Text("0.70")
+                                .font(.caption2.weight(.medium))
+                                .foregroundStyle(VFStyle.secondaryText)
+                            Spacer(minLength: 0)
+                            Text(AppText.localized(
+                                String(format: "Scale %.2fx", poster.clampedHeadlineScale),
+                                String(format: "比例 %.2f 倍", poster.clampedHeadlineScale)
+                            ))
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(VFStyle.ink)
+                            Spacer(minLength: 0)
+                            Text("1.60")
+                                .font(.caption2.weight(.medium))
+                                .foregroundStyle(VFStyle.secondaryText)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(AppText.localized("Subtitle size", "副标题字号"))
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(VFStyle.secondaryText)
+                        Slider(
+                            value: posterSubtitleScaleBinding,
+                            in: 0.70...1.60,
+                            step: 0.05
+                        )
+                        HStack {
+                            Text("0.70")
+                                .font(.caption2.weight(.medium))
+                                .foregroundStyle(VFStyle.secondaryText)
+                            Spacer(minLength: 0)
+                            Text(AppText.localized(
+                                String(format: "Scale %.2fx", poster.clampedSubtitleScale),
+                                String(format: "比例 %.2f 倍", poster.clampedSubtitleScale)
+                            ))
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(VFStyle.ink)
+                            Spacer(minLength: 0)
+                            Text("1.60")
+                                .font(.caption2.weight(.medium))
+                                .foregroundStyle(VFStyle.secondaryText)
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(AppText.localized("CTA size", "按钮字号"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+                    Slider(value: posterCtaScaleBinding, in: 0.70...1.60, step: 0.05)
+                    HStack {
+                        Text("0.70")
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(VFStyle.secondaryText)
+                        Spacer(minLength: 0)
+                        Text(AppText.localized(
+                            String(format: "Scale %.2fx", poster.clampedCtaScale),
+                            String(format: "比例 %.2f 倍", poster.clampedCtaScale)
+                        ))
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(VFStyle.ink)
+                        Spacer(minLength: 0)
+                        Text("1.60")
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(VFStyle.secondaryText)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(AppText.localized("Fine position", "微调位置"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.secondaryText)
+
+                    VStack(spacing: 8) {
+                        HStack(spacing: 12) {
+                            Text(AppText.localized("X", "横向"))
+                                .font(.caption.weight(.black))
+                                .foregroundStyle(VFStyle.secondaryText)
+                                .frame(width: 34, alignment: .leading)
+                            Slider(value: posterCopyOffsetXBinding, in: -80...80, step: 1)
+                            Text(String(format: "%.0f", poster.clampedCopyOffsetX))
+                                .font(.caption2.weight(.black))
+                                .frame(width: 34, alignment: .trailing)
+                        }
+                        HStack(spacing: 12) {
+                            Text(AppText.localized("Y", "纵向"))
+                                .font(.caption.weight(.black))
+                                .foregroundStyle(VFStyle.secondaryText)
+                                .frame(width: 34, alignment: .leading)
+                            Slider(value: posterCopyOffsetYBinding, in: -80...80, step: 1)
+                            Text(String(format: "%.0f", poster.clampedCopyOffsetY))
+                                .font(.caption2.weight(.black))
+                                .frame(width: 34, alignment: .trailing)
+                        }
+                    }
+                }
+
+                HStack(spacing: 10) {
+                    Spacer(minLength: 0)
+                    Button {
+                        resetTextLayerSettings()
+                    } label: {
+                        Label(
+                            AppText.localized("Reset Recommended Layout", "恢复默认布局"),
+                            systemImage: "arrow.counterclockwise"
+                        )
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(VFStyle.ink)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(.white.opacity(0.62), in: Capsule())
+                        .overlay {
+                            Capsule()
+                                .stroke(.white.opacity(0.78), lineWidth: 1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("vf.poster.resetTextLayer")
+                }
+            }
+        }
+    }
+
+    private var generatedCopyCandidates: some View {
+        VFGlassCard(level: .thin) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label(AppText.localized("Generated copy is ready", "文案候选已生成"), systemImage: "doc.text.magnifyingglass")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(VFStyle.ink)
+
+                        Text(AppText.localized(
+                            "Choose a title or hook to place it on the poster. You can still edit every line below.",
+                            "点选标题或钩子即可替换到海报上，下面仍可继续编辑。"
+                        ))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(VFStyle.secondaryText)
+                    }
+
+                    Spacer(minLength: 10)
+
+                    NavigationLink {
+                        ResultView(project: project)
+                    } label: {
+                        Label(AppText.localized("All copy", "全部文案"), systemImage: "list.bullet.clipboard")
+                            .font(.caption.weight(.black))
+                            .labelStyle(.iconOnly)
+                            .foregroundStyle(VFStyle.primaryRed)
+                            .frame(width: 34, height: 34)
+                            .background(VFStyle.primaryRed.opacity(0.10), in: Circle())
+                            .accessibilityLabel(AppText.localized("View all generated copy", "查看全部生成文案"))
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                copyCandidateGroup(
+                    title: AppText.localized("Title options", "标题候选"),
+                    lines: Array(project.result.titles.prefix(3)),
+                    selectedID: selectedTitleID,
+                    tint: VFStyle.primaryRed,
+                    action: applyTitleCandidate
+                )
+
+                copyCandidateGroup(
+                    title: AppText.localized("Hook options", "开头钩子"),
+                    lines: Array(project.result.hooks.prefix(3)),
+                    selectedID: selectedHookID,
+                    tint: VFStyle.electricCyan,
+                    action: applyHookCandidate
+                )
+            }
+        }
+        .accessibilityIdentifier("vf.poster.copyCandidates")
+    }
+
+    @ViewBuilder
+    private func copyCandidateGroup(
+        title: String,
+        lines: [ScoredLine],
+        selectedID: UUID?,
+        tint: Color,
+        action: @escaping (ScoredLine) -> Void
+    ) -> some View {
+        if !lines.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(VFStyle.secondaryText)
+
+                VStack(spacing: 7) {
+                    ForEach(lines) { line in
+                        CopyCandidateButton(
+                            line: line,
+                            isSelected: selectedID == line.id,
+                            tint: tint
+                        ) {
+                            action(line)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var posterWorkflowGuide: some View {
+        VFGlassCard(level: .thin) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 7) {
+                    Image(systemName: "rectangle.3.group")
+                        .foregroundStyle(VFStyle.primaryRed)
+                    Text(AppText.localized("Poster workflow", "海报流程"))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(VFStyle.ink)
+                }
+
+                HStack(spacing: 7) {
+                    workflowStep(
+                        number: 1,
+                        title: AppText.localized("AI Background", "AI 背景"),
+                        subtitle: AppText.localized("Generate a photo layer first.", "先生成背景层。"),
+                        isCompleted: hasGeneratedBackground,
+                        isActive: workflowActiveStep == 1,
+                        icon: "sparkles.rectangle.stack.fill",
+                        identifier: "vf.poster.workflowGuide.step1"
+                    )
+
+                    workflowConnector
+
+                    workflowStep(
+                        number: 2,
+                        title: AppText.localized("Poster Copy", "海报文案"),
+                        subtitle: AppText.localized("Adjust text and placement.", "再调整文字和位置。"),
+                        isCompleted: !poster.headline.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                        isActive: workflowActiveStep == 2,
+                        icon: "text.justify",
+                        identifier: "vf.poster.workflowGuide.step2"
+                    )
+
+                    workflowConnector
+
+                    workflowStep(
+                        number: 3,
+                        title: AppText.localized("Render & Export", "渲染与导出"),
+                        subtitle: AppText.localized("Create final poster file.", "生成最终海报文件。"),
+                        isCompleted: hasRenderedPoster,
+                        isActive: workflowActiveStep == 3,
+                        icon: "square.and.arrow.down",
+                        identifier: "vf.poster.workflowGuide.step3"
+                    )
+                }
+            }
+        }
+        .accessibilityIdentifier("vf.poster.workflowGuide")
+    }
+
+    private func workflowStep(
+        number: Int,
+        title: String,
+        subtitle: String,
+        isCompleted: Bool,
+        isActive: Bool,
+        icon: String,
+        identifier: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 7) {
+                ZStack {
+                    Circle()
+                        .fill(isCompleted ? VFStyle.teal.opacity(0.2) : isActive ? VFStyle.primaryRed.opacity(0.18) : .white.opacity(0.52))
+                        .frame(width: 19, height: 19)
+
+                    if isCompleted {
+                        Image(systemName: "checkmark")
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(VFStyle.teal)
+                    } else {
+                        Text(String(number))
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(isActive ? VFStyle.primaryRed : VFStyle.secondaryText)
+                    }
+                }
+
+                Image(systemName: icon)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(isActive ? VFStyle.primaryRed : VFStyle.secondaryText)
+            }
+
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(VFStyle.ink)
+                .lineLimit(1)
+
+            Text(subtitle)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(VFStyle.secondaryText)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(identifier)
+    }
+
+    private var workflowConnector: some View {
+        Image(systemName: "chevron.right")
+            .font(.caption.weight(.black))
+            .foregroundStyle(VFStyle.secondaryText.opacity(0.5))
+            .padding(.top, 8)
+    }
+
+    private var hasGeneratedBackground: Bool {
+        poster.backgroundImageURL != nil
+    }
+
+    private var hasRenderedPoster: Bool {
+        exportedImageURL != nil
+    }
+
+    private var workflowActiveStep: Int {
+        if hasRenderedPoster { 3 }
+        else if hasGeneratedBackground { 2 }
+        else { 1 }
+    }
+
+    private var backgroundGenerationControls: some View {
+        VFGlassCard {
+            VStack(spacing: 12) {
+                VFSectionHeader(
+                    title: AppText.localized("AI Background", "AI 背景"),
+                    subtitle: AppText.localized("Generate AI background only. This is the no-text commercial photo layer.", "仅生成背景图，不会写入文案，适合商单视觉素材。")
+                )
 
                 VFPrimaryButton(
                     title: appModel.isGeneratingPosterBackground ? AppText.localized("Generating Background...", "生成背景中...") : AppText.localized("Generate AI Background", "生成 AI 背景"),
@@ -92,14 +664,6 @@ struct PosterEditorView: View {
                     .accessibilityIdentifier("vf.poster.regenerateBackgroundOnlyButton")
                 }
 
-                if poster.backgroundHistory.count > 1 {
-                    backgroundHistoryView
-                }
-
-                if directionPreviewVersions.count > 1 {
-                    directionPreviewGrid
-                }
-
                 if let backgroundStatusMessage {
                     Label(backgroundStatusMessage, systemImage: "checkmark.circle.fill")
                         .font(.footnote.weight(.semibold))
@@ -118,8 +682,8 @@ struct PosterEditorView: View {
                                 "Your poster text and layout are still safe. You can retry AI background generation or render the current poster manually.",
                                 "当前海报文案和版式不会丢失。你可以重试 AI 背景，也可以直接生成当前海报。"
                             ))
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(VFStyle.secondaryText)
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(VFStyle.secondaryText)
 
                             Button {
                                 generateBackgroundOnly()
@@ -138,105 +702,16 @@ struct PosterEditorView: View {
                     }
                     .accessibilityIdentifier("vf.poster.backgroundError")
                 }
-
-                VFPrimaryButton(
-                    title: showsWatermarkForExport
-                        ? AppText.localized("Render Branded Poster", "生成带标识图片")
-                        : AppText.localized("Render No-Watermark Poster", "生成无水印图片"),
-                    icon: "square.and.arrow.down"
-                ) {
-                    exportPoster()
-                }
-                .accessibilityIdentifier("vf.poster.renderButton")
-
-                if let exportedImageURL {
-                    VFGlassCard {
-                        VStack(spacing: 12) {
-                            exportResultHeader
-
-                            ShareLink(item: exportedImageURL) {
-                                exportActionLabel(AppText.localized("Share PNG", "分享 PNG 图片"), icon: "square.and.arrow.up", tint: VFStyle.primaryRed)
-                            }
-                            .buttonStyle(.plain)
-
-                            Button {
-                                saveToPhotoLibrary()
-                            } label: {
-                                exportActionLabel(
-                                    isSavingToPhotos ? AppText.localized("Saving...", "保存中...") : AppText.localized("Save to Photos", "保存到相册"),
-                                    icon: "photo.badge.arrow.down",
-                                    tint: VFStyle.ink
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(isSavingToPhotos || exportedUIImage == nil)
-
-                            Button {
-                                requestCleanExport()
-                            } label: {
-                                exportActionLabel(
-                                    appModel.quota.isPro
-                                        ? AppText.localized("Render No-Watermark Copy", "重新生成无水印版")
-                                        : AppText.localized("Unlock No-Watermark Export", "解锁无水印导出"),
-                                    icon: appModel.quota.isPro ? "checkmark.seal.fill" : "crown.fill",
-                                    tint: appModel.quota.isPro ? VFStyle.teal : VFStyle.sunset
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityIdentifier("vf.poster.noWatermarkButton")
-                        }
-                    }
-                }
-
-                if let exportStatusMessage {
-                    Label(exportStatusMessage, systemImage: "checkmark.circle")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(VFStyle.secondaryText)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityIdentifier("vf.poster.exportStatus")
-                }
-
-                if let exportedUIImage {
-                    VFGlassCard {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text(AppText.localized("Export Preview", "导出预览"))
-                                .font(.headline.weight(.bold))
-                                .foregroundStyle(VFStyle.ink)
-                            Image(uiImage: exportedUIImage)
-                                .resizable()
-                                .scaledToFit()
-                                .clipShape(RoundedRectangle(cornerRadius: 18))
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 18)
-                                        .stroke(.white.opacity(0.8), lineWidth: 1)
-                                }
-                        }
-                    }
-                }
-            }
-        }
-        .accessibilityIdentifier("vf.poster.screen")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            NavigationLink {
-                ResultView(project: project)
-            } label: {
-                Label(AppText.localized("Content", "文案"), systemImage: "doc.text")
-            }
-        }
-        .onAppear {
-            if appModel.quota.isPro {
-                exportMode = .clean
             }
         }
     }
 
-    private var controls: some View {
-        VFGlassCard(level: .thick) {
+    private var posterFormatControls: some View {
+        VFGlassCard {
             VStack(alignment: .leading, spacing: 14) {
                 VFSectionHeader(
-                    title: AppText.localized("Poster Controls", "海报控制台"),
-                    subtitle: AppText.localized("Choose size, visual style, and poster copy", "选择尺寸、视觉风格与海报文案")
+                    title: AppText.localized("Poster Layout", "版式与风格"),
+                    subtitle: AppText.localized("Choose template style and export size", "选择海报风格与导出尺寸")
                 )
 
                 Picker(AppText.localized("Template", "模板"), selection: $poster.style) {
@@ -252,36 +727,70 @@ struct PosterEditorView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+            }
+        }
+    }
 
-                posterField(
-                    AppText.localized("Headline", "主标题"),
-                    text: $poster.headline,
-                    icon: "textformat.size",
-                    tint: VFStyle.primaryRed,
-                    lines: 2,
-                    accessibilityIdentifier: "vf.poster.headlineField"
-                )
-                posterField(
-                    AppText.localized("Subtitle", "副标题"),
-                    text: $poster.subtitle,
-                    icon: "text.alignleft",
-                    tint: VFStyle.electricCyan,
-                    accessibilityIdentifier: "vf.poster.subtitleField"
-                )
-                posterField(
-                    AppText.localized("CTA", "行动按钮"),
-                    text: $poster.cta,
-                    icon: "hand.tap.fill",
-                    tint: VFStyle.sunset,
-                    accessibilityIdentifier: "vf.poster.ctaField"
-                )
-                posterField(
-                    AppText.localized("Poster label", "海报标签"),
-                    text: posterChannelLabelBinding,
-                    icon: "tag.fill",
-                    tint: VFStyle.teal,
-                    accessibilityIdentifier: "vf.poster.channelLabelField"
-                )
+    private var productImageLockNotice: some View {
+        VFGlassCard(level: .thick) {
+            HStack(spacing: 12) {
+                VFGradientIcon(icon: "lock.shield", tint: VFStyle.teal, size: 34)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(AppText.localized("Real product lock", "真实产品已锁定"))
+                        .font(.subheadline.weight(.black))
+                        .foregroundStyle(VFStyle.ink)
+                    Text(AppText.localized(
+                        "Real product locked. AI backgrounds will be built around it.",
+                        "已锁定真实产品，AI 背景会围绕该产品自然融合"
+                    ))
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(VFStyle.secondaryText)
+                    .lineLimit(3)
+                }
+
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private var advancedPosterSettings: some View {
+        VFGlassCard(level: .thick) {
+            VStack(alignment: .leading, spacing: 12) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        showAdvancedSettings.toggle()
+                    }
+                } label: {
+                    HStack {
+                        VFSectionHeader(
+                            title: AppText.localized("Advanced Settings", "高级设置"),
+                            subtitle: AppText.localized("Style, product blend, copy position, directions, and history.", "样式、产品融合、文案位置、方向与历史版本设置")
+                        )
+                        Spacer(minLength: 0)
+                        Image(systemName: showAdvancedSettings ? "chevron.down" : "chevron.right")
+                            .foregroundStyle(VFStyle.secondaryText)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("vf.poster.advancedSettings")
+
+                if showAdvancedSettings {
+                    VStack(spacing: 12) {
+                        posterFormatControls
+                        productIntegrationControls
+                        textPlacementControls
+                        backgroundDirectionControls
+
+                        if poster.backgroundHistory.count > 1 {
+                            backgroundHistoryView
+                        }
+
+                        if directionPreviewVersions.count > 1 {
+                            directionPreviewGrid
+                        }
+                    }
+                }
             }
         }
     }
@@ -517,8 +1026,8 @@ struct PosterEditorView: View {
         VFGlassCard {
             VStack(alignment: .leading, spacing: 13) {
                 VFSectionHeader(
-                    title: AppText.localized("Export Quality", "导出品质"),
-                    subtitle: AppText.localized("Free exports include a small ViralForge mark; Pro removes it.", "免费导出带 ViralForge 小标识；会员可无水印。")
+                    title: AppText.localized("Render & Export", "渲染与导出"),
+                    subtitle: AppText.localized("Render creates the final poster for sharing and publishing.", "点击生成后会导出最终可分享的海报。")
                 )
 
                 HStack(spacing: 10) {
@@ -711,6 +1220,10 @@ struct PosterEditorView: View {
                 Text(showsWatermarkForExport ? AppText.localized("Upgrade to Pro anytime to remove the ViralForge mark.", "可随时升级 Pro 移除 ViralForge 标识。") : AppText.localized("Ready for direct publishing and client delivery.", "可直接发布或交付客户。"))
                     .font(.caption.weight(.medium))
                     .foregroundStyle(VFStyle.secondaryText)
+
+                Text(AppText.localized("Share first, then save, or render a no-watermark version.", "建议先分享/保存，或者直接渲染无水印版本。"))
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(VFStyle.secondaryText)
             }
             Spacer(minLength: 0)
         }
@@ -789,47 +1302,205 @@ struct PosterEditorView: View {
             },
             set: { newValue in
                 let trimmedValue = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                poster.channelLabel = trimmedValue.isEmpty ? nil : trimmedValue
+                mutatePoster {
+                    $0.channelLabel = trimmedValue.isEmpty ? nil : trimmedValue
+                }
             }
         )
     }
 
-    private func selectBackgroundDirection(_ direction: PosterBackgroundDirection) {
-        guard poster.backgroundDirection != direction else { return }
-        poster.backgroundDirection = direction
-        backgroundStatusMessage = nil
-        exportedUIImage = nil
-        exportedImageURL = nil
+    private var posterHeadlineBinding: Binding<String> {
+        Binding(
+            get: { poster.headline },
+            set: { newValue in
+                mutatePoster { $0.headline = newValue }
+            }
+        )
+    }
+
+    private var posterSubtitleBinding: Binding<String> {
+        Binding(
+            get: { poster.subtitle },
+            set: { newValue in
+                mutatePoster { $0.subtitle = newValue }
+            }
+        )
+    }
+
+    private var posterCtaBinding: Binding<String> {
+        Binding(
+            get: { poster.cta },
+            set: { newValue in
+                mutatePoster { $0.cta = newValue }
+            }
+        )
+    }
+
+    private var posterTextFontFamilyBinding: Binding<PosterTextFontFamily> {
+        Binding(
+            get: { poster.textFontFamily },
+            set: { newValue in
+                mutatePoster { $0.textFontFamily = newValue }
+            }
+        )
+    }
+
+    private var posterTextWeightBinding: Binding<PosterTextWeight> {
+        Binding(
+            get: { poster.textWeight },
+            set: { newValue in
+                mutatePoster { $0.textWeight = newValue }
+            }
+        )
+    }
+
+    private var posterTextColorBinding: Binding<PosterTextColor> {
+        Binding(
+            get: { poster.textColor },
+            set: { newValue in
+                mutatePoster { $0.textColor = newValue }
+            }
+        )
+    }
+
+    private var posterTextAlignmentBinding: Binding<PosterTextAlignment> {
+        Binding(
+            get: { poster.textAlignment },
+            set: { newValue in
+                mutatePoster { $0.textAlignment = newValue }
+            }
+        )
+    }
+
+    private var posterHeadlineScaleBinding: Binding<Double> {
+        Binding(
+            get: { poster.clampedHeadlineScale },
+            set: { newValue in
+                mutatePoster { $0.headlineScale = newValue }
+            }
+        )
+    }
+
+    private var posterSubtitleScaleBinding: Binding<Double> {
+        Binding(
+            get: { poster.clampedSubtitleScale },
+            set: { newValue in
+                mutatePoster { $0.subtitleScale = newValue }
+            }
+        )
+    }
+
+    private var posterCtaScaleBinding: Binding<Double> {
+        Binding(
+            get: { poster.clampedCtaScale },
+            set: { newValue in
+                mutatePoster { $0.ctaScale = newValue }
+            }
+        )
+    }
+
+    private var posterCopyOffsetXBinding: Binding<Double> {
+        Binding(
+            get: { poster.clampedCopyOffsetX },
+            set: { newValue in
+                mutatePoster { $0.copyOffsetX = newValue }
+            }
+        )
+    }
+
+    private var posterCopyOffsetYBinding: Binding<Double> {
+        Binding(
+            get: { poster.clampedCopyOffsetY },
+            set: { newValue in
+                mutatePoster { $0.copyOffsetY = newValue }
+            }
+        )
+    }
+
+    private func resetTextLayerSettings() {
+        mutatePoster {
+            $0.textFontFamily = .rounded
+            $0.textWeight = .black
+            $0.textColor = .auto
+            $0.textAlignment = .leading
+            $0.headlineScale = 1.0
+            $0.subtitleScale = 1.0
+            $0.ctaScale = 1.0
+            $0.copyOffsetX = 0.0
+            $0.copyOffsetY = 0.0
+        }
+    }
+
+    private func mutatePoster(
+        statusMessage: String? = nil,
+        clearExport: Bool = true,
+        _ mutate: (inout PosterDraft) -> Void
+    ) {
+        mutate(&poster)
+
+        if clearExport {
+            exportedUIImage = nil
+            exportedImageURL = nil
+        }
+
+        if let statusMessage {
+            backgroundStatusMessage = statusMessage
+        } else if clearExport {
+            backgroundStatusMessage = nil
+        }
 
         Task {
             await appModel.savePosterDraft(for: project, poster: poster)
+        }
+    }
+
+    private func selectBackgroundDirection(_ direction: PosterBackgroundDirection) {
+        guard poster.backgroundDirection != direction else { return }
+        mutatePoster {
+            $0.backgroundDirection = direction
         }
     }
 
     private func selectProductIntegrationMode(_ mode: ProductImageIntegrationMode) {
         guard poster.productImageIntegrationMode != mode else { return }
-        poster.productImageIntegrationMode = mode
-        backgroundStatusMessage = nil
-        exportedUIImage = nil
-        exportedImageURL = nil
-
-        Task {
-            await appModel.savePosterDraft(for: project, poster: poster)
+        mutatePoster {
+            $0.productImageIntegrationMode = mode
         }
     }
 
     private func selectTextPlacement(_ placement: PosterTextPlacement) {
         guard poster.textPlacement != placement else { return }
-        poster.textPlacement = placement
-        backgroundStatusMessage = AppText.localized(
-            "Copy placement updated. Regenerate the background for better product clearance.",
-            "文案位置已更新。重新生成背景后，产品避让效果会更好。"
-        )
-        exportedUIImage = nil
-        exportedImageURL = nil
+        mutatePoster(
+            statusMessage: AppText.localized(
+                "Copy placement updated. Regenerate the background for better product clearance.",
+                "文案位置已更新。重新生成背景后，产品避让效果会更好。"
+            )
+        ) {
+            $0.textPlacement = placement
+        }
+    }
 
-        Task {
-            await appModel.savePosterDraft(for: project, poster: poster)
+    private func applyTitleCandidate(_ line: ScoredLine) {
+        selectedTitleID = line.id
+        mutatePoster(
+            statusMessage: AppText.localized(
+                "Title applied to poster copy.",
+                "标题已应用到海报文案。"
+            )
+        ) {
+            $0.headline = line.text
+        }
+    }
+
+    private func applyHookCandidate(_ line: ScoredLine) {
+        selectedHookID = line.id
+        mutatePoster(
+            statusMessage: AppText.localized(
+                "Hook applied to poster subtitle.",
+                "开头钩子已应用到海报副标题。"
+            )
+        ) {
+            $0.subtitle = line.text
         }
     }
 
@@ -846,6 +1517,15 @@ struct PosterEditorView: View {
             return
         }
 
+        guard generationLimit <= 1 || ProcessInfo.processInfo.arguments.contains("VF_UI_TESTING") else {
+            showsDirectionPreviewCostAlert = true
+            return
+        }
+
+        runDirectionPreviews(generationLimit: generationLimit)
+    }
+
+    private func runDirectionPreviews(generationLimit: Int) {
         Task {
             isGeneratingDirectionPreviews = true
             defer { isGeneratingDirectionPreviews = false }
@@ -923,8 +1603,29 @@ struct PosterEditorView: View {
 
     @MainActor
     private func exportPoster() {
+        guard !isRenderingExport else { return }
         if exportMode == .clean && !appModel.quota.isPro {
             requestCleanExport()
+            return
+        }
+
+        Task {
+            await renderPosterExport()
+        }
+    }
+
+    @MainActor
+    private func renderPosterExport() async {
+        isRenderingExport = true
+        exportStatusMessage = AppText.localized("Preparing poster image...", "正在准备海报图片...")
+        defer { isRenderingExport = false }
+
+        let exportBackgroundImage = await loadedExportBackgroundImage()
+        if poster.backgroundImageURL != nil && exportBackgroundImage == nil {
+            exportStatusMessage = AppText.localized(
+                "Poster background is still loading. Please check the network and render again.",
+                "海报背景图还未加载成功，请检查网络后重新生成。"
+            )
             return
         }
 
@@ -934,7 +1635,8 @@ struct PosterEditorView: View {
                 poster: poster,
                 platform: project.draft.platform,
                 target: selectedTarget,
-                showsWatermark: showsWatermarkForExport
+                showsWatermark: showsWatermarkForExport,
+                preloadedBackgroundImage: exportBackgroundImage
             )
             .frame(width: exportSize.width, height: exportSize.height)
         )
@@ -945,7 +1647,7 @@ struct PosterEditorView: View {
         }
 
         exportedUIImage = uiImage
-        exportedImageURL = writePNGToTemporaryFile(uiImage)
+        exportedImageURL = await writePNGToTemporaryFile(uiImage)
         exportStatusMessage = showsWatermarkForExport
             ? AppText.localized("Poster rendered with ViralForge mark. It is now available in Assets.", "带 ViralForge 标识的海报已生成，可在素材库查看。")
             : AppText.localized("No-watermark poster rendered. It is now available in Assets.", "无水印海报已生成，可在素材库查看。")
@@ -955,13 +1657,52 @@ struct PosterEditorView: View {
         }
     }
 
-    private func writePNGToTemporaryFile(_ image: UIImage) -> URL? {
-        guard let data = image.pngData() else { return nil }
+    private func loadedExportBackgroundImage() async -> UIImage? {
+        guard let backgroundImageURL = poster.backgroundImageURL else { return nil }
 
+        if backgroundImageURL.scheme == "data",
+           let dataURLImage = imageFromDataURL(backgroundImageURL) {
+            return dataURLImage
+        }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: backgroundImageURL)
+            if let httpResponse = response as? HTTPURLResponse,
+               !(200..<300).contains(httpResponse.statusCode) {
+                return nil
+            }
+            return UIImage(data: data)
+        } catch {
+            return nil
+        }
+    }
+
+    private func imageFromDataURL(_ url: URL) -> UIImage? {
+        let absoluteString = url.absoluteString
+        guard let commaIndex = absoluteString.firstIndex(of: ",") else { return nil }
+        let metadata = absoluteString[..<commaIndex]
+        let payload = String(absoluteString[absoluteString.index(after: commaIndex)...])
+
+        let data: Data?
+        if metadata.contains(";base64") {
+            data = Data(base64Encoded: payload)
+        } else {
+            data = payload.removingPercentEncoding?.data(using: .utf8)
+        }
+
+        return data.flatMap(UIImage.init(data:))
+    }
+
+    private func writePNGToTemporaryFile(_ image: UIImage) async -> URL? {
         let fileName = "viralforge-poster-\(project.id.uuidString).png"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
 
         do {
+            guard let data = await Task.detached(priority: .utility, operation: {
+                image.pngData()
+            }).value else {
+                return nil
+            }
             try data.write(to: url, options: [.atomic])
             return url
         } catch {
@@ -995,17 +1736,71 @@ struct PosterEditorView: View {
     }
 }
 
+private struct CopyCandidateButton: View {
+    let line: ScoredLine
+    let isSelected: Bool
+    let tint: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(isSelected ? tint : VFStyle.secondaryText.opacity(0.42))
+                    .padding(.top, 2)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(line.text)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(VFStyle.ink)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+
+                    HStack(spacing: 5) {
+                        Image(systemName: "sparkles")
+                        Text(AppText.localized("Score \(line.score)", "推荐 \(line.score)"))
+                    }
+                    .font(.caption2.weight(.black))
+                    .foregroundStyle(tint)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 9)
+            .padding(.horizontal, 10)
+            .background(isSelected ? tint.opacity(0.10) : .white.opacity(0.46), in: RoundedRectangle(cornerRadius: 14))
+            .overlay {
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(isSelected ? tint.opacity(0.28) : .white.opacity(0.72), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(line.text)
+    }
+}
+
 struct PosterPreview: View {
     let poster: PosterDraft
     let platform: SocialPlatform
     let target: PosterCanvasTarget
     let showsWatermark: Bool
+    let preloadedBackgroundImage: UIImage?
+    let productUIImage: UIImage?
 
-    init(poster: PosterDraft, platform: SocialPlatform, target: PosterCanvasTarget = .xiaohongshuCover, showsWatermark: Bool = false) {
+    init(
+        poster: PosterDraft,
+        platform: SocialPlatform,
+        target: PosterCanvasTarget = .xiaohongshuCover,
+        showsWatermark: Bool = false,
+        preloadedBackgroundImage: UIImage? = nil
+    ) {
         self.poster = poster
         self.platform = platform
         self.target = target
         self.showsWatermark = showsWatermark
+        self.preloadedBackgroundImage = preloadedBackgroundImage
+        self.productUIImage = poster.productImageData.flatMap(UIImage.init(data:))
     }
 
     var body: some View {
@@ -1017,7 +1812,19 @@ struct PosterPreview: View {
             if poster.backgroundImageURL == nil {
                 PosterFallbackVisual(palette: palette, platform: platform)
             }
-            if let backgroundImageURL = poster.backgroundImageURL {
+            if let preloadedBackgroundImage {
+                Image(uiImage: preloadedBackgroundImage)
+                    .resizable()
+                    .scaledToFill()
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            } else if let backgroundImageURL = poster.backgroundImageURL,
+                      backgroundImageURL.scheme == "data",
+                      let dataURLImage = Self.imageFromDataURL(backgroundImageURL) {
+                Image(uiImage: dataURLImage)
+                    .resizable()
+                    .scaledToFill()
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            } else if let backgroundImageURL = poster.backgroundImageURL {
                 AsyncImage(url: backgroundImageURL) { phase in
                     switch phase {
                     case .success(let image):
@@ -1034,14 +1841,18 @@ struct PosterPreview: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
-            LinearGradient(
-                colors: [
-                    palette.background.opacity(poster.backgroundImageURL == nil ? 0 : 0.08),
-                    palette.background.opacity(poster.backgroundImageURL == nil ? 0 : 0.72)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            if hasImageBackground {
+                readabilityScrim(palette: palette)
+            } else {
+                LinearGradient(
+                    colors: [
+                        palette.background.opacity(0),
+                        palette.background.opacity(0.72)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
             if poster.shouldOverlayProductImage, let productUIImage {
                 productImageLayer(productUIImage, palette: palette)
             }
@@ -1054,16 +1865,131 @@ struct PosterPreview: View {
         .shadow(color: .black.opacity(0.08), radius: 18, y: 8)
     }
 
-    private var productUIImage: UIImage? {
-        poster.productImageData.flatMap(UIImage.init(data:))
-    }
-
     private var resolvedTextPlacement: PosterTextPlacement {
         poster.textPlacement.resolved(for: poster)
     }
 
+    private var hasImageBackground: Bool {
+        poster.backgroundImageURL != nil
+    }
+
+    private static func imageFromDataURL(_ url: URL) -> UIImage? {
+        let absoluteString = url.absoluteString
+        guard let commaIndex = absoluteString.firstIndex(of: ",") else { return nil }
+        let metadata = absoluteString[..<commaIndex]
+        let payload = String(absoluteString[absoluteString.index(after: commaIndex)...])
+        let data = metadata.contains(";base64")
+            ? Data(base64Encoded: payload)
+            : payload.removingPercentEncoding?.data(using: .utf8)
+        return data.flatMap(UIImage.init(data:))
+    }
+
     private var placesCopyAtTop: Bool {
         resolvedTextPlacement == .top
+    }
+
+    private var usesProductSafeTextLayout: Bool {
+        poster.productImageData != nil || poster.productImageIntegratedInBackground == true
+    }
+
+    private var copyHorizontalAlignment: HorizontalAlignment {
+        poster.textAlignment.horizontalAlignment
+    }
+
+    private var copyTextAlignment: TextAlignment {
+        poster.textAlignment.textAlignment
+    }
+
+    private var copyFrameAlignment: Alignment {
+        poster.textAlignment.frameAlignment
+    }
+
+    private var headlineScale: CGFloat {
+        CGFloat(poster.clampedHeadlineScale)
+    }
+
+    private var subtitleScale: CGFloat {
+        CGFloat(poster.clampedSubtitleScale)
+    }
+
+    private var ctaScale: CGFloat {
+        CGFloat(poster.clampedCtaScale)
+    }
+
+    private func copyOffsetX(_ width: CGFloat) -> CGFloat {
+        max(min(CGFloat(poster.clampedCopyOffsetX), width * 0.35), -width * 0.35)
+    }
+
+    private func copyOffsetY(_ height: CGFloat) -> CGFloat {
+        max(min(CGFloat(poster.clampedCopyOffsetY), height * 0.35), -height * 0.35)
+    }
+
+    private func copyForegroundColor(palette: PosterPalette, isButtonText: Bool = false) -> Color {
+        poster.textColor.resolvedColor(
+            palette: palette,
+            hasImageBackground: hasImageBackground,
+            isButtonText: isButtonText
+        )
+    }
+
+    private func copyFont(size: CGFloat) -> Font {
+        Font.system(
+            size: size,
+            weight: poster.textWeight.weight,
+            design: poster.textFontFamily.design
+        )
+    }
+
+    private var productPriorityTitleLineLimit: Int {
+        usesProductSafeTextLayout ? 2 : 3
+    }
+
+    @ViewBuilder
+    private func readabilityScrim(palette: PosterPalette) -> some View {
+        ZStack {
+            LinearGradient(
+                colors: placesCopyAtTop
+                    ? [
+                        .black.opacity(0.56),
+                        .black.opacity(0.32),
+                        .clear,
+                        .black.opacity(0.20)
+                    ]
+                    : [
+                        .black.opacity(0.18),
+                        .clear,
+                        .black.opacity(0.28),
+                        .black.opacity(0.54)
+                    ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            LinearGradient(
+                colors: [
+                    (placesCopyAtTop ? palette.background : palette.primary).opacity(0.12),
+                    .clear,
+                    .clear,
+                    (placesCopyAtTop ? palette.primary : palette.background).opacity(0.08)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
+    private func adjustedTitleSize(_ baseSize: CGFloat) -> CGFloat {
+        let targetScale: CGFloat
+        switch target {
+        case .xiaohongshuCover:
+            targetScale = 0.92
+        case .douyinVertical:
+            targetScale = 0.86
+        case .weChatSquare:
+            targetScale = 0.80
+        }
+
+        return baseSize * targetScale * (usesProductSafeTextLayout ? 0.88 : 1)
     }
 
     private func productImageLayer(_ image: UIImage, palette: PosterPalette) -> some View {
@@ -1111,9 +2037,33 @@ struct PosterPreview: View {
 
     @ViewBuilder
     private func posterContentOverlay(palette: PosterPalette) -> some View {
+        GeometryReader { proxy in
+            if usesProductSafeTextLayout {
+                productSafeCopyOverlay(palette: palette, width: proxy.size.width, height: proxy.size.height)
+                    .offset(
+                        x: copyOffsetX(proxy.size.width),
+                        y: copyOffsetY(proxy.size.height)
+                    )
+            } else {
+                standardPosterContentOverlay(palette: palette, width: proxy.size.width, height: proxy.size.height)
+                    .offset(
+                        x: copyOffsetX(proxy.size.width),
+                        y: copyOffsetY(proxy.size.height)
+                    )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func standardPosterContentOverlay(
+        palette: PosterPalette,
+        width: CGFloat,
+        height: CGFloat
+    ) -> some View {
+        let contentAlignment = copyFrameAlignment
         switch poster.style {
         case .cleanProduct:
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: copyHorizontalAlignment, spacing: 18) {
                 platformBadge(palette: palette)
                 if placesCopyAtTop {
                     cleanCopyBlock(palette: palette)
@@ -1124,8 +2074,9 @@ struct PosterPreview: View {
                 }
             }
             .padding(28)
+            .frame(maxWidth: width, maxHeight: height, alignment: contentAlignment)
         case .boldLaunch:
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: copyHorizontalAlignment, spacing: 18) {
                 HStack {
                     platformBadge(palette: palette)
                     Spacer()
@@ -1147,8 +2098,9 @@ struct PosterPreview: View {
                 }
             }
             .padding(26)
+            .frame(maxWidth: width, maxHeight: height, alignment: contentAlignment)
         case .softLifestyle:
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: copyHorizontalAlignment, spacing: 16) {
                 platformBadge(palette: palette)
                 if placesCopyAtTop {
                     softCopyCard(palette: palette)
@@ -1159,8 +2111,9 @@ struct PosterPreview: View {
                 }
             }
             .padding(24)
+            .frame(maxWidth: width, maxHeight: height, alignment: contentAlignment)
         case .editorial:
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: copyHorizontalAlignment, spacing: 18) {
                 platformBadge(palette: palette)
                 if placesCopyAtTop {
                     editorialCopyBlock(palette: palette)
@@ -1171,30 +2124,146 @@ struct PosterPreview: View {
                 }
             }
             .padding(28)
+            .frame(maxWidth: width, maxHeight: height, alignment: contentAlignment)
         }
     }
 
+    @ViewBuilder
+    private func productSafeCopyOverlay(
+        palette: PosterPalette,
+        width: CGFloat,
+        height: CGFloat
+    ) -> some View {
+        let horizontalPadding = max(18, width * 0.055)
+        let verticalPadding = max(14, height * 0.026)
+        let cardPadding = max(12, width * 0.03)
+        let copyCardMaxWidth = min(width * 0.68, max(260, width * 0.54))
+        let safeAreaHeight = height * (placesCopyAtTop ? 0.35 : 0.32)
+        let titleSize = min(29, max(20, width * (target == .weChatSquare ? 0.056 : 0.061)))
+        let subtitleSize = min(16, max(12, width * 0.033))
+        let ctaSize = min(15, max(12, width * 0.031))
+
+        let cardTitleAlignment = copyHorizontalAlignment
+        let cardCopyTextAlignment = copyTextAlignment
+        let cardTitleColor = copyForegroundColor(palette: palette)
+        let copySubtitleColor = copyForegroundColor(palette: palette).opacity(hasImageBackground ? 0.84 : 0.75)
+        let ctaBackground = palette.accent
+
+        let copyCard = VStack(alignment: cardTitleAlignment, spacing: max(6, height * 0.006)) {
+            platformBadge(palette: palette)
+                .frame(maxWidth: copyCardMaxWidth, alignment: copyFrameAlignment)
+            Text(poster.headline)
+                .font(copyFont(size: titleSize * headlineScale))
+                .minimumScaleFactor(0.62)
+                .lineLimit(2)
+                .multilineTextAlignment(cardCopyTextAlignment)
+                .foregroundStyle(cardTitleColor)
+                .shadow(
+                    color: hasImageBackground ? Color.black.opacity(0.52) : .clear,
+                    radius: hasImageBackground ? 8 : 0,
+                    x: 0,
+                    y: 2
+                )
+            Text(poster.subtitle)
+                .font(copyFont(size: subtitleSize * subtitleScale))
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+                .multilineTextAlignment(cardCopyTextAlignment)
+                .foregroundStyle(copySubtitleColor)
+                .shadow(
+                    color: hasImageBackground ? Color.black.opacity(0.42) : .clear,
+                    radius: hasImageBackground ? 7 : 0,
+                    x: 0,
+                    y: 2
+                )
+            Text(poster.cta)
+                .font(copyFont(size: ctaSize * ctaScale))
+                .minimumScaleFactor(0.72)
+                .lineLimit(1)
+                .multilineTextAlignment(cardCopyTextAlignment)
+                .padding(.horizontal, max(10, width * 0.024))
+                .padding(.vertical, max(7, height * 0.007))
+                .foregroundStyle(copyForegroundColor(palette: palette, isButtonText: true))
+                .background(ctaBackground, in: RoundedRectangle(cornerRadius: 10))
+                .shadow(
+                    color: hasImageBackground ? Color.black.opacity(0.48) : .clear,
+                    radius: hasImageBackground ? 10 : 0,
+                    x: 0,
+                    y: 4
+                )
+                .frame(maxWidth: .infinity, alignment: copyFrameAlignment)
+        }
+        .padding(cardPadding)
+        .frame(maxWidth: copyCardMaxWidth, alignment: copyFrameAlignment)
+        .background(
+            hasImageBackground
+                ? AnyShapeStyle(
+                    LinearGradient(
+                        colors: [Color.black.opacity(0.34), Color.black.opacity(0.14)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                : AnyShapeStyle(Color.white.opacity(0.74)),
+            in: RoundedRectangle(cornerRadius: 18)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(hasImageBackground ? Color.white.opacity(0.42) : Color.white.opacity(0.76), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.07), radius: 12, x: 0, y: 7)
+
+        VStack {
+            if placesCopyAtTop {
+                copyCard
+                    .frame(maxHeight: safeAreaHeight)
+                    .frame(maxWidth: .infinity, alignment: copyFrameAlignment)
+                Spacer(minLength: 0)
+            } else {
+                Spacer(minLength: 0)
+                copyCard
+                    .frame(maxHeight: safeAreaHeight)
+                    .frame(maxWidth: .infinity, alignment: copyFrameAlignment)
+            }
+        }
+        .padding(.vertical, verticalPadding)
+        .padding(.horizontal, horizontalPadding)
+    }
+
     private func cleanCopyBlock(palette: PosterPalette) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            posterTitle(palette: palette, size: 44, lineLimit: 3)
-            posterSubtitle(palette: palette)
+        VStack(alignment: copyHorizontalAlignment, spacing: 12) {
+            posterTitle(
+                palette: palette,
+                size: adjustedTitleSize(44),
+                lineLimit: productPriorityTitleLineLimit
+            )
+            posterSubtitle(
+                palette: palette,
+                size: 20,
+                lineLimit: usesProductSafeTextLayout ? 2 : nil
+            )
             ctaButton(palette: palette, cornerRadius: 8)
         }
     }
 
     private func boldCopyBlock(palette: PosterPalette) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            posterTitle(palette: palette, size: 48, lineLimit: 3)
-            posterSubtitle(palette: palette)
+        VStack(alignment: copyHorizontalAlignment, spacing: 12) {
+            posterTitle(palette: palette, size: adjustedTitleSize(48), lineLimit: productPriorityTitleLineLimit)
+            posterSubtitle(palette: palette, size: 20, lineLimit: 2)
         }
         .padding(18)
         .background(.black.opacity(0.20), in: RoundedRectangle(cornerRadius: 18))
+        .shadow(color: hasImageBackground ? .black.opacity(0.25) : .clear, radius: 12, x: 0, y: 6)
     }
 
     private func softCopyCard(palette: PosterPalette) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            posterTitle(palette: palette, size: 36, lineLimit: 3)
-            posterSubtitle(palette: palette)
+        VStack(alignment: copyHorizontalAlignment, spacing: 12) {
+            posterTitle(palette: palette, size: adjustedTitleSize(36), lineLimit: productPriorityTitleLineLimit)
+            posterSubtitle(
+                palette: palette,
+                size: 20,
+                lineLimit: usesProductSafeTextLayout ? 2 : nil
+            )
             ctaButton(palette: palette, cornerRadius: 14)
         }
         .padding(18)
@@ -1203,28 +2272,41 @@ struct PosterPreview: View {
             RoundedRectangle(cornerRadius: 22)
                 .stroke(.white.opacity(0.76), lineWidth: 1)
         }
+        .shadow(color: hasImageBackground ? .black.opacity(0.20) : .clear, radius: 10, x: 0, y: 5)
     }
 
     private func editorialCopyBlock(palette: PosterPalette) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: copyHorizontalAlignment, spacing: 18) {
             HStack(alignment: .top, spacing: 14) {
                 Rectangle()
                     .fill(palette.accent)
                     .frame(width: 5)
                     .clipShape(Capsule())
-                VStack(alignment: .leading, spacing: 12) {
-                    posterTitle(palette: palette, size: 42, lineLimit: 3)
-                    posterSubtitle(palette: palette)
+                VStack(alignment: copyHorizontalAlignment, spacing: 12) {
+                    posterTitle(palette: palette, size: adjustedTitleSize(42), lineLimit: productPriorityTitleLineLimit)
+                    posterSubtitle(
+                        palette: palette,
+                        size: 20,
+                        lineLimit: usesProductSafeTextLayout ? 2 : nil
+                    )
                 }
             }
             Text(poster.cta)
-                .font(.headline.weight(.bold))
-                .foregroundStyle(palette.primary)
+                .font(copyFont(size: 17 * ctaScale))
+                .foregroundStyle(copyForegroundColor(palette: palette))
                 .padding(.bottom, 4)
+                .shadow(
+                    color: hasImageBackground ? Color.black.opacity(0.42) : .clear,
+                    radius: hasImageBackground ? 7 : 0,
+                    x: 0,
+                    y: 2
+                )
+                .multilineTextAlignment(copyTextAlignment)
                 .overlay(alignment: .bottomLeading) {
                     Rectangle()
                         .fill(palette.accent)
                         .frame(height: 3)
+                        .frame(maxWidth: .infinity, alignment: copyFrameAlignment)
                 }
         }
     }
@@ -1236,30 +2318,68 @@ struct PosterPreview: View {
             .padding(.vertical, 6)
             .foregroundStyle(palette.background)
             .background(palette.accent, in: Capsule())
+            .shadow(
+                color: hasImageBackground ? Color.black.opacity(0.36) : .clear,
+                radius: hasImageBackground ? 4 : 0,
+                x: 0,
+                y: 2
+            )
             .accessibilityIdentifier("vf.poster.channelLabelBadge")
     }
 
     private func posterTitle(palette: PosterPalette, size: CGFloat, lineLimit: Int) -> some View {
         Text(poster.headline)
-            .font(.system(size: size, weight: .black, design: .rounded))
+            .font(copyFont(size: size * headlineScale))
             .minimumScaleFactor(0.45)
             .lineLimit(lineLimit)
-            .foregroundStyle(palette.primary)
+            .foregroundStyle(copyForegroundColor(palette: palette))
+            .multilineTextAlignment(copyTextAlignment)
+            .frame(maxWidth: .infinity, alignment: copyFrameAlignment)
+            .shadow(
+                color: hasImageBackground ? Color.black.opacity(0.52) : .clear,
+                radius: hasImageBackground ? 8 : 0,
+                x: 0,
+                y: 2
+            )
     }
 
-    private func posterSubtitle(palette: PosterPalette) -> some View {
+    private func posterSubtitle(
+        palette: PosterPalette,
+        size: CGFloat,
+        lineLimit: Int?
+    ) -> some View {
         Text(poster.subtitle)
-            .font(.title3.weight(.semibold))
-            .foregroundStyle(palette.primary.opacity(0.75))
+            .font(copyFont(size: size * subtitleScale))
+            .lineLimit(lineLimit)
+            .minimumScaleFactor(0.62)
+            .foregroundStyle(copyForegroundColor(palette: palette).opacity(hasImageBackground ? 0.84 : 0.75))
+            .multilineTextAlignment(copyTextAlignment)
+            .frame(maxWidth: .infinity, alignment: copyFrameAlignment)
+            .shadow(
+                color: hasImageBackground ? Color.black.opacity(0.42) : .clear,
+                radius: hasImageBackground ? 7 : 0,
+                x: 0,
+                y: 2
+            )
     }
 
-    private func ctaButton(palette: PosterPalette, cornerRadius: CGFloat) -> some View {
+    private func ctaButton(palette: PosterPalette, cornerRadius: CGFloat, fontSize: CGFloat = 18) -> some View {
         Text(poster.cta)
-            .font(.headline)
+            .font(copyFont(size: fontSize * ctaScale))
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .foregroundStyle(palette.background)
+            .foregroundStyle(copyForegroundColor(palette: palette, isButtonText: true))
+            .multilineTextAlignment(copyTextAlignment)
             .background(palette.accent, in: RoundedRectangle(cornerRadius: cornerRadius))
+            .frame(maxWidth: .infinity, alignment: copyFrameAlignment)
+            .shadow(
+                color: hasImageBackground ? Color.black.opacity(0.48) : .clear,
+                radius: hasImageBackground ? 10 : 0,
+                x: 0,
+                y: 4
+            )
     }
 
     private func posterWatermark(palette: PosterPalette) -> some View {

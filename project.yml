@@ -8,9 +8,9 @@ fileGroups:
   - ViralForge.storekit
 settings:
   base:
-    MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "4"
-    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "1.1"
+    CURRENT_PROJECT_VERSION: "9"
+    DEVELOPMENT_TEAM: 9SZ5257PF4
 targets:
   ViralForge:
     type: application
@@ -23,9 +23,22 @@ targets:
         PRODUCT_NAME: ViralForge
         INFOPLIST_FILE: ViralForge/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        OTHER_LDFLAGS: "$(inherited) -ObjC"
+        VIRALFORGE_ADS_ENABLED: "YES"
+        VIRALFORGE_ADS_APP_OPEN_ENABLED: "YES"
+        VIRALFORGE_ADS_REWARDED_TEXT_GENERATION_ENABLED: "YES"
+        VIRALFORGE_ADS_TEXT_GENERATION_REWARD_DEBUG_GRANT_ENABLED: "NO"
+        VIRALFORGE_ADS_NATIVE_FEED_ENABLED: "YES"
+        VIRALFORGE_ADS_SHOW_DEBUG_FALLBACK_ADS: "NO"
+        VIRALFORGE_ADS_APP_ID: "5827905"
+        VIRALFORGE_ADS_APP_OPEN_PLACEMENT_ID: "104076071"
+        VIRALFORGE_ADS_REWARDED_TEXT_GENERATION_PLACEMENT_ID: "104075974"
+        VIRALFORGE_ADS_TEMPLATES_FEED_PLACEMENT_ID: "104076348"
+        VIRALFORGE_ADS_PROJECTS_FEED_PLACEMENT_ID: "104076348"
+        VIRALFORGE_ADS_HISTORY_FEED_PLACEMENT_ID: "104076348"
       configs:
         Debug:
-          BACKEND_BASE_URL: "http://localhost:8787"
+          BACKEND_BASE_URL: "https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run"
         Release:
           BACKEND_BASE_URL: "https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run"
     scheme:

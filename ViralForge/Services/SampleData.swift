@@ -123,19 +123,19 @@ enum SampleData {
         ContentProject(
             id: UUID(),
             createdAt: .now.addingTimeInterval(-3600),
-            draft: GenerationDraft(language: .chinese, platform: .xiaohongshu, goal: .sellProduct, topic: "便携榨汁杯", audience: "25-35岁上班族女性", tone: "真实、种草、不夸张"),
+            draft: GenerationDraft(language: .chinese, platform: .xiaohongshu, goal: .sellProduct, topic: "早 C 晚 A 焕亮护肤套装", audience: "熬夜暗沉、上妆卡粉、想要快速建立护肤仪式感的精致女生", tone: "高级、可信、有转化钩子"),
             result: ContentResult(
                 titles: [
-                    ScoredLine(text: "上班族女生真的需要便携榨汁杯吗？", score: 92, reason: "目标人群明确，适合小红书封面。")
+                    ScoredLine(text: "熬夜脸别硬遮：这套早 C 晚 A 把光感养回来", score: 94, reason: "痛点、解决方案和结果感明确，适合小红书封面。")
                 ],
                 hooks: [
-                    ScoredLine(text: "如果你总说没时间照顾自己，可以先从一杯水果饮开始。", score: 88, reason: "生活方式切入自然。")
+                    ScoredLine(text: "底妆不服帖的时候，很多人先换粉底，其实更该先看皮肤的发光感。", score: 91, reason: "先抓消费痛点，再自然带出产品。")
                 ],
-                caption: "一个适合办公室和通勤的小习惯工具。",
-                sellingPoints: ["轻便", "好清洗", "适合办公室"],
-                hashtags: ["#小红书种草", "#上班族好物"]
+                caption: "最近把护肤流程换成这套早 C 晚 A 焕亮组合：白天精华打底，晚上面霜修护，第二天上妆更贴，熬夜后的暗沉感也没那么明显。",
+                sellingPoints: ["早 C 晚 A 组合", "熬夜暗沉急救", "上妆更服帖", "补充装更划算"],
+                hashtags: ["#护肤套装", "#熬夜脸急救", "#早C晚A", "#小红书种草"]
             ),
-            poster: PosterDraft(headline: "下班后也能轻松补充维C", subtitle: "便携榨汁杯", cta: "3个场景告诉你值不值得买", style: .cleanProduct),
+            poster: PosterDraft(headline: "熬夜脸别硬遮", subtitle: "早 C 晚 A，把光感养回来", cta: "立即解锁焕亮套装", style: .cleanProduct),
             isFavorite: true,
             hasPosterExport: false
         )
@@ -145,19 +145,19 @@ enum SampleData {
         ContentProject(
             id: UUID(),
             createdAt: .now.addingTimeInterval(-3600),
-            draft: GenerationDraft(language: .english, platform: .tikTok, goal: .sellProduct, topic: "portable blender", audience: "busy creators and office workers", tone: "practical, upbeat, not exaggerated"),
+            draft: GenerationDraft(language: .english, platform: .instagram, goal: .sellProduct, topic: "premium glow skincare launch set", audience: "beauty shoppers dealing with dull skin and uneven makeup", tone: "premium, credible, conversion-focused"),
             result: ContentResult(
                 titles: [
-                    ScoredLine(text: "Is a portable blender actually worth it for busy mornings?", score: 91, reason: "Clear product and short-form curiosity angle.")
+                    ScoredLine(text: "Stop covering dull skin. Build glow before makeup.", score: 93, reason: "Clear pain point, result, and conversion angle.")
                 ],
                 hooks: [
-                    ScoredLine(text: "If your healthy routine keeps failing before 9 AM, the problem might be friction.", score: 90, reason: "Starts with a relatable routine problem.")
+                    ScoredLine(text: "When foundation sits on top of tired skin, the fix starts before the base layer.", score: 91, reason: "Starts with a relatable beauty problem.")
                 ],
-                caption: "I tried a portable blender for workdays. It is not magic, but it removes enough friction to make a small healthy habit easier to repeat.",
-                sellingPoints: ["Fits in a work bag", "Quick rinse cleanup", "Useful after workouts"],
-                hashtags: ["#creatorfinds", "#healthyroutine", "#productreview"]
+                caption: "A premium serum, cream, and refill routine designed for dull skin days: brighter-looking skin, smoother makeup prep, and a ritual that feels worth repeating.",
+                sellingPoints: ["Serum + cream routine", "Glow-focused prep", "Smoother makeup base", "Premium refill set"],
+                hashtags: ["#skincarelaunch", "#glowroutine", "#beautyfinds", "#productreview"]
             ),
-            poster: PosterDraft(headline: "A smoother routine in 60 seconds", subtitle: "Portable Blender", cta: "3 moments where it actually helps", style: .editorial),
+            poster: PosterDraft(headline: "Glow before makeup", subtitle: "A premium routine for dull-skin days", cta: "Shop the launch set", style: .editorial),
             isFavorite: true,
             hasPosterExport: false
         )

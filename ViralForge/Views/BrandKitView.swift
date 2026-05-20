@@ -29,6 +29,7 @@ struct BrandKitView: View {
             didSave = false
             appModel.brandStatusMessage = nil
         }
+        .accessibilityIdentifier("vf.brand.screen")
     }
 
     private var brandColor: Color {

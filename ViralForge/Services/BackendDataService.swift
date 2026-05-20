@@ -16,11 +16,6 @@ struct BackendDataService {
         return response.state
     }
 
-    func updateProStatus(isPro: Bool) async throws -> QuotaState {
-        let response: QuotaResponse = try await apiClient.post("/api/quota/pro", body: QuotaProUpdateRequest(isPro: isPro))
-        return response.state
-    }
-
     func syncSubscription(_ request: SubscriptionSyncRequest) async throws -> QuotaState {
         let response: QuotaResponse = try await apiClient.post("/api/subscription/sync", body: request)
         return response.state

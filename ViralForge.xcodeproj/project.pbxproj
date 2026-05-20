@@ -10,30 +10,41 @@
 		01E8ED191E9B861F4DAE0668 /* ContentGenerating.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0823B86AD05AAE6D2A1AAB3 /* ContentGenerating.swift */; };
 		0228FE765DEA88C4E3803B99 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83815749F09EADCA87A06CC /* HomeView.swift */; };
 		03358CFC67B62760141B8CFE /* AssetsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC02973674BE989B04A852F9 /* AssetsView.swift */; };
+		059926BE216FF12582450574 /* AdService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D0C08F899D5B6539FACE20B /* AdService.swift */; };
+		10EE3611ECE1BBD49A994CF2 /* PangleNativeFeedAdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 791D9AA12D1C4AFDD58B0271 /* PangleNativeFeedAdView.swift */; };
+		13D927DA3C3E97BD786B0C36 /* AdSplashPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C025243A6F9C5238A848603 /* AdSplashPlaceholderView.swift */; };
 		1701D887978FC8561C071200 /* BrandKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435A1758105F1C55CA31EC3C /* BrandKitView.swift */; };
 		18E0338F4E417037D5E8FD8D /* BackendDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DACCB1C6BF0EFF9C9703B3A /* BackendDTOs.swift */; };
 		19D283F18C2A3902374BAEF5 /* BackendSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 695BF69FFFFF254432D0E21A /* BackendSettings.swift */; };
+		1A934A646E5A1F2712A4F72A /* FeedAdPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F312110AB52B82F44594FED7 /* FeedAdPlaceholderView.swift */; };
 		3780DD9E4026EEB0E859C958 /* BatchCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14694249B2F69A3705DE7E80 /* BatchCreateView.swift */; };
 		3B90739F88F8EAEB3A1C86DB /* PosterEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D033E9C4C3CC1B64D8F0FF1 /* PosterEditorView.swift */; };
 		47912C696A40595977E2F893 /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FF09FC068E1A3F4F7C4ECFF /* SampleData.swift */; };
 		4C725A02C61AA20E52A76A9A /* ViralForgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE34A96FAAB6CA2E2369217B /* ViralForgeApp.swift */; };
 		4E9CA4F44AE23FCFE75E00DC /* AppText.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9EE0CA669A23A4BE74282E /* AppText.swift */; };
 		4F17DB62D597B4C5060B7D25 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B3517FED465E57D7E238B59 /* AppRootView.swift */; };
+		52AACBE0A41B2928EDEFD27B /* PangleAdService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF8F7B1F25BFEAB30A6CA19 /* PangleAdService.swift */; };
 		5B8BA184FDF86DC812D90D4A /* VFGlobalStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0295E570E4E64BAF3200F2 /* VFGlobalStyle.swift */; };
+		5C4F1A4C30B1621390686EBE /* AdServiceFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99EEF31534D9D57F5F62B8DC /* AdServiceFactory.swift */; };
+		61D3D255892F4DB6641CDCCF /* AdTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 394EF21C2B054FC7D2D87893 /* AdTypes.swift */; };
 		6EEB30F52BD5F87097807B3D /* TemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A692A256A45B27A1D796A3D2 /* TemplatesView.swift */; };
 		7A23E5648596D58AF9D7AD50 /* QuotaStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0856B85C79DB28A552029E28 /* QuotaStatusView.swift */; };
 		7B4BCF433D429A58D6A99240 /* ModelRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF7DB1105294A475EF485A28 /* ModelRouting.swift */; };
 		7B9835188AC6574EBB2C38CD /* CreationFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0987BBAA96C58EE63F59E6DC /* CreationFlowUITests.swift */; };
+		7C858866887A98780163CB4A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 183B2E86BF16396E0D2151E2 /* PrivacyInfo.xcprivacy */; };
 		8F21A6B03326CACDE5A25535 /* BackendSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B73AF0B6A0CB5159DC1EF8 /* BackendSettingsView.swift */; };
 		91BECCB8742A5C4C7362C24B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 24A546EA52C98A01F028C9CC /* InfoPlist.strings */; };
 		ACA4C874E9B6798F32298BDF /* MockContentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13EA30A70042A3FEA3C738B3 /* MockContentService.swift */; };
 		AEB90894E5BF2150C567C159 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */; };
+		B47278A1DB40465D922C0E21 /* AdConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDA58E1F51B6C1B3B9FF956 /* AdConfiguration.swift */; };
 		BD60120398B530E8489DB73B /* BackendContentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F64EB59F1AEBB183A77E3A /* BackendContentService.swift */; };
 		BDB581EBDE526B70972FF64D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BA08513B6A611ADC6AA5DB /* SettingsView.swift */; };
 		C1AC0492FB57BD1C2BFFF969 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01292BC19CA55087155F90C7 /* AppConfiguration.swift */; };
 		D8E1253C24307785AC59E071 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */; };
 		DAB68408B16581443A690917 /* BackendDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A85E893743A9153D469CAB /* BackendDataService.swift */; };
 		DAD8544C45ACB3C855E48481 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64177FF007D6CE07527E00E1 /* APIClient.swift */; };
+		E7B4BEAE9A33EFB71F95D1FD /* NoopAdService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98560BBA4F3CC63974BA08E6 /* NoopAdService.swift */; };
+		EE4AB2D3786376D3969C458B /* MyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 987E282E59F8322F02AF9496 /* MyView.swift */; };
 		F1242B83BCFAD3B5CADD38A1 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12772C4BFCF55BD6E18C80B8 /* AppModel.swift */; };
 		F306B438C432EC4B842C2A4C /* ContentModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 387E20D6EEBB4DAF6F06913C /* ContentModels.swift */; };
 		F5DE66E363E609C00EF58EDA /* SubscriptionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE3B5217B984EACDAB6767A /* SubscriptionModels.swift */; };
@@ -62,21 +73,30 @@
 		12772C4BFCF55BD6E18C80B8 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		13EA30A70042A3FEA3C738B3 /* MockContentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockContentService.swift; sourceTree = "<group>"; };
 		14694249B2F69A3705DE7E80 /* BatchCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchCreateView.swift; sourceTree = "<group>"; };
+		183B2E86BF16396E0D2151E2 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1B76C4539870EB9D20A3703E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		2BDA58E1F51B6C1B3B9FF956 /* AdConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdConfiguration.swift; sourceTree = "<group>"; };
 		2DACCB1C6BF0EFF9C9703B3A /* BackendDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendDTOs.swift; sourceTree = "<group>"; };
 		2EE3B5217B984EACDAB6767A /* SubscriptionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionModels.swift; sourceTree = "<group>"; };
 		387E20D6EEBB4DAF6F06913C /* ContentModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentModels.swift; sourceTree = "<group>"; };
+		394EF21C2B054FC7D2D87893 /* AdTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdTypes.swift; sourceTree = "<group>"; };
 		435A1758105F1C55CA31EC3C /* BrandKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandKitView.swift; sourceTree = "<group>"; };
 		48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		4FF09FC068E1A3F4F7C4ECFF /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
+		5C025243A6F9C5238A848603 /* AdSplashPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdSplashPlaceholderView.swift; sourceTree = "<group>"; };
 		5CCC0BBD19F07241283C2AE5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		64177FF007D6CE07527E00E1 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		65A85E893743A9153D469CAB /* BackendDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendDataService.swift; sourceTree = "<group>"; };
 		695BF69FFFFF254432D0E21A /* BackendSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSettings.swift; sourceTree = "<group>"; };
 		6B3517FED465E57D7E238B59 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
+		6D0C08F899D5B6539FACE20B /* AdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdService.swift; sourceTree = "<group>"; };
 		7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		791D9AA12D1C4AFDD58B0271 /* PangleNativeFeedAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PangleNativeFeedAdView.swift; sourceTree = "<group>"; };
 		8515AE8622366534FFE8A090 /* ViralForge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ViralForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F0A3B62468A44D99E7FC673 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		98560BBA4F3CC63974BA08E6 /* NoopAdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoopAdService.swift; sourceTree = "<group>"; };
+		987E282E59F8322F02AF9496 /* MyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyView.swift; sourceTree = "<group>"; };
+		99EEF31534D9D57F5F62B8DC /* AdServiceFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdServiceFactory.swift; sourceTree = "<group>"; };
 		A0B23C48C34DD161AA63B2EF /* ViralForge.storekit */ = {isa = PBXFileReference; path = ViralForge.storekit; sourceTree = "<group>"; };
 		A692A256A45B27A1D796A3D2 /* TemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatesView.swift; sourceTree = "<group>"; };
 		AC38B989C06A1E6BC56891B3 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
@@ -87,9 +107,11 @@
 		C83815749F09EADCA87A06CC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		CC02973674BE989B04A852F9 /* AssetsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetsView.swift; sourceTree = "<group>"; };
 		D36D31C093B28F6A0530B9C2 /* ViralForgeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ViralForgeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DAF8F7B1F25BFEAB30A6CA19 /* PangleAdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PangleAdService.swift; sourceTree = "<group>"; };
 		DC9EE0CA669A23A4BE74282E /* AppText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppText.swift; sourceTree = "<group>"; };
 		EA0295E570E4E64BAF3200F2 /* VFGlobalStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VFGlobalStyle.swift; sourceTree = "<group>"; };
 		EE34A96FAAB6CA2E2369217B /* ViralForgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViralForgeApp.swift; sourceTree = "<group>"; };
+		F312110AB52B82F44594FED7 /* FeedAdPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedAdPlaceholderView.swift; sourceTree = "<group>"; };
 		FF7DB1105294A475EF485A28 /* ModelRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelRouting.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -112,11 +134,22 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		31DFF997234DD360572851A1 /* Ads */ = {
+			isa = PBXGroup;
+			children = (
+				5C025243A6F9C5238A848603 /* AdSplashPlaceholderView.swift */,
+				F312110AB52B82F44594FED7 /* FeedAdPlaceholderView.swift */,
+				791D9AA12D1C4AFDD58B0271 /* PangleNativeFeedAdView.swift */,
+			);
+			path = Ads;
+			sourceTree = "<group>";
+		};
 		32342ED8D0482EC53BDE26A2 /* ViralForge */ = {
 			isa = PBXGroup;
 			children = (
 				8F0A3B62468A44D99E7FC673 /* Assets.xcassets */,
 				1B76C4539870EB9D20A3703E /* Info.plist */,
+				183B2E86BF16396E0D2151E2 /* PrivacyInfo.xcprivacy */,
 				CC1CD816AC19A9520035BB61 /* App */,
 				24A546EA52C98A01F028C9CC /* InfoPlist.strings */,
 				30B5C3C21A84BB9A6846D3C6 /* Models */,
@@ -138,8 +171,22 @@
 				13EA30A70042A3FEA3C738B3 /* MockContentService.swift */,
 				FF7DB1105294A475EF485A28 /* ModelRouting.swift */,
 				4FF09FC068E1A3F4F7C4ECFF /* SampleData.swift */,
+				B4A04CB3DCD8B0513FD90C0A /* Ads */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		B4A04CB3DCD8B0513FD90C0A /* Ads */ = {
+			isa = PBXGroup;
+			children = (
+				2BDA58E1F51B6C1B3B9FF956 /* AdConfiguration.swift */,
+				6D0C08F899D5B6539FACE20B /* AdService.swift */,
+				99EEF31534D9D57F5F62B8DC /* AdServiceFactory.swift */,
+				394EF21C2B054FC7D2D87893 /* AdTypes.swift */,
+				98560BBA4F3CC63974BA08E6 /* NoopAdService.swift */,
+				DAF8F7B1F25BFEAB30A6CA19 /* PangleAdService.swift */,
+			);
+			path = Ads;
 			sourceTree = "<group>";
 		};
 		C4D7535FF5CC422C93F5FAED /* Views */ = {
@@ -151,6 +198,7 @@
 				435A1758105F1C55CA31EC3C /* BrandKitView.swift */,
 				7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */,
 				C83815749F09EADCA87A06CC /* HomeView.swift */,
+				987E282E59F8322F02AF9496 /* MyView.swift */,
 				48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */,
 				0D033E9C4C3CC1B64D8F0FF1 /* PosterEditorView.swift */,
 				0856B85C79DB28A552029E28 /* QuotaStatusView.swift */,
@@ -158,6 +206,7 @@
 				11BA08513B6A611ADC6AA5DB /* SettingsView.swift */,
 				A692A256A45B27A1D796A3D2 /* TemplatesView.swift */,
 				EA0295E570E4E64BAF3200F2 /* VFGlobalStyle.swift */,
+				31DFF997234DD360572851A1 /* Ads */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -242,11 +291,11 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					4452928A70DA0D1ECC286824 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 9SZ5257PF4;
 						SystemCapabilities = "[\"com.apple.InAppPurchase\": [\"enabled\": 1]]";
 					};
 					4D23125238E31CBB26FCD1F2 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 9SZ5257PF4;
 						TestTargetID = 4452928A70DA0D1ECC286824;
 					};
 				};
@@ -279,6 +328,7 @@
 			files = (
 				F8AA88837843F21BF96D7EDB /* Assets.xcassets in Resources */,
 				91BECCB8742A5C4C7362C24B /* InfoPlist.strings in Resources */,
+				7C858866887A98780163CB4A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,6 +348,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				DAD8544C45ACB3C855E48481 /* APIClient.swift in Sources */,
+				B47278A1DB40465D922C0E21 /* AdConfiguration.swift in Sources */,
+				059926BE216FF12582450574 /* AdService.swift in Sources */,
+				5C4F1A4C30B1621390686EBE /* AdServiceFactory.swift in Sources */,
+				13D927DA3C3E97BD786B0C36 /* AdSplashPlaceholderView.swift in Sources */,
+				61D3D255892F4DB6641CDCCF /* AdTypes.swift in Sources */,
 				C1AC0492FB57BD1C2BFFF969 /* AppConfiguration.swift in Sources */,
 				F1242B83BCFAD3B5CADD38A1 /* AppModel.swift in Sources */,
 				4F17DB62D597B4C5060B7D25 /* AppRootView.swift in Sources */,
@@ -313,10 +368,15 @@
 				01E8ED191E9B861F4DAE0668 /* ContentGenerating.swift in Sources */,
 				F306B438C432EC4B842C2A4C /* ContentModels.swift in Sources */,
 				FDCCB3F010505A0F302340D4 /* ContentServiceFactory.swift in Sources */,
+				1A934A646E5A1F2712A4F72A /* FeedAdPlaceholderView.swift in Sources */,
 				AEB90894E5BF2150C567C159 /* HistoryView.swift in Sources */,
 				0228FE765DEA88C4E3803B99 /* HomeView.swift in Sources */,
 				ACA4C874E9B6798F32298BDF /* MockContentService.swift in Sources */,
 				7B4BCF433D429A58D6A99240 /* ModelRouting.swift in Sources */,
+				EE4AB2D3786376D3969C458B /* MyView.swift in Sources */,
+				E7B4BEAE9A33EFB71F95D1FD /* NoopAdService.swift in Sources */,
+				52AACBE0A41B2928EDEFD27B /* PangleAdService.swift in Sources */,
+				10EE3611ECE1BBD49A994CF2 /* PangleNativeFeedAdView.swift in Sources */,
 				D8E1253C24307785AC59E071 /* PaywallView.swift in Sources */,
 				3B90739F88F8EAEB3A1C86DB /* PosterEditorView.swift in Sources */,
 				7A23E5648596D58AF9D7AD50 /* QuotaStatusView.swift in Sources */,
@@ -387,9 +447,9 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 9;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -401,7 +461,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -423,10 +483,23 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = "$(inherited) -ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.phil.viralforge;
 				PRODUCT_NAME = ViralForge;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VIRALFORGE_ADS_APP_ID = 5827905;
+				VIRALFORGE_ADS_APP_OPEN_ENABLED = YES;
+				VIRALFORGE_ADS_APP_OPEN_PLACEMENT_ID = 104076071;
+				VIRALFORGE_ADS_ENABLED = YES;
+				VIRALFORGE_ADS_HISTORY_FEED_PLACEMENT_ID = 104076348;
+				VIRALFORGE_ADS_NATIVE_FEED_ENABLED = YES;
+				VIRALFORGE_ADS_PROJECTS_FEED_PLACEMENT_ID = 104076348;
+				VIRALFORGE_ADS_REWARDED_TEXT_GENERATION_ENABLED = YES;
+				VIRALFORGE_ADS_REWARDED_TEXT_GENERATION_PLACEMENT_ID = 104075974;
+				VIRALFORGE_ADS_SHOW_DEBUG_FALLBACK_ADS = NO;
+				VIRALFORGE_ADS_TEMPLATES_FEED_PLACEMENT_ID = 104076348;
+				VIRALFORGE_ADS_TEXT_GENERATION_REWARD_DEBUG_GRANT_ENABLED = NO;
 			};
 			name = Release;
 		};
@@ -481,9 +554,9 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 9;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -501,7 +574,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -534,17 +607,30 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				BACKEND_BASE_URL = "http://localhost:8787";
+				BACKEND_BASE_URL = "https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = ViralForge/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = "$(inherited) -ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.phil.viralforge;
 				PRODUCT_NAME = ViralForge;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VIRALFORGE_ADS_APP_ID = 5827905;
+				VIRALFORGE_ADS_APP_OPEN_ENABLED = YES;
+				VIRALFORGE_ADS_APP_OPEN_PLACEMENT_ID = 104076071;
+				VIRALFORGE_ADS_ENABLED = YES;
+				VIRALFORGE_ADS_HISTORY_FEED_PLACEMENT_ID = 104076348;
+				VIRALFORGE_ADS_NATIVE_FEED_ENABLED = YES;
+				VIRALFORGE_ADS_PROJECTS_FEED_PLACEMENT_ID = 104076348;
+				VIRALFORGE_ADS_REWARDED_TEXT_GENERATION_ENABLED = YES;
+				VIRALFORGE_ADS_REWARDED_TEXT_GENERATION_PLACEMENT_ID = 104075974;
+				VIRALFORGE_ADS_SHOW_DEBUG_FALLBACK_ADS = NO;
+				VIRALFORGE_ADS_TEMPLATES_FEED_PLACEMENT_ID = 104076348;
+				VIRALFORGE_ADS_TEXT_GENERATION_REWARD_DEBUG_GRANT_ENABLED = NO;
 			};
 			name = Debug;
 		};

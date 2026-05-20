@@ -8,13 +8,13 @@ This file is the copy source for ViralForge App Store Connect metadata. The app 
 
 - Privacy Policy URL: `https://philyu8259-create.github.io/Viral-Forge/zh/privacy.html`
 - Support URL: `https://philyu8259-create.github.io/Viral-Forge/zh/support.html`
-- Terms URL: `https://philyu8259-create.github.io/Viral-Forge/zh/terms.html`
+- Terms URL: `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`
 
 ### English
 
 - Privacy Policy URL: `https://philyu8259-create.github.io/Viral-Forge/en/privacy.html`
 - Support URL: `https://philyu8259-create.github.io/Viral-Forge/en/support.html`
-- Terms URL: `https://philyu8259-create.github.io/Viral-Forge/en/terms.html`
+- Terms URL: `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`
 
 ## Simplified Chinese Metadata
 
@@ -28,7 +28,7 @@ ViralForge 爆款内容助手
 
 ### Promotional Text
 
-面向内容创作者、商家和个人 IP 的 AI 创作工作台，一次生成文案、标题、标签、海报文案和内容日历。
+从产品简报到爆款文案、真实 AI 海报和品牌记忆，一套工作流完成种草内容创作。
 
 ### Description
 
@@ -45,7 +45,7 @@ ViralForge 是为内容创作者、商家、品牌运营和个人 IP 打造的 A
 - 品牌记忆：保存品牌名称、行业、目标人群、语气、品牌色和禁用词，让输出更稳定。
 - 批量内容日历：围绕一个产品或主题规划 7 天或 14 天内容。
 - 素材与历史：保存项目、海报资产和可复用片段，方便继续编辑和复制。
-- 会员权益：ViralForge Pro 提供更高生成额度、高级模板和无水印导出等能力。
+- 会员权益：ViralForge Pro 提供更高生成额度、高级模板、无水印导出和完全去广告等能力。
 
 适合人群：
 
@@ -56,23 +56,32 @@ ViralForge 是为内容创作者、商家、品牌运营和个人 IP 打造的 A
 
 生成内容仅作为创作建议。发布前请自行审核事实、平台规则、广告合规性和素材权利。
 
+隐私政策：https://philyu8259-create.github.io/Viral-Forge/zh/privacy.html
+用户协议（EULA）：https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
 ### Keywords
 
 AI文案,海报,内容创作,新媒体,种草,短视频,私域,电商,个人IP,营销
 
 ### What's New
 
-首个版本支持 AI 文案生成、模板工作流、品牌记忆、海报编辑、批量内容日历、素材历史和会员订阅。
+1.1 优化海报工作室、可编辑文字层、AI 背景生成效果、文案候选选择和 Pro 完全去广告体验。
 
 ### Review Notes
 
-ViralForge is a single-bundle dual-locale iOS app. Simplified Chinese mode supports discovery-note, short-video, and private-community workflows; English mode supports short-form social, creator, and brand-content workflows.
+ViralForge is a single-bundle dual-locale iOS app for AI copy and poster creation. No login is required.
 
-No login is required for the current version. Subscription purchase and restore use Apple StoreKit. The in-app Settings page includes Privacy Policy, Terms of Use, Support, Email Support, Restore Purchases, app version, backend mode, and User ID.
+Suggested review flow:
+1. Open the Create tab.
+2. Enter a product or topic brief, for example: "portable blender for office breakfast".
+3. Tap Start Viral Creation to generate copy and poster direction.
+4. Open the generated result, copy text, and tap the poster/image action to preview or edit the poster.
+5. Open Settings or the Pro tab to view Privacy Policy, Terms of Use, Support, Restore Purchases, and subscription status.
 
-For review, the app can be tested in mock/offline mode if the production backend is not configured yet. If a public backend URL is configured in the Release build, generation requests may be sent to the configured backend and AI providers.
+Free copy generation is limited to 3 generations per day and resets daily. Free AI background generation includes 3 total uses and does not reset. Free users may see Pangle app-open ads, native/feed ads, and rewarded video ads. The app may request App Tracking Transparency permission for ad personalization and measurement. ViralForge Pro uses Apple StoreKit subscriptions and unlocks premium templates, watermark-free export, unlimited copy generation, AI background generation up to 10 per day / 200 per month, and a completely ad-free experience.
 
-Support email: philyu2023@qq.com
+The Release build uses the public ViralForge backend:
+https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run
 
 ## English Metadata
 
@@ -86,7 +95,7 @@ AI posts, posters, planning
 
 ### Promotional Text
 
-An AI studio for creators and brands. Turn a product brief into post copy, hooks, hashtags, poster text, and content plans.
+Turn one product brief into social copy, AI poster assets, brand-consistent posts, and reusable creator workflows.
 
 ### Description
 
@@ -103,7 +112,7 @@ Core features:
 - Brand memory for brand name, industry, audience, tone, brand color, and banned words.
 - Batch content calendar for 7-day or 14-day campaign planning.
 - Assets and history for saved projects, poster exports, reusable snippets, and continued editing.
-- ViralForge Pro unlocks higher limits, premium templates, and watermark-free exports.
+- ViralForge Pro unlocks higher limits, premium templates, watermark-free exports, and a completely ad-free experience.
 
 ViralForge is useful for:
 
@@ -115,23 +124,32 @@ ViralForge is useful for:
 
 Generated content is creative assistance only. Review factual claims, platform rules, advertising compliance, and content rights before publishing.
 
+Privacy Policy: https://philyu8259-create.github.io/Viral-Forge/en/privacy.html
+Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
 ### Keywords
 
 AI writer,content,poster,social,short video,creator,marketing,copywriting,brand
 
 ### What's New
 
-Initial release with AI copy generation, workflow templates, brand memory, poster editing, batch planning, saved assets, history, and subscriptions.
+Version 1.1 improves Poster Studio, editable text layers, AI background quality, copy candidate selection, and the fully ad-free Pro experience.
 
 ### Review Notes
 
-ViralForge is a single-bundle dual-locale iOS app. English mode supports short-form social, creator, and brand-content workflows; Simplified Chinese mode supports discovery-note, short-video, and private-community workflows.
+ViralForge is a single-bundle dual-locale iOS app for AI copy and poster creation. No login is required.
 
-No login is required for the current version. Subscription purchase and restore use Apple StoreKit. The in-app Settings page includes Privacy Policy, Terms of Use, Support, Email Support, Restore Purchases, app version, backend mode, and User ID.
+Suggested review flow:
+1. Open the Create tab.
+2. Enter a product or topic brief, for example: "portable blender for office breakfast".
+3. Tap Start Viral Creation to generate copy and poster direction.
+4. Open the generated result, copy text, and tap the poster/image action to preview or edit the poster.
+5. Open Settings or the Pro tab to view Privacy Policy, Terms of Use, Support, Restore Purchases, and subscription status.
 
-For review, the app can be tested in mock/offline mode if the production backend is not configured yet. If a public backend URL is configured in the Release build, generation requests may be sent to the configured backend and AI providers.
+Free copy generation is limited to 3 generations per day and resets daily. Free AI background generation includes 3 total uses and does not reset. Free users may see Pangle app-open ads, native/feed ads, and rewarded video ads. The app may request App Tracking Transparency permission for ad personalization and measurement. ViralForge Pro uses Apple StoreKit subscriptions and unlocks premium templates, watermark-free export, unlimited copy generation, AI background generation up to 10 per day / 200 per month, and a completely ad-free experience.
 
-Support email: philyu2023@qq.com
+The Release build uses the public ViralForge backend:
+https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run
 
 ## Subscription Metadata
 
@@ -141,8 +159,8 @@ Support email: philyu2023@qq.com
 - Reference Name: `ViralForge Pro Monthly`
 - Display Name, Chinese: `ViralForge Pro 月度会员`
 - Display Name, English: `ViralForge Pro Monthly`
-- Description, Chinese: `解锁更高生成额度、高级模板和无水印导出。`
-- Description, English: `Unlock higher limits, premium templates, and watermark-free exports.`
+- Description, Chinese: `解锁不限文案、会员模板、完全去广告、无水印导出和 AI 背景 10张/天、200张/月。`
+- Description, English: `Unlock unlimited copy, premium templates, ad-free use, watermark-free exports, and AI backgrounds up to 10/day and 200/month.`
 - Target price: `$5.99/month` or China `CNY 39.8/month`
 
 ### ViralForge Pro Yearly
@@ -151,8 +169,8 @@ Support email: philyu2023@qq.com
 - Reference Name: `ViralForge Pro Yearly`
 - Display Name, Chinese: `ViralForge Pro 年度会员`
 - Display Name, English: `ViralForge Pro Yearly`
-- Description, Chinese: `按年解锁 Pro 内容生产能力，高级模板与无水印导出。`
-- Description, English: `Yearly access to Pro content tools, premium templates, and watermark-free exports.`
+- Description, Chinese: `按年解锁不限文案、会员模板、完全去广告、无水印导出和 AI 背景 10张/天、200张/月。`
+- Description, English: `Yearly access to unlimited copy, premium templates, ad-free use, watermark-free exports, and AI backgrounds up to 10/day and 200/month.`
 - Target price: `$59.99/year` or China `CNY 398/year`
 
 ## App Privacy Answers Draft
@@ -161,7 +179,7 @@ Use this as a conservative draft for App Store Connect App Privacy. Final answer
 
 ### Data Used To Track You
 
-- No.
+- Yes, when the Release build enables Pangle ads and App Tracking Transparency. Disclose device identifiers such as the advertising identifier, ad interaction data, and any other data the ad network uses for third-party advertising or cross-app/site attribution. If ads are disabled for a special build, re-check this answer before submission.
 
 ### Data Linked To You
 
@@ -171,10 +189,13 @@ If the Release build uses the ViralForge backend, disclose:
 - Purchases: subscription product ID and entitlement status from StoreKit.
 - Identifiers: in-app User ID and StoreKit app account token used for entitlement sync.
 - Usage Data: generation quota, project sync events, and basic operational request metadata if retained by the backend.
+- Photos or Videos: user-selected product reference images when sent to the backend or Seedream image generation service for poster/background generation.
 
 ### Data Not Linked To You
 
 If aggregate diagnostics or operational logs are retained without linking to the in-app User ID, disclose them here instead of under linked data. Do not disclose any analytics category unless it is actually enabled in the Release build.
+
+Ad SDK diagnostics, ad performance, and SKAdNetwork attribution should be disclosed here or under tracking/linked data according to the final Pangle dashboard configuration and App Store Connect questionnaire wording.
 
 ### Sensitive Data
 
@@ -182,19 +203,32 @@ If aggregate diagnostics or operational logs are retained without linking to the
 
 ### Photos Or Videos
 
-- The app requests Photos permission only to save generated posters to the user's photo library. If the app does not upload the user's photo library content, do not mark Photos/Videos as collected.
+- The app requests add-only Photos permission to save generated posters, and selected-photo access when the user adds a product reference image. If the reference image is sent to the backend or Seedream for generation, mark Photos/Videos as collected for app functionality.
+
+### ATT And Ads Review Note
+
+- Release builds can show Pangle ads to free users: app-open, native/feed, and rewarded video.
+- Pro users are completely ad-free.
+- ATT copy is localized in `InfoPlist.strings`.
+- `Info.plist` includes Pangle SKAdNetwork IDs `238da6jt44.skadnetwork` and `22mmun2rn5.skadnetwork`; verify against the current Pangle console/docs before final upload.
 
 ## Screenshot Plan
 
-Final screenshots should wait until the UI/UX expert pass is complete. Current recommended set:
+Current promotional screenshot sets are ready under:
+
+- iPhone 6.5/6.9-inch: `artifacts/app_store_previews/iphone65_cn/` and `artifacts/app_store_previews/iphone65_en/`
+- iPad Pro 13-inch: `artifacts/app_store_previews/ipad13_cn/` and `artifacts/app_store_previews/ipad13_en/`
+
+Use the localized set that matches each App Store Connect language. Recommended scene order:
 
 1. Create Studio: platform selection, brief editor, strategy cards, generation CTA.
 2. Result Pack: titles, hooks, captions, hashtags, copy/share actions.
 3. Poster Editor: canvas presets, editable poster copy, export controls.
 4. Templates: category workflow library and template detail.
 5. Brand Kit: brand memory, audience, tone, brand color, banned words.
-6. Batch Calendar: 7-day or 14-day content plan.
-7. Paywall: monthly/yearly ViralForge Pro plan cards and restore purchases.
+6. Pro: free quota, premium benefits, monthly/yearly plan cards, and restore purchases.
+
+The poster preview screenshot uses the Seedream hero asset at `artifacts/app_store_seedream/office_smoothie_blender_appstore_hero.png`.
 
 ## Official Apple References
 

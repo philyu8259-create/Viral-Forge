@@ -7,20 +7,20 @@ struct HealthResponse: Decodable {
 
 struct QuotaResponse: Decodable {
     var remainingTextGenerations: Int
+    var freeTextDailyKey: String?
     var remainingPosterExports: Int
     var isPro: Bool
+    var proPosterUsage: ProPosterUsage?
 
     var state: QuotaState {
         QuotaState(
             remainingTextGenerations: remainingTextGenerations,
             remainingPosterExports: remainingPosterExports,
-            isPro: isPro
+            isPro: isPro,
+            freeTextDailyKey: freeTextDailyKey,
+            proPosterUsage: proPosterUsage
         )
     }
-}
-
-struct QuotaProUpdateRequest: Encodable {
-    var isPro: Bool
 }
 
 struct SubscriptionSyncRequest: Encodable {
@@ -97,6 +97,15 @@ struct PosterResponse: Decodable {
     var productImageIntegrationMode: String?
     var backgroundImageUrl: URL?
     var productImageIntegratedInBackground: Bool?
+    var textFontFamily: String?
+    var textWeight: String?
+    var textColor: String?
+    var textAlignment: String?
+    var headlineScale: Double?
+    var subtitleScale: Double?
+    var ctaScale: Double?
+    var copyOffsetX: Double?
+    var copyOffsetY: Double?
 
     func draft(fallbackStyle: PosterStyle) -> PosterDraft {
         PosterDraft(
@@ -109,7 +118,16 @@ struct PosterResponse: Decodable {
             backgroundDirection: backgroundDirection.flatMap { PosterBackgroundDirection(rawValue: $0) } ?? .clean,
             productImageIntegrationMode: productImageIntegrationMode.flatMap { ProductImageIntegrationMode(rawValue: $0) } ?? .natural,
             backgroundImageURL: backgroundImageUrl,
-            productImageIntegratedInBackground: productImageIntegratedInBackground
+            productImageIntegratedInBackground: productImageIntegratedInBackground,
+            textFontFamily: textFontFamily.flatMap { PosterTextFontFamily(rawValue: $0) } ?? .rounded,
+            textWeight: textWeight.flatMap { PosterTextWeight(rawValue: $0) } ?? .black,
+            textColor: textColor.flatMap { PosterTextColor(rawValue: $0) } ?? .auto,
+            textAlignment: textAlignment.flatMap { PosterTextAlignment(rawValue: $0) } ?? .leading,
+            headlineScale: headlineScale ?? 1.0,
+            subtitleScale: subtitleScale ?? 1.0,
+            ctaScale: ctaScale ?? 1.0,
+            copyOffsetX: copyOffsetX ?? 0.0,
+            copyOffsetY: copyOffsetY ?? 0.0
         )
     }
 }
@@ -318,6 +336,15 @@ struct PosterPayload: Encodable {
     var productImageIntegrationMode: String
     var backgroundImageUrl: URL?
     var productImageIntegratedInBackground: Bool?
+    var textFontFamily: String
+    var textWeight: String
+    var textColor: String
+    var textAlignment: String
+    var headlineScale: Double
+    var subtitleScale: Double
+    var ctaScale: Double
+    var copyOffsetX: Double
+    var copyOffsetY: Double
 
     init(poster: PosterDraft) {
         self.headline = poster.headline
@@ -330,6 +357,15 @@ struct PosterPayload: Encodable {
         self.productImageIntegrationMode = poster.productImageIntegrationMode.rawValue
         self.backgroundImageUrl = poster.backgroundImageURL
         self.productImageIntegratedInBackground = poster.productImageIntegratedInBackground
+        self.textFontFamily = poster.textFontFamily.rawValue
+        self.textWeight = poster.textWeight.rawValue
+        self.textColor = poster.textColor.rawValue
+        self.textAlignment = poster.textAlignment.rawValue
+        self.headlineScale = poster.headlineScale
+        self.subtitleScale = poster.subtitleScale
+        self.ctaScale = poster.ctaScale
+        self.copyOffsetX = poster.copyOffsetX
+        self.copyOffsetY = poster.copyOffsetY
     }
 }
 

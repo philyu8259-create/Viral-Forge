@@ -14,8 +14,13 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS quota (
     user_id TEXT PRIMARY KEY,
     remaining_text_generations INTEGER NOT NULL,
+    free_text_daily_key TEXT NOT NULL DEFAULT '',
     remaining_poster_exports INTEGER NOT NULL,
     is_pro INTEGER NOT NULL DEFAULT 0,
+    pro_poster_daily_used INTEGER NOT NULL DEFAULT 0,
+    pro_poster_daily_key TEXT NOT NULL DEFAULT '',
+    pro_poster_monthly_used INTEGER NOT NULL DEFAULT 0,
+    pro_poster_monthly_key TEXT NOT NULL DEFAULT '',
     updated_at TEXT NOT NULL
   );
 
@@ -79,6 +84,11 @@ db.exec(`
 
 ensureColumn("subscriptions", "app_account_token", "TEXT");
 ensureColumn("app_store_notifications", "app_account_token", "TEXT");
+ensureColumn("quota", "free_text_daily_key", "TEXT NOT NULL DEFAULT ''");
+ensureColumn("quota", "pro_poster_daily_used", "INTEGER NOT NULL DEFAULT 0");
+ensureColumn("quota", "pro_poster_daily_key", "TEXT NOT NULL DEFAULT ''");
+ensureColumn("quota", "pro_poster_monthly_used", "INTEGER NOT NULL DEFAULT 0");
+ensureColumn("quota", "pro_poster_monthly_key", "TEXT NOT NULL DEFAULT ''");
 
 export function nowISO() {
   return new Date().toISOString();

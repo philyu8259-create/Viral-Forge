@@ -4,7 +4,15 @@ export { nowISO, parseJSON };
 
 export async function getQuotaRecord(userId) {
   return db.prepare(`
-    SELECT remaining_text_generations, remaining_poster_exports, is_pro
+    SELECT
+      remaining_text_generations,
+      free_text_daily_key,
+      remaining_poster_exports,
+      is_pro,
+      pro_poster_daily_used,
+      pro_poster_daily_key,
+      pro_poster_monthly_used,
+      pro_poster_monthly_key
     FROM quota
     WHERE user_id = ?
   `).get(userId);
@@ -15,20 +23,35 @@ export async function putQuotaRecord(userId, quota) {
     INSERT INTO quota (
       user_id,
       remaining_text_generations,
+      free_text_daily_key,
       remaining_poster_exports,
       is_pro,
+      pro_poster_daily_used,
+      pro_poster_daily_key,
+      pro_poster_monthly_used,
+      pro_poster_monthly_key,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(user_id) DO UPDATE SET
       remaining_text_generations = excluded.remaining_text_generations,
+      free_text_daily_key = excluded.free_text_daily_key,
       remaining_poster_exports = excluded.remaining_poster_exports,
       is_pro = excluded.is_pro,
+      pro_poster_daily_used = excluded.pro_poster_daily_used,
+      pro_poster_daily_key = excluded.pro_poster_daily_key,
+      pro_poster_monthly_used = excluded.pro_poster_monthly_used,
+      pro_poster_monthly_key = excluded.pro_poster_monthly_key,
       updated_at = excluded.updated_at
   `).run(
     userId,
     quota.remainingTextGenerations,
+    quota.freeTextDailyKey ?? "",
     quota.remainingPosterExports,
     quota.isPro ? 1 : 0,
+    quota.proPosterDailyUsed ?? 0,
+    quota.proPosterDailyKey ?? "",
+    quota.proPosterMonthlyUsed ?? 0,
+    quota.proPosterMonthlyKey ?? "",
     nowISO()
   );
 }

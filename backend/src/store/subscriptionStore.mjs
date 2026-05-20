@@ -105,12 +105,17 @@ export async function currentSubscription(userId) {
   const store = await backend();
   const row = await store.latestSubscriptionRecord(userId);
 
-  const quota = await getQuota(userId);
+  let quota = await getQuota(userId);
   if (!row) {
     return {
       ...quota,
       subscription: null
     };
+  }
+
+  const isActive = !row.expiration_date || new Date(row.expiration_date).getTime() > Date.now();
+  if (quota.isPro !== isActive) {
+    quota = await setProStatus(userId, isActive);
   }
 
   return {
@@ -120,7 +125,7 @@ export async function currentSubscription(userId) {
       transactionId: row.transaction_id,
       originalTransactionId: row.original_transaction_id,
       appAccountToken: row.app_account_token,
-      isActive: quota.isPro,
+      isActive,
       verificationStatus: row.verification_status,
       expiresAt: row.expiration_date
     }

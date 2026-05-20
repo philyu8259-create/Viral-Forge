@@ -4,6 +4,10 @@ struct HistoryView: View {
     @Environment(AppModel.self) private var appModel
     @State private var showFavoritesOnly = false
 
+    private var historyFeedPlacement: AdFeedPlacement? {
+        appModel.feedPlacement(for: .historyList)
+    }
+
     private var projects: [ContentProject] {
         showFavoritesOnly ? appModel.projects.filter(\.isFavorite) : appModel.projects
     }
@@ -58,7 +62,7 @@ struct HistoryView: View {
                                 .buttonStyle(.plain)
 
                                 Button {
-                                    appModel.selectedTab = .templates
+                                    appModel.selectedTab = .create
                                 } label: {
                                     Label(AppText.localized("Templates", "模板"), systemImage: "rectangle.3.group")
                                         .font(.caption.weight(.black))
@@ -76,15 +80,25 @@ struct HistoryView: View {
                     }
                     .accessibilityIdentifier("vf.history.emptyState")
                 } else {
-                    ForEach(projects) { project in
+                    ForEach(Array(projects.enumerated()), id: \.element.id) { index, project in
                         HistoryProjectCard(project: project) {
                             appModel.deleteProjects([project])
+                        }
+
+                        if shouldInsertFeedAd(after: index, total: projects.count),
+                           let adPlacement = historyFeedPlacement {
+                            FeedAdPlaceholderView(placement: adPlacement)
+                                .accessibilityIdentifier("vf.history.adCard")
                         }
                     }
                 }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func shouldInsertFeedAd(after index: Int, total: Int) -> Bool {
+        total >= 6 && index == 5
     }
 }
 

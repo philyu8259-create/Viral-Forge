@@ -7,7 +7,6 @@ import {
   ensurePosterExportAvailable,
   ensureTextGenerationAvailable,
   getQuota,
-  setProStatus
 } from "./quota/quotaManager.mjs";
 import { assertRateLimit } from "./safety/rateLimiter.mjs";
 import { assertSafeContentRequest, assertSafePosterRequest } from "./safety/contentSafety.mjs";
@@ -33,12 +32,6 @@ export async function routeRequest(request, response) {
 
   if (request.method === "GET" && url.pathname === "/api/quota") {
     return sendJSON(response, 200, await getQuota(userIdFrom(request)));
-  }
-
-  if (request.method === "POST" && url.pathname === "/api/quota/pro") {
-    const userId = userIdFrom(request);
-    const body = await readJSON(request);
-    return sendJSON(response, 200, await setProStatus(userId, body.isPro === true));
   }
 
   if (request.method === "GET" && url.pathname === "/api/subscription") {
@@ -160,7 +153,15 @@ export async function routeRequest(request, response) {
 }
 
 function userIdFrom(request) {
-  return request.headers["x-user-id"] || "demo-user";
+  const userId = String(request.headers["x-user-id"] ?? "").trim();
+  if (userId) {
+    return userId;
+  }
+
+  const error = new Error("Missing user id.");
+  error.statusCode = 401;
+  error.code = "missing_user_id";
+  throw error;
 }
 
 function applyBrandProfile(body, profile) {

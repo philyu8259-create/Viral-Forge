@@ -10,10 +10,16 @@ private struct PosterEditorRoute: Identifiable, Hashable {
 struct ResultView: View {
     @Environment(AppModel.self) private var appModel
     let project: ContentProject
+    let shouldShowContinuePosterAction: Bool
     @State private var regeneratedProject: ContentProject?
     @State private var posterEditorRoute: PosterEditorRoute?
     @State private var copyStatusMessage: String?
     @State private var isShowingEditor = false
+
+    init(project: ContentProject, shouldShowContinuePosterAction: Bool = true) {
+        self.project = project
+        self.shouldShowContinuePosterAction = shouldShowContinuePosterAction
+    }
 
     private var currentProject: ContentProject {
         appModel.projects.first(where: { $0.id == project.id }) ?? project
@@ -47,7 +53,7 @@ struct ResultView: View {
             }
             .accessibilityLabel(AppText.localized("Favorite", "收藏"))
         }
-        .navigationDestination(item: $regeneratedProject) { project in
+                .navigationDestination(item: $regeneratedProject) { project in
             ResultView(project: project)
         }
         .navigationDestination(item: $posterEditorRoute) { route in
@@ -86,47 +92,44 @@ struct ResultView: View {
         VFGlassCard {
             VStack(alignment: .leading, spacing: 13) {
                 VFSectionHeader(
-                    title: AppText.localized("Reuse", "复用"),
-                    subtitle: AppText.localized("Turn this result into a poster or regenerate a new pack", "编辑海报或基于当前简报再生成")
+                    title: AppText.localized("Result Stage", "结果阶段"),
+                    subtitle: AppText.localized(
+                        "Step 1 is done. Copy publish pack is ready, then continue to Poster Studio to generate AI background.",
+                        "步骤1已完成，文案包已就绪，下一步去海报工作室生成 AI 背景。"
+                    )
                 )
 
-                HStack(spacing: 10) {
-                    Button {
-                        isShowingEditor = true
-                    } label: {
-                        actionPill(AppText.localized("Edit Copy", "编辑文案"), icon: "pencil.line", tint: VFStyle.electricCyan)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("vf.result.editCopyButton")
+                Text(AppText.localized(
+                    "Primary actions: copy your publish pack now, then open Poster Studio.",
+                    "核心流程：先复制发布文案包，再进入海报工作室。"
+                ))
+                .font(.caption.weight(.medium))
+                .foregroundStyle(VFStyle.secondaryText)
 
-                    Button {
-                        posterEditorRoute = PosterEditorRoute(project: currentProject)
-                    } label: {
-                        actionPill(AppText.localized("Edit Poster", "编辑海报"), icon: "photo.on.rectangle.angled", tint: VFStyle.sunset)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("vf.result.editPosterButton")
-
-                    Button {
-                        regenerate()
-                    } label: {
-                        actionPill(appModel.isGenerating ? AppText.localized("Generating...", "生成中...") : AppText.localized("Regenerate", "再生成"), icon: "arrow.clockwise", tint: VFStyle.primaryRed)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(appModel.isGenerating)
+                if shouldShowContinuePosterAction {
+                    continueToPosterButton
                 }
 
-                HStack(spacing: 10) {
-                    Button {
-                        copyToClipboard(
-                            currentProject.formattedPublishPackage,
-                            feedback: AppText.localized("Full publish pack copied.", "整套发布稿已复制。")
-                        )
-                    } label: {
-                        actionPill(AppText.localized("Copy Pack", "复制整套"), icon: "doc.on.doc.fill", tint: VFStyle.electricCyan)
+                VStack(spacing: 10) {
+                    copyPublishPackButton
+
+                    HStack(spacing: 10) {
+                        Button {
+                            isShowingEditor = true
+                        } label: {
+                            actionPill(AppText.localized("Edit Copy", "编辑文案"), icon: "pencil.line", tint: VFStyle.electricCyan)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("vf.result.editCopyButton")
+
+                        Button {
+                            regenerate()
+                        } label: {
+                            actionPill(appModel.isGenerating ? AppText.localized("Generating...", "生成中...") : AppText.localized("Regenerate", "再生成"), icon: "arrow.clockwise", tint: VFStyle.primaryRed)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(appModel.isGenerating)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("vf.result.copyPackButton")
 
                     ShareLink(item: currentProject.formattedPublishPackage) {
                         actionPill(AppText.localized("Share Text", "分享文案"), icon: "square.and.arrow.up", tint: VFStyle.purpleFlow)
@@ -149,6 +152,29 @@ struct ResultView: View {
                 }
             }
         }
+    }
+
+    private var copyPublishPackButton: some View {
+        Button {
+            copyToClipboard(
+                currentProject.formattedPublishPackage,
+                feedback: AppText.localized("Full publish pack copied.", "整套发布稿已复制。")
+            )
+        } label: {
+            actionPill(AppText.localized("Copy Publish Pack", "复制发布包"), icon: "doc.on.doc.fill", tint: VFStyle.electricCyan)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("vf.result.copyPackButton")
+    }
+
+    private var continueToPosterButton: some View {
+        VFPrimaryButton(
+            title: AppText.localized("Continue to Poster", "继续生成海报"),
+            icon: "sparkles.rectangle.stack.fill"
+        ) {
+            posterEditorRoute = PosterEditorRoute(project: currentProject)
+        }
+        .accessibilityIdentifier("vf.result.continuePosterButton")
     }
 
     private func contentSection(_ title: String, lines: [ScoredLine], icon: String, tint: Color) -> some View {
@@ -233,16 +259,42 @@ struct ResultView: View {
 
     private var posterSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            VFSectionHeader(title: AppText.localized("Poster", "海报"), subtitle: AppText.localized("Preview and continue editing the visual asset", "预览并继续编辑视觉资产"))
+            VFSectionHeader(
+                title: AppText.localized("AI Poster Studio", "AI 海报生成"),
+                subtitle: AppText.localized("Generate backgrounds, blend product photos, and export the final poster", "生成背景、融合真实产品图，并导出最终海报")
+            )
             PosterPreview(poster: currentProject.poster, platform: currentProject.draft.platform)
                 .frame(height: 420)
                 .clipShape(RoundedRectangle(cornerRadius: 28))
                 .shadow(color: VFStyle.platformTint(currentProject.draft.platform).opacity(0.14), radius: 20, x: 0, y: 12)
-            VFPrimaryButton(title: AppText.localized("Edit Poster", "编辑海报"), icon: "photo.on.rectangle.angled") {
+
+            HStack(spacing: 8) {
+                posterCapabilityPill(AppText.localized("AI Background", "AI 背景"), icon: "sparkles", tint: VFStyle.purpleFlow)
+                posterCapabilityPill(AppText.localized("Product Blend", "产品融合"), icon: "photo.on.rectangle", tint: VFStyle.electricCyan)
+                posterCapabilityPill(AppText.localized("PNG Export", "导出成图"), icon: "square.and.arrow.down", tint: VFStyle.sunset)
+            }
+
+            VFPrimaryButton(title: AppText.localized("Generate / Refine AI Poster", "生成/优化 AI 海报"), icon: "sparkles.rectangle.stack.fill") {
                 posterEditorRoute = PosterEditorRoute(project: currentProject)
             }
             .accessibilityIdentifier("vf.result.editPosterButton.bottom")
         }
+    }
+
+    private func posterCapabilityPill(_ text: String, icon: String, tint: Color) -> some View {
+        Label(text, systemImage: icon)
+            .font(.caption.weight(.black))
+            .foregroundStyle(tint)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
+            .padding(.horizontal, 8)
+            .background(tint.opacity(0.10), in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(.white.opacity(0.78), lineWidth: 1)
+            }
     }
 
     private func pill(_ text: String, tint: Color) -> some View {
@@ -322,7 +374,7 @@ struct ResultView: View {
                     if !appModel.quota.isPro {
                         Button {
                             appModel.generationError = nil
-                            appModel.selectedTab = .pro
+                            appModel.openPaywall(reason: message)
                         } label: {
                             Label(AppText.localized("Upgrade Pro", "升级 Pro"), systemImage: "crown.fill")
                                 .font(.subheadline.weight(.bold))

@@ -41,8 +41,9 @@ export async function openAIGeneratePosterBackground(request) {
 function buildImagePrompt(request) {
   return [
     request.prompt || "social media poster background",
-    "No embedded text.",
-    "Leave clean negative space for app-rendered headline and subtitle.",
+    "The image must look like a clean camera photo, not a finished poster, graphic design, or social app screen.",
+    "Create a full-frame premium poster-photography composition. Do not leave a large blank block, flat color panel, template placeholder, signage, printed matter, stickers, label panels, invented brand marks, or interface elements.",
+    "Make the whole image visually rich but not cluttered with tasteful commercial-photography layers: foreground blur, reflections, soft shadows, props, background depth, material texture, subtle color accents, and relevant lifestyle cues. Use three to six category-relevant supporting elements across foreground, midground, and background. The upper half must also contain at least two recognizable scene objects such as softly focused props, plants, reflections, shelf edges, light texture, bokeh, or background objects; do not turn it into abstract blur. Do not leave the product alone against a bare wall, blank window area, or large empty tabletop. No single low-detail wall, window, or tabletop surface should dominate the image. The app will render copy later; the image should provide natural tonal hierarchy, not empty space.",
     `Style: ${request.style || "Clean"}.`
   ].join(" ");
 }
