@@ -24,7 +24,6 @@
 		4E9CA4F44AE23FCFE75E00DC /* AppText.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9EE0CA669A23A4BE74282E /* AppText.swift */; };
 		4F17DB62D597B4C5060B7D25 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B3517FED465E57D7E238B59 /* AppRootView.swift */; };
 		52AACBE0A41B2928EDEFD27B /* PangleAdService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF8F7B1F25BFEAB30A6CA19 /* PangleAdService.swift */; };
-		58A4DCE2CA2B5AAE4DD500D2 /* Pods_ViralForge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DBC55334C6462503E1AF4DC4 /* Pods_ViralForge.framework */; };
 		5B8BA184FDF86DC812D90D4A /* VFGlobalStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0295E570E4E64BAF3200F2 /* VFGlobalStyle.swift */; };
 		5C4F1A4C30B1621390686EBE /* AdServiceFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99EEF31534D9D57F5F62B8DC /* AdServiceFactory.swift */; };
 		61D3D255892F4DB6641CDCCF /* AdTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 394EF21C2B054FC7D2D87893 /* AdTypes.swift */; };
@@ -45,6 +44,7 @@
 		D8E1253C24307785AC59E071 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */; };
 		DAB68408B16581443A690917 /* BackendDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A85E893743A9153D469CAB /* BackendDataService.swift */; };
 		DAD8544C45ACB3C855E48481 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64177FF007D6CE07527E00E1 /* APIClient.swift */; };
+		DC613C8940854005D1029B43 /* Pods_ViralForge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB90892605C7F5DE0A94DC7D /* Pods_ViralForge.framework */; };
 		E7B4BEAE9A33EFB71F95D1FD /* NoopAdService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98560BBA4F3CC63974BA08E6 /* NoopAdService.swift */; };
 		EE4AB2D3786376D3969C458B /* MyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 987E282E59F8322F02AF9496 /* MyView.swift */; };
 		F1242B83BCFAD3B5CADD38A1 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12772C4BFCF55BD6E18C80B8 /* AppModel.swift */; };
@@ -82,6 +82,7 @@
 		2EE3B5217B984EACDAB6767A /* SubscriptionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionModels.swift; sourceTree = "<group>"; };
 		387E20D6EEBB4DAF6F06913C /* ContentModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentModels.swift; sourceTree = "<group>"; };
 		394EF21C2B054FC7D2D87893 /* AdTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdTypes.swift; sourceTree = "<group>"; };
+		3BF8BF7EFC91FD400BA2014B /* Pods-ViralForge.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ViralForge.debug.xcconfig"; path = "Target Support Files/Pods-ViralForge/Pods-ViralForge.debug.xcconfig"; sourceTree = "<group>"; };
 		435A1758105F1C55CA31EC3C /* BrandKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandKitView.swift; sourceTree = "<group>"; };
 		45134448077867AFD09B0B9C /* TrackingAuthorizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingAuthorizationService.swift; sourceTree = "<group>"; };
 		48E1E4BFD3ED10C60BD18CEE /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
@@ -93,6 +94,7 @@
 		695BF69FFFFF254432D0E21A /* BackendSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendSettings.swift; sourceTree = "<group>"; };
 		6B3517FED465E57D7E238B59 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		6D0C08F899D5B6539FACE20B /* AdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdService.swift; sourceTree = "<group>"; };
+		6FA6856F251A36EC55F329CF /* Pods-ViralForge.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ViralForge.release.xcconfig"; path = "Target Support Files/Pods-ViralForge/Pods-ViralForge.release.xcconfig"; sourceTree = "<group>"; };
 		7897F0E9D6E0C7ADCD7B61ED /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		791D9AA12D1C4AFDD58B0271 /* PangleNativeFeedAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PangleNativeFeedAdView.swift; sourceTree = "<group>"; };
 		8515AE8622366534FFE8A090 /* ViralForge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ViralForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -110,23 +112,21 @@
 		C83815749F09EADCA87A06CC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		CC02973674BE989B04A852F9 /* AssetsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetsView.swift; sourceTree = "<group>"; };
 		D36D31C093B28F6A0530B9C2 /* ViralForgeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ViralForgeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		D42E1164EDC5E2E3FBE61D00 /* Pods-ViralForge.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ViralForge.release.xcconfig"; path = "Target Support Files/Pods-ViralForge/Pods-ViralForge.release.xcconfig"; sourceTree = "<group>"; };
 		DAF8F7B1F25BFEAB30A6CA19 /* PangleAdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PangleAdService.swift; sourceTree = "<group>"; };
-		DBC55334C6462503E1AF4DC4 /* Pods_ViralForge.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ViralForge.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DC9EE0CA669A23A4BE74282E /* AppText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppText.swift; sourceTree = "<group>"; };
 		EA0295E570E4E64BAF3200F2 /* VFGlobalStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VFGlobalStyle.swift; sourceTree = "<group>"; };
 		EE34A96FAAB6CA2E2369217B /* ViralForgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViralForgeApp.swift; sourceTree = "<group>"; };
 		F312110AB52B82F44594FED7 /* FeedAdPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedAdPlaceholderView.swift; sourceTree = "<group>"; };
-		FD657A0772D23725EF2ED3CB /* Pods-ViralForge.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ViralForge.debug.xcconfig"; path = "Target Support Files/Pods-ViralForge/Pods-ViralForge.debug.xcconfig"; sourceTree = "<group>"; };
+		FB90892605C7F5DE0A94DC7D /* Pods_ViralForge.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ViralForge.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF7DB1105294A475EF485A28 /* ModelRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelRouting.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		009651434506A3A0CE6E4C2F /* Frameworks */ = {
+		037434E951DA81672720E86B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				58A4DCE2CA2B5AAE4DD500D2 /* Pods_ViralForge.framework in Frameworks */,
+				DC613C8940854005D1029B43 /* Pods_ViralForge.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -161,6 +161,14 @@
 			path = Ads;
 			sourceTree = "<group>";
 		};
+		320C654958BB64D1B04C48FA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FB90892605C7F5DE0A94DC7D /* Pods_ViralForge.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		32342ED8D0482EC53BDE26A2 /* ViralForge */ = {
 			isa = PBXGroup;
 			children = (
@@ -174,6 +182,16 @@
 				C4D7535FF5CC422C93F5FAED /* Views */,
 			);
 			path = ViralForge;
+			sourceTree = "<group>";
+		};
+		4B0555205DC38C263BDD20FE /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				3BF8BF7EFC91FD400BA2014B /* Pods-ViralForge.debug.xcconfig */,
+				6FA6856F251A36EC55F329CF /* Pods-ViralForge.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		5AFB22499BE01F54FF9AFB69 /* Services */ = {
@@ -191,14 +209,6 @@
 				B4A04CB3DCD8B0513FD90C0A /* Ads */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		A6464DD366237884EE02BD73 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				DBC55334C6462503E1AF4DC4 /* Pods_ViralForge.framework */,
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		B4A04CB3DCD8B0513FD90C0A /* Ads */ = {
@@ -250,16 +260,6 @@
 			path = App;
 			sourceTree = "<group>";
 		};
-		CE5D23C962ECB41363713085 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				FD657A0772D23725EF2ED3CB /* Pods-ViralForge.debug.xcconfig */,
-				D42E1164EDC5E2E3FBE61D00 /* Pods-ViralForge.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
 		EA90C21E69117ADD413F27A6 = {
 			isa = PBXGroup;
 			children = (
@@ -267,8 +267,8 @@
 				32342ED8D0482EC53BDE26A2 /* ViralForge */,
 				F6866AAB428935FAD6960978 /* ViralForgeUITests */,
 				11D2A0831966E018045B72A9 /* Products */,
-				CE5D23C962ECB41363713085 /* Pods */,
-				A6464DD366237884EE02BD73 /* Frameworks */,
+				4B0555205DC38C263BDD20FE /* Pods */,
+				320C654958BB64D1B04C48FA /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -287,12 +287,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = E625757A7A4D3FA40EC57DC7 /* Build configuration list for PBXNativeTarget "ViralForge" */;
 			buildPhases = (
-				2EA35231B959B490591FC675 /* [CP] Check Pods Manifest.lock */,
+				2A93B2466EF86256B02D4846 /* [CP] Check Pods Manifest.lock */,
 				95D4E898F2EC3062D1CC4E43 /* Sources */,
 				2A73F5BA32FD800A11B97FCD /* Resources */,
-				009651434506A3A0CE6E4C2F /* Frameworks */,
-				A980F558997E27E688F15292 /* [CP] Embed Pods Frameworks */,
-				718E8E78DAEC75B07BE0D222 /* [CP] Copy Pods Resources */,
+				037434E951DA81672720E86B /* Frameworks */,
+				EF4689514C900CF4BBFD17DE /* [CP] Embed Pods Frameworks */,
+				4D99AB9347E94B3F9D2407B3 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -373,7 +373,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		2EA35231B959B490591FC675 /* [CP] Check Pods Manifest.lock */ = {
+		2A93B2466EF86256B02D4846 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -395,7 +395,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		718E8E78DAEC75B07BE0D222 /* [CP] Copy Pods Resources */ = {
+		4D99AB9347E94B3F9D2407B3 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -412,7 +412,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ViralForge/Pods-ViralForge-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		A980F558997E27E688F15292 /* [CP] Embed Pods Frameworks */ = {
+		EF4689514C900CF4BBFD17DE /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -545,7 +545,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 12;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -572,7 +572,7 @@
 		};
 		17F0AD14EF5F4A3216465DA4 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D42E1164EDC5E2E3FBE61D00 /* Pods-ViralForge.release.xcconfig */;
+			baseConfigurationReference = 6FA6856F251A36EC55F329CF /* Pods-ViralForge.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				BACKEND_BASE_URL = "https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run";
@@ -656,7 +656,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 12;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 9SZ5257PF4;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -707,7 +707,7 @@
 		};
 		F569D8304764A78E4B3CB016 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FD657A0772D23725EF2ED3CB /* Pods-ViralForge.debug.xcconfig */;
+			baseConfigurationReference = 3BF8BF7EFC91FD400BA2014B /* Pods-ViralForge.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				BACKEND_BASE_URL = "https://viralfo-backend-ipiunjbsno.cn-hangzhou.fcapp.run";

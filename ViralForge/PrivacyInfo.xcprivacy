@@ -92,7 +92,13 @@
 		<key>NSPrivacyTracking</key>
 		<true/>
 		<key>NSPrivacyTrackingDomains</key>
-		<array/>
+		<array>
+			<string>mon.snssdk.com</string>
+			<string>mon.toutiao.com</string>
+			<string>mon.toutiaocloud.com</string>
+			<string>mon.toutiaocloud.net</string>
+			<string>monsetting.toutiao.com</string>
+		</array>
 		<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>

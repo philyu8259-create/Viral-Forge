@@ -10,7 +10,7 @@ fileGroups:
 settings:
   base:
     MARKETING_VERSION: "1.1"
-    CURRENT_PROJECT_VERSION: "11"
+    CURRENT_PROJECT_VERSION: "12"
     DEVELOPMENT_TEAM: 9SZ5257PF4
 targets:
   ViralForge:
